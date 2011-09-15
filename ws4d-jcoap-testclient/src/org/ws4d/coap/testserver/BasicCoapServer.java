@@ -17,23 +17,23 @@ package org.ws4d.coap.testserver;
 
 import org.ws4d.coap.connection.DefaultCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannel;
+import org.ws4d.coap.interfaces.CoapChannelHandler;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapServerHandler;
-import org.ws4d.coap.interfaces.CoapSocketListener;
 import org.ws4d.coap.messages.CoapMessageCode.MessageCode;
 
-public class BasicCoapServer implements CoapServerHandler {
+public class BasicCoapServer implements CoapServerHandler, CoapChannelHandler {
     private static final int PORT = 61616;
     static int counter = 0;
 
     public static void main(String[] args) {
-        System.out.println("Start CoAP Server... ");
+        System.out.println("Start CoAP Server on port " + PORT);
         BasicCoapServer server = new BasicCoapServer();
 
         CoapChannelManager channelManager = DefaultCoapChannelManager.getInstance();
-        CoapSocketListener socketListener = channelManager.createSocketListener(PORT);
-        socketListener.setCoapServerHandler(server);
+        channelManager.createSocketListener(PORT);
+        channelManager.setCoapServerHandler(server);
     }
 
     @Override

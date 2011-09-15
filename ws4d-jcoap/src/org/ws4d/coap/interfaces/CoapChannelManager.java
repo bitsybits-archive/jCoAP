@@ -15,7 +15,11 @@
 
 package org.ws4d.coap.interfaces;
 
+import java.net.InetAddress;
+
+
 public interface CoapChannelManager {
+    
     // public CoapClientChannel getClientChannel(String remoteHost, int
     // remotePort);
     // public CoapServerChannel getServerChannel(int port);
@@ -24,4 +28,8 @@ public interface CoapChannelManager {
     public int getNewMessageID();
 
     public void reset();
+    
+	public CoapChannel createServerChannel(CoapSocketListener socketListener, InetAddress addr, int port);
+
+    public void setCoapServerHandler(CoapServerHandler serverListener);
 }

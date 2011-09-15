@@ -9,12 +9,12 @@ public interface CoapChannel {
     public void sendMessage(CoapMessage msg);
 
     public void close();
-
+    
     public InetAddress getRemoteAddress();
 
     public int getRemotePort();
 
-    public CoapChannelHandler getChannelListener();
+    public CoapChannelHandler getCoapChannelHandler();
 
     /* these hooks can be used by SocketListener implementations */
     public void setHookObject(Object o);
@@ -26,4 +26,6 @@ public interface CoapChannel {
     public CoapMessage createRequest(boolean reliable, CoapMessageCode.MessageCode messageCode);
 
     public CoapMessage createResponse(CoapMessage request, CoapMessageCode.MessageCode messageCode);
+    
+    public void newIncommingMessage(CoapMessage message);
 }

@@ -50,8 +50,7 @@ public class DefaultCoapSocketListener implements CoapSocketListener {
     protected CoapReceiveThread receiveThread = null;
     protected CoapSendThread sendThread = null;
     protected List<CoapChannel> channels = new LinkedList<CoapChannel>();
-    CoapChannelManager channelManager = null;
-    CoapServerHandler serverListener = null;
+    private CoapChannelManager channelManager = null;
 
     byte[] sendBuffer = new byte[Constants.COAP_MESSAGE_SIZE_MAX];
 
@@ -115,9 +114,7 @@ public class DefaultCoapSocketListener implements CoapSocketListener {
                             Object duplicate = buf.recvdConNon.get(msgID);
                             if (duplicate == null) {
                                 /* Received CON or NON */
-                                CoapMessage response = channel.getChannelListener()
-                                        .onReceivedMessage(msg);
-                                DefaultCoapSocketListener.this.sendMessage(response);
+                                channel.newIncommingMessage(msg);
                                 /* put something in there, use it as HashSet */
                                 buf.recvdConNon.put(msgID, new Integer(1));
                             } else {
@@ -142,9 +139,9 @@ public class DefaultCoapSocketListener implements CoapSocketListener {
                                 sendThread.confirmMessage(msgID);
                                 /*
                                  * in case of a RST the listener is responsible
-                                 * for close the channel
+                                 * for closing the channel
                                  */
-                                channel.getChannelListener().onReceivedMessage(msg);
+                                channel.newIncommingMessage(msg);
                             } else
                                 logger.log(Level.INFO, "ACK or RST duplicate");
                         }
@@ -160,26 +157,21 @@ public class DefaultCoapSocketListener implements CoapSocketListener {
                              * ignore ACKs and RSTs if there is no corresponding
                              * channel
                              */
-                            if (serverListener != null) {
                                 /*
                                  * TODO: check if the sever wants to create a
                                  * channel and create a new one
                                  */
-                                CoapChannel newChannel = new DefaultCoapChannel(
-                                        DefaultCoapSocketListener.this, null,
-                                        dgramPacket.getAddress(), dgramPacket.getPort());
-                                if (serverListener.onAccept(newChannel)) {
-                                    newChannel.setHookObject(new ChannelBuffers());
-                                    addChannel(newChannel);
-                                    ((ChannelBuffers) newChannel.getHookObject()).recvdConNon.put(
-                                            msgID, 1);
-                                    logger.log(Level.INFO, "Created new server channel...");
-                                    msg.setChannel(newChannel);
-                                    CoapMessage response = newChannel.getChannelListener()
-                                            .onReceivedMessage(msg);
-                                    DefaultCoapSocketListener.this.sendMessage(response);
-                                }
-                                /* TODO: else: send a RST */
+                            CoapChannel newChannel = channelManager.createServerChannel(DefaultCoapSocketListener.this, dgramPacket.getAddress(), dgramPacket.getPort());
+                            if (newChannel != null) {
+                                newChannel.setHookObject(new ChannelBuffers());
+                                addChannel(newChannel);
+                                ((ChannelBuffers) newChannel.getHookObject()).recvdConNon.put(
+                                        msgID, 1);
+                                logger.log(Level.INFO, "Created new server channel...");
+                                msg.setChannel(newChannel);
+                                newChannel.newIncommingMessage(msg);
+                            } else {
+                            	/* TODO: send a RST */
                             }
                         }
                     }
@@ -303,7 +295,7 @@ public class DefaultCoapSocketListener implements CoapSocketListener {
                                          * Failed to send Packet (MAX RETRANS
                                          * REACHED)
                                          */
-                                        msg.getCoapChannel().getChannelListener()
+                                        msg.getCoapChannel().getCoapChannelHandler()
                                                 .onLostConnection();
                                         logger.log(Level.INFO, "Connection Lost...");
                                     }
@@ -451,17 +443,15 @@ public class DefaultCoapSocketListener implements CoapSocketListener {
     @Override
     public CoapChannel connect(CoapChannelHandler channelListener, InetAddress remoteAddress,
             int remotePort) {
-        /* TODO: channel listener is set to null -> messages can get lost */
+    	if (channelListener == null){
+    		return null;
+    	}
+    	
         CoapChannel channel = new DefaultCoapChannel(this, channelListener, remoteAddress,
                 remotePort);
         channel.setHookObject(new ChannelBuffers());
         addChannel(channel);
         return channel;
-    }
-
-    @Override
-    public void setCoapServerHandler(CoapServerHandler serverListener) {
-        this.serverListener = serverListener;
     }
 
     @Override

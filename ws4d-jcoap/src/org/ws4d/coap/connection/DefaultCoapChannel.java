@@ -51,7 +51,7 @@ public class DefaultCoapChannel implements CoapChannel {
     }
 
     @Override
-    public CoapChannelHandler getChannelListener() {
+    public CoapChannelHandler getCoapChannelHandler() {
         return listener;
     }
 
@@ -98,5 +98,11 @@ public class DefaultCoapChannel implements CoapChannel {
 
         return null;
     }
+
+	@Override
+	public void newIncommingMessage(CoapMessage message) {
+		CoapMessage response = getCoapChannelHandler().onReceivedMessage(message);
+		socketListener.sendMessage(response);
+	}
 
 }

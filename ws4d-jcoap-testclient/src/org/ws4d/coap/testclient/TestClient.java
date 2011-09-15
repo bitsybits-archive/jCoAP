@@ -22,15 +22,15 @@ import java.net.UnknownHostException;
 
 import org.ws4d.coap.connection.DefaultCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannel;
+import org.ws4d.coap.interfaces.CoapChannelHandler;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
-import org.ws4d.coap.interfaces.CoapServerHandler;
 import org.ws4d.coap.interfaces.CoapSocketListener;
 import org.ws4d.coap.messages.CoapHeaderOption;
 import org.ws4d.coap.messages.CoapHeaderOptions.HeaderOptionNumber;
 import org.ws4d.coap.messages.CoapMessageCode.MessageCode;
 
-public class TestClient implements CoapServerHandler {
+public class TestClient implements CoapChannelHandler {
 
     // private static final String UNICAST_HOST = "[aaaa::212:7400:117b:6dd4]";
     private static final String UNICAST_HOST = "localhost";
@@ -65,7 +65,7 @@ public class TestClient implements CoapServerHandler {
         /* To be a Server and accept channels */
         CoapChannel channel = socketListener.connect(this, InetAddress.getByName(uri.getHost()),
                 uri.getPort());
-        socketListener.setCoapServerHandler(this);
+        channel.setCoapChannelHandler(this);
 
         /* create a CoAP Message */
         CoapMessage coapMessage = channel.createRequest(true, MessageCode.GET);
@@ -115,13 +115,6 @@ public class TestClient implements CoapServerHandler {
     public void onLostConnection() {
         System.out.println("Lost connection...");
 
-    }
-
-    @Override
-    public boolean onAccept(CoapChannel newChannel) {
-        System.out.println("Accept connection...");
-        newChannel.setCoapChannelHandler(this);
-        return true;
     }
 
     // private void testMulticastRequest() {

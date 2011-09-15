@@ -16,19 +16,23 @@
 package org.ws4d.coap.connection;
 
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Random;
 
 import org.ws4d.coap.Constants;
+import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
+import org.ws4d.coap.interfaces.CoapServerHandler;
 import org.ws4d.coap.interfaces.CoapSocketListener;
 
 public class DefaultCoapChannelManager implements CoapChannelManager {
     // global message id
-    private int messageId;
+    private int globalMessageId;
     private static DefaultCoapChannelManager instance;
     private HashMap<Integer, DatagramSocket> socketMap = new HashMap<Integer, DatagramSocket>();
+    CoapServerHandler serverHandler = null;
 
     private DefaultCoapChannelManager() {
         reset();
@@ -40,47 +44,46 @@ public class DefaultCoapChannelManager implements CoapChannelManager {
         }
         return instance;
     }
-
-    // /**
-    // * Create a CoapConnection to a remote Socket, choosing a random local
-    // port
-    // */
-    // @Override
-    // public synchronized CoapClientChannel getClientChannel(String remoteHost,
-    // int remotePort) {
-    // CoapClientChannel connection = new DefaultCoapClientChannel(this);
-    // connection.connect(remoteHost, remotePort);
-    // return connection;
-    // }
-    //
-    // /**
-    // * Create a CoapConnection to a remote Socket, choosing a random local
-    // port
-    // */
-    // @Override
-    // public synchronized CoapServerChannel getServerChannel(int port) {
-    // CoapServerChannel serverChannel = new DefaultCoapServerChannel(this);
-    // serverChannel.listen(port);
-    // return serverChannel;
-    // }
+    
+	@Override
+	public void setCoapServerHandler(CoapServerHandler serverHandler) {
+		// TODO Auto-generated method stub
+		this.serverHandler = serverHandler;
+		
+	}
+    
+    /**
+     * Creates a new server channel
+     */
+    @Override
+    public synchronized CoapChannel createServerChannel(CoapSocketListener socketListener, InetAddress addr, int port){
+    	CoapChannel newChannel= new DefaultCoapChannel( socketListener, null, addr, port);
+    	
+    	if (!serverHandler.onAccept(newChannel)){
+    		/* Server rejected channel */
+    		return null;
+    	}
+    	
+    	return newChannel;
+    }
 
     /**
      * Creates a new, global message id for a new COAP message
      */
     @Override
     public synchronized int getNewMessageID() {
-        if (messageId < Constants.MESSAGE_ID_MAX) {
-            ++messageId;
+        if (globalMessageId < Constants.MESSAGE_ID_MAX) {
+            ++globalMessageId;
         } else
-            messageId = Constants.MESSAGE_ID_MIN;
-        return messageId;
+            globalMessageId = Constants.MESSAGE_ID_MIN;
+        return globalMessageId;
     }
 
     @Override
     public synchronized void reset() {
         // generate random 16 bit messageId
         Random random = new Random();
-        messageId = random.nextInt(Constants.MESSAGE_ID_MAX + 1);
+        globalMessageId = random.nextInt(Constants.MESSAGE_ID_MAX + 1);
     }
 
     @Override
@@ -99,4 +102,6 @@ public class DefaultCoapChannelManager implements CoapChannelManager {
 
         return (socket != null) ? new DefaultCoapSocketListener(this, socket) : null;
     }
+
+
 }

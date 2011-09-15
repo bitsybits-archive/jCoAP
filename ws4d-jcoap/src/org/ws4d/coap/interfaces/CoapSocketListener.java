@@ -32,8 +32,6 @@ public interface CoapSocketListener {
     public CoapChannel connect(CoapChannelHandler channelListener, InetAddress remoteAddress,
             int remotePort);
 
-    public void setCoapServerHandler(CoapServerHandler serverListener);
-
     public void close();
 
     public void removeChannel(CoapChannel channel);
