@@ -15,6 +15,7 @@
 
 package org.ws4d.coap.connection;
 
+import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -31,7 +32,7 @@ public class DefaultCoapChannelManager implements CoapChannelManager {
     // global message id
     private int globalMessageId;
     private static DefaultCoapChannelManager instance;
-    private HashMap<Integer, DatagramSocket> socketMap = new HashMap<Integer, DatagramSocket>();
+    private HashMap<Integer, DefaultCoapSocketListener> socketListenerMap = new HashMap<Integer, DefaultCoapSocketListener>();
     CoapServerHandler serverHandler = null;
 
     private DefaultCoapChannelManager() {
@@ -88,19 +89,18 @@ public class DefaultCoapChannelManager implements CoapChannelManager {
 
     @Override
     public CoapSocketListener createSocketListener(int localPort) {
-        DatagramSocket socket = null;
-        if (!socketMap.containsKey(localPort)) {
+    	DefaultCoapSocketListener socketListener = null;
+        if (!socketListenerMap.containsKey(localPort)) {
             try {
-                socket = new DatagramSocket(localPort);
-                socketMap.put(localPort, socket);
-            } catch (SocketException e) {
-                e.printStackTrace();
-            }
+            	socketListener = new DefaultCoapSocketListener(this, localPort);
+            	socketListenerMap.put(localPort, socketListener);
+            } catch (IOException e) {
+				e.printStackTrace();
+			}
         } else {
-            socket = socketMap.get(localPort);
+        	socketListener = socketListenerMap.get(localPort);
         }
-
-        return (socket != null) ? new DefaultCoapSocketListener(this, socket) : null;
+		return socketListener;
     }
 
 

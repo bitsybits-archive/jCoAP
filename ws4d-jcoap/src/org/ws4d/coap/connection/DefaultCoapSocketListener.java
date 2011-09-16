@@ -17,14 +17,16 @@ package org.ws4d.coap.connection;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,7 +36,6 @@ import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelHandler;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
-import org.ws4d.coap.interfaces.CoapServerHandler;
 import org.ws4d.coap.interfaces.CoapSocketListener;
 import org.ws4d.coap.messages.CoapPacketType;
 import org.ws4d.coap.messages.DefaultCoapMessage;
@@ -46,21 +47,24 @@ public class DefaultCoapSocketListener implements CoapSocketListener {
      * @author Nico Laum <nico.laum@uni-rostock.de>
      */
     private static Logger logger = Logger.getLogger(DefaultCoapSocketListener.class.getName());
-    protected DatagramSocket socket;
-    protected CoapReceiveThread receiveThread = null;
-    protected CoapSendThread sendThread = null;
+    protected WorkerThread workerThread = null;
     protected List<CoapChannel> channels = new LinkedList<CoapChannel>();
     private CoapChannelManager channelManager = null;
+    private DatagramChannel dgramChannel = null;
 
     byte[] sendBuffer = new byte[Constants.COAP_MESSAGE_SIZE_MAX];
 
-    public DefaultCoapSocketListener(CoapChannelManager channelManager, DatagramSocket socket) {
+    public DefaultCoapSocketListener(CoapChannelManager channelManager, int port) throws IOException {
         this.channelManager = channelManager;
-        this.socket = socket;
-        receiveThread = new CoapReceiveThread(socket);
-        receiveThread.start();
-        sendThread = new CoapSendThread(socket);
-        sendThread.start();
+        dgramChannel = DatagramChannel.open();
+        dgramChannel.socket().bind(new InetSocketAddress(port));
+        dgramChannel.configureBlocking(false);
+//        ByteBuffer dst = ByteBuffer.allocate(1000);
+//        dgramChannel.receive(dst);
+        
+        
+        workerThread = new WorkerThread();
+        workerThread.start();
         logger.setLevel(Level.ALL);
     }
 
@@ -75,9 +79,8 @@ public class DefaultCoapSocketListener implements CoapSocketListener {
                 CoapMessage.ACK_RST_RETRANS_TIMEOUT_MS);
     }
 
-    protected class CoapReceiveThread extends Thread {
-        DatagramSocket socket;
-        DatagramPacket dgramPacket;
+    protected class WorkerThread extends Thread {
+        Selector selector = null;
         /*
          * contains all global duplicate messageIDs for all ACK and RST Messages
          * second Integer is the timestamp when the messageID expires
@@ -85,302 +88,303 @@ public class DefaultCoapSocketListener implements CoapSocketListener {
         TimeoutHashMap<Integer, Integer> dupRstAck = new TimeoutHashMap<Integer, Integer>(
                 CoapMessage.ACK_RST_RETRANS_TIMEOUT_MS);
 
-        public CoapReceiveThread(DatagramSocket socket) {
-            this.socket = socket;
-            byte[] dgramBuffer = new byte[1500];
-            dgramPacket = new DatagramPacket(dgramBuffer, Constants.COAP_MESSAGE_SIZE_MAX);
+		/* Contains all messages that will be send at a given time */
+		private PriorityBlockingQueue<CoapMessage> sendQueue;
+		/* Contains all received confirmations (ACK and RST) */
+//		private LinkedBlockingQueue<Integer> conQueue;
+		// /* Contains buffered messages which expire after a while (sent ACK
+		// and RST)*/
+		// private PriorityBlockingQueue<CoapMessage> timeoutQueue;
+		
+		/* Contains all sent messages sorted by message ID */
+		private HashMap<Integer, CoapMessage> msgMap = new HashMap<Integer, CoapMessage>();
+		long startTime;
+		static final int POLLING_INTERVALL = 10000;
 
-        }
+		ByteBuffer dgramBuffer;
+//		dgramPacket = new DatagramPacket(dgramBuffer, Constants.COAP_MESSAGE_SIZE_MAX);
 
-        @Override
-        public void run() {
-            logger.log(Level.INFO, "Receive Thread started.");
-            while (!socket.isClosed()) {
-                try {
-                    socket.receive(dgramPacket);
-                    CoapMessage msg = new DefaultCoapMessage(dgramPacket.getData(),
-                            dgramPacket.getLength());
-                    CoapPacketType packetType = msg.getPacketType();
-                    int msgID = msg.getMessageID();
-                    /* TODO drop invalid messages (invalid version, type etc.) */
-                    CoapChannel channel = getChannel(dgramPacket.getAddress(),
-                            dgramPacket.getPort());
-                    if (channel != null) {
-                        /* channel already established */
-                        msg.setChannel(channel);
-                        if ((packetType == CoapPacketType.CON)
-                                || (packetType == CoapPacketType.NON)) {
-                            ChannelBuffers buf = (ChannelBuffers) channel.getHookObject();
-                            Object duplicate = buf.recvdConNon.get(msgID);
-                            if (duplicate == null) {
-                                /* Received CON or NON */
-                                channel.newIncommingMessage(msg);
-                                /* put something in there, use it as HashSet */
-                                buf.recvdConNon.put(msgID, new Integer(1));
-                            } else {
-                                /*
-                                 * duplicate NONs were ignored (dropped)
-                                 * duplicate CONs were dropped but corresponding
-                                 * ACKs and RSTs were retransmitted
-                                 */
-                                if (packetType == CoapPacketType.CON) {
-                                    /* retransmit ACK or RST */
-                                    sendThread.sendMessage(buf.sentAckRst.get(msgID));
-                                    logger.log(Level.INFO,
-                                            "CON duplicate msg (" + msg.getMessageID() + ")");
-                                } else
-                                    logger.log(Level.INFO, "NON duplicate msg");
-                            }
-                        }
+		public WorkerThread() {
+			dgramBuffer = ByteBuffer.allocate(1500);
+		    sendQueue = new PriorityBlockingQueue<CoapMessage>(10,
+		            new Comparator<CoapMessage>() {
+		                public int compare(CoapMessage a, CoapMessage b) {
+		                    if (a.getSendTimestamp() < b.getSendTimestamp()) {
+		                        return -1;
+		                    } else
+		                        return 1;
+		                }
+		            });
+		
+//		    conQueue = new LinkedBlockingQueue<Integer>();
+		    startTime = System.currentTimeMillis();
+		}
 
-                        if ((packetType == CoapPacketType.ACK)
-                                || (packetType == CoapPacketType.RST)) {
-                            if (!dupRstAck.containsKey(msgID)) {
-                                sendThread.confirmMessage(msgID);
-                                /*
-                                 * in case of a RST the listener is responsible
-                                 * for closing the channel
-                                 */
-                                channel.newIncommingMessage(msg);
-                            } else
-                                logger.log(Level.INFO, "ACK or RST duplicate");
-                        }
-                    } else {
-                        /* no channel found */
-                        if ((packetType == CoapPacketType.CON)
-                                || (packetType == CoapPacketType.NON)) {
-                            /*
-                             * no channel found -> ask server for acceptance of
-                             * a new channel
-                             */
-                            /*
-                             * ignore ACKs and RSTs if there is no corresponding
-                             * channel
-                             */
-                                /*
-                                 * TODO: check if the sever wants to create a
-                                 * channel and create a new one
-                                 */
-                            CoapChannel newChannel = channelManager.createServerChannel(DefaultCoapSocketListener.this, dgramPacket.getAddress(), dgramPacket.getPort());
-                            if (newChannel != null) {
-                                newChannel.setHookObject(new ChannelBuffers());
-                                addChannel(newChannel);
-                                ((ChannelBuffers) newChannel.getHookObject()).recvdConNon.put(
-                                        msgID, 1);
-                                logger.log(Level.INFO, "Created new server channel...");
-                                msg.setChannel(newChannel);
-                                newChannel.newIncommingMessage(msg);
-                            } else {
-                            	/* TODO: send a RST */
-                            }
-                        }
-                    }
+		public synchronized void putMessageToSendMessageBuffer(CoapMessage msg) {
+			if (msg != null) {
+				msg.setSendTimestamp(System.currentTimeMillis());
+				sendQueue.add(msg);
+				/* notify sendthread to send message immediately */
+				msgMap.put(msg.getMessageID(), msg);
+				selector.wakeup();
+			}
+		}
+		
+		public synchronized void close() {
+	        if (channels != null)
+	            channels.clear();
+	        try {
+				dgramChannel.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+	        /* TODO: wake up thread and kill it*/
+		}
 
-                } catch (SocketException e) {
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            socket = null;
-        }
-    }
+		@Override
+		public void run() {
+		    logger.log(Level.INFO, "Receive Thread started.");
+		    
+		    try {
+				selector = Selector.open();
+				SelectionKey key = dgramChannel.register(selector, SelectionKey.OP_READ);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			
+			long waitFor = POLLING_INTERVALL;
+			InetSocketAddress addr = null;
+			
+			while (dgramChannel != null) {
+				
+				try {
+					selector.select(waitFor);
+					addr = (InetSocketAddress) dgramChannel.receive(dgramBuffer);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				logger.log(Level.INFO, "wakeup");
 
-    /**
-     * @author Christian Lerche <christian.lerche@uni-rostock.de>
-     * @author Nico Laum <nico.laum@uni-rostock.de>
-     */
-    protected class CoapSendThread extends Thread {
-        /* Contains all messages that will be send at a given time */
-        private PriorityBlockingQueue<CoapMessage> sendQueue;
-        /* Contains all received confirmations (ACK and RST) */
-        private LinkedBlockingQueue<Integer> conQueue;
-        // /* Contains buffered messages which expire after a while (sent ACK
-        // and RST)*/
-        // private PriorityBlockingQueue<CoapMessage> timeoutQueue;
+				/* handle incoming packets */
+				if (addr != null){
+					logger.log(Level.INFO, "handle incomming msg");
+					handleIncommingMessage(dgramBuffer, addr);
+				}
+				
+				/* send messages */
+				waitFor = handleSendMessage();
+			}
+		}
 
-        /* Contains all sent messages sorted by message ID */
-        private HashMap<Integer, CoapMessage> msgMap = new HashMap<Integer, CoapMessage>();
+		private void confirmMessage(int messageID) {
+			CoapMessage msg = msgMap.get(messageID);
+			if (msg != null) {
+				msg.confirmMessage();
+				logger.log(Level.INFO, "Confirm Message with ID " + messageID);
+			}
+		}
 
-        long startTime;
-        static final int MAX_WAIT = 10000;
+		private void handleIncommingMessage(ByteBuffer buffer, InetSocketAddress addr) {
+			CoapMessage msg = new DefaultCoapMessage(buffer.array(), buffer.array().length);
+			CoapPacketType packetType = msg.getPacketType();
+			int msgID = msg.getMessageID();
+			/* TODO drop invalid messages (invalid version, type etc.) */
+			CoapChannel channel = getChannel(addr.getAddress(),	addr.getPort());
+			if (channel != null) {
+				/* channel already established */
+				msg.setChannel(channel);
+				if ((packetType == CoapPacketType.CON)
+						|| (packetType == CoapPacketType.NON)) {
+					ChannelBuffers buf = (ChannelBuffers) channel
+							.getHookObject();
+					Object duplicate = buf.recvdConNon.get(msgID);
+					if (duplicate == null) {
+						/* Received CON or NON */
+						channel.newIncommingMessage(msg);
+						/* put something in there, use it as HashSet */
+						buf.recvdConNon.put(msgID, new Integer(1));
+					} else {
+						/*
+						 * duplicate NONs were ignored (dropped) duplicate CONs
+						 * were dropped but corresponding ACKs and RSTs were
+						 * retransmitted
+						 */
+						if (packetType == CoapPacketType.CON) {
+							/* retransmit ACK or RST */
+							putMessageToSendMessageBuffer(buf.sentAckRst.get(msgID));
+							logger.log(Level.INFO,
+									"CON duplicate msg (" + msg.getMessageID()
+											+ ")");
+						} else
+							logger.log(Level.INFO, "NON duplicate msg");
+					}
+				}
 
-        private DatagramSocket socket = null;
+				if ((packetType == CoapPacketType.ACK)
+						|| (packetType == CoapPacketType.RST)) {
+					if (!dupRstAck.containsKey(msgID)) {
+						confirmMessage(msgID);
+						/*
+						 * in case of a RST the listener is responsible for
+						 * closing the channel
+						 */
+						channel.newIncommingMessage(msg);
+					} else
+						logger.log(Level.INFO, "ACK or RST duplicate");
+				}
+			} else {
+				/* no channel found */
+				if ((packetType == CoapPacketType.CON)
+						|| (packetType == CoapPacketType.NON)) {
+					/*
+					 * no channel found -> ask server for acceptance of a new
+					 * channel
+					 */
+					/*
+					 * ignore ACKs and RSTs if there is no corresponding channel
+					 */
+					/*
+					 * TODO: check if the sever wants to create a channel and
+					 * create a new one
+					 */
+					CoapChannel newChannel = channelManager
+							.createServerChannel(
+									DefaultCoapSocketListener.this,
+									addr.getAddress(),
+									addr.getPort());
+					if (newChannel != null) {
+						newChannel.setHookObject(new ChannelBuffers());
+						addChannel(newChannel);
+						((ChannelBuffers) newChannel.getHookObject()).recvdConNon
+								.put(msgID, 1);
+						logger.log(Level.INFO, "Created new server channel...");
+						msg.setChannel(newChannel);
+						newChannel.newIncommingMessage(msg);
+					} else {
+						/* TODO: send a RST */
+					}
+				}
+			}
+		}
+		
+		private long handleSendMessage() {
+			/*
+			 * send all messages from the queue with an expired timestamp
+			 */
+			long waitFor;
+			while (true) {
+				waitFor = POLLING_INTERVALL; // Maximum Wait
+				CoapMessage msg = sendQueue.peek();
+				if (msg == null){
+					break;
+				}
 
-        public CoapSendThread(DatagramSocket socket) {
-            this.socket = socket;
-            sendQueue = new PriorityBlockingQueue<CoapMessage>(10,
-                    new Comparator<CoapMessage>() {
-                        public int compare(CoapMessage a, CoapMessage b) {
-                            if (a.getSendTimestamp() < b.getSendTimestamp()) {
-                                return -1;
-                            } else
-                                return 1;
-                        }
-                    });
+				waitFor = msg.getSendTimestamp() - System.currentTimeMillis();
+				
+				if (waitFor > 0){
+					/* go to sleep */
+					break;
+				}
 
-            conQueue = new LinkedBlockingQueue<Integer>();
-            startTime = System.currentTimeMillis();
-        }
+				msg = sendQueue.poll();
+				CoapPacketType packetType = msg.getPacketType();
 
-        public synchronized void sendMessage(CoapMessage msg) {
-            if (msg != null) {
-                try {
-                    msg.setSendTimestamp(System.currentTimeMillis());
-                    sendQueue.add(msg);
-                    msgMap.put(msg.getMessageID(), msg);
-                    /* notify sendthread to send message immediately */
-                    synchronized (sendThread) {
-                        sendThread.notify();
-                    }
-                } catch (IllegalStateException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+				if (packetType == CoapPacketType.NON) {
+					sendMsg(msg);
+					continue;
+				}
+				
+				if ((packetType == CoapPacketType.CON) && !msg.isConfirmed()) {
+					/* Retransmit only CON packets */
+					/* Confirmed messages were just dropped */
+					if (retransMsgCheck(msg, sendQueue)) {
+						sendMsg(msg);
+					} else {
+						/*
+						 * Failed to send Packet (MAX RETRANS REACHED)
+						 */
+						msg.getCoapChannel().getCoapChannelHandler()
+								.onLostConnection();
+						logger.log(Level.INFO, "Connection Lost...");
+					}
+					continue;
+				}
+				/* save ACK and RST for possible retransmission */
+				if ((packetType == CoapPacketType.ACK)
+						|| (packetType == CoapPacketType.RST)) {
+					ChannelBuffers buf = (ChannelBuffers) msg.getCoapChannel()
+							.getHookObject();
+					buf.sentAckRst.put(msg.getMessageID(), msg);
+					sendMsg(msg);
+					continue;
+				}
+				logger.log(Level.INFO,
+						"drop confirmend msg with ID " + msg.getMessageID());
+				continue;
 
-        public synchronized void confirmMessage(int messageID) {
-            try {
-                conQueue.add(messageID);
-                sendThread.notify();
-            } catch (IllegalStateException e) {
-                e.printStackTrace();
-            }
-        }
+			};
 
-        @Override
-        public void run() {
-            logger.log(Level.INFO, "Send Thread started.");
-            while (!socket.isClosed()) {
-                try {
-                    /*
-                     * check for received RSTs and ACKs to remove the
-                     * corresponding CONs from the retransmission queue
-                     */
-                    do {
-                        Integer msgID = conQueue.poll();
-                        if (msgID != null) {
-                            CoapMessage msg = msgMap.get(msgID);
-                            if (msg != null) {
-                                msg.confirmMessage();
-                                logger.log(Level.INFO, "Confirm Message with ID " + msgID);
-                            }
-                            continue;
-                        }
-                    } while (false);
+			/*
+			 * This wait() needs to be interrupted by a notify() when something
+			 * in the queues changes
+			 */
+			if (waitFor > POLLING_INTERVALL) {
+				waitFor = POLLING_INTERVALL;
+			}
+			if (waitFor < 0) {
+				logger.log(Level.WARNING, "Wait for is negative");
+				waitFor = POLLING_INTERVALL;
+			}
+			if (waitFor == 0) {
+				logger.log(Level.WARNING, "Wait for is zero");
+				waitFor = POLLING_INTERVALL;
+			}
+			return waitFor;
+		}
 
-                    /*
-                     * send all messages from the queue with an expired
-                     * timestamp
-                     */
-                    long waitFor = MAX_WAIT; // Maximum Wait
-                    do {
-                        CoapMessage msg = sendQueue.peek();
-                        if (msg != null) {
-                            waitFor = msg.getSendTimestamp() - System.currentTimeMillis();
-                            if (waitFor <= 0) {
-                                msg = sendQueue.poll();
-                                CoapPacketType packetType = msg.getPacketType();
+		private void sendMsg(CoapMessage msg) {
+			ByteBuffer buf = ByteBuffer.wrap(msg.serialize());
+		    try {
+		    	dgramChannel.send(buf, new InetSocketAddress(msg.getCoapChannel().getRemoteAddress(), msg.getCoapChannel().getRemotePort()));
+		        logger.log(Level.INFO, "Send Msg with ID: " + msg.getMessageID());
+		    } catch (IOException e) {
+		    	/* TODO: handle error*/
+		    	e.printStackTrace();
+		    }
+		}
 
-                                if (packetType == CoapPacketType.NON) {
-                                    sendMsg(msg);
-                                    continue;
-                                }
-                                if ((packetType == CoapPacketType.CON) && !msg.isConfirmed()) {
-                                    /* Retransmit only CON packets */
-                                    /* Confirmed messages were just dropped */
-                                    if (retransMsgCheck(msg, sendQueue)) {
-                                        sendMsg(msg);
-                                    } else {
-                                        /*
-                                         * Failed to send Packet (MAX RETRANS
-                                         * REACHED)
-                                         */
-                                        msg.getCoapChannel().getCoapChannelHandler()
-                                                .onLostConnection();
-                                        logger.log(Level.INFO, "Connection Lost...");
-                                    }
-                                    continue;
-                                }
-                                /* save ACK and RST for possible retransmission */
-                                if ((packetType == CoapPacketType.ACK)
-                                        || (packetType == CoapPacketType.RST)) {
-                                    ChannelBuffers buf = (ChannelBuffers) msg.getCoapChannel()
-                                            .getHookObject();
-                                    buf.sentAckRst.put(msg.getMessageID(), msg);
-                                    sendMsg(msg);
-                                    continue;
-                                }
-                                logger.log(Level.INFO,
-                                        "drop confirmend msg with ID " + msg.getMessageID());
-                                continue;
-                            }
-                        }
-                    } while (false);
+		private boolean retransMsgCheck(CoapMessage msg, PriorityBlockingQueue<CoapMessage> msgQueue) {
+		    if (msg.getHeader().getType() == CoapPacketType.CON) {
+		        try {
+		            if (msg.maxRetransReached()) {
+		                /* Connection Failed */
+		                return false;
+		            }
+		            msg.incRetransCounterAndTimeout();
+		            msg.setSendTimestamp(System.currentTimeMillis() + msg.getTimeout());
+		            msgQueue.add(msg);
+		        } catch (IllegalStateException e) {
+		            e.printStackTrace();
+		        }
+		    }
+		    /* nothing happened, the msg is dropped from the queue */
+		    return true;
+		}
 
-                    /*
-                     * This wait() needs to be interrupted by a notify() when
-                     * something in the queues changes
-                     */
-                    synchronized (sendThread) {
-                        if (waitFor > MAX_WAIT) {
-                            waitFor = MAX_WAIT;
-                        }
-                        if (waitFor < 0) {
-                            logger.log(Level.WARNING, "Wait for is negative");
-                        } else if (waitFor > 0) {
-                            /* wait(0) means infinite */
-                            sendThread.wait(waitFor);
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            socket = null;
-        }
+		private synchronized CoapChannel getChannel(InetAddress addr, int port) {
+			for (CoapChannel channel : channels) {
+				if (channel.getRemoteAddress().equals(addr)
+						&& channel.getRemotePort() == port) {
+					/* Found the corresponding channel */
+					return channel;
+				}
+			}
+			return null;
+		}
+	}
 
-        private void sendMsg(CoapMessage msg) {
-            DatagramPacket packet = new DatagramPacket(sendBuffer, sendBuffer.length, msg
-                    .getCoapChannel().getRemoteAddress(), msg.getCoapChannel().getRemotePort());
-            packet.setData(msg.serialize());
-            try {
-                socket.send(packet);
-                logger.log(Level.INFO, "Send Msg with ID: " + msg.getMessageID());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        private boolean retransMsgCheck(CoapMessage msg, PriorityBlockingQueue<CoapMessage> msgQueue) {
-            if (msg.getHeader().getType() == CoapPacketType.CON) {
-                try {
-                    if (msg.maxRetransReached()) {
-                        /* Connection Failed */
-                        return false;
-                    }
-                    msg.incRetransCounterAndTimeout();
-                    msg.setSendTimestamp(System.currentTimeMillis() + msg.getTimeout());
-                    msgQueue.add(msg);
-                } catch (IllegalStateException e) {
-                    e.printStackTrace();
-                }
-            }
-            /* nothing happened, the msg is dropped from the queue */
-            return true;
-        }
-    }
-
-    private synchronized CoapChannel getChannel(InetAddress addr, int port) {
-        for (CoapChannel channel : channels) {
-            if (channel.getRemoteAddress().equals(addr) && channel.getRemotePort() == port) {
-                /* Found the corresponding channel */
-                return channel;
-            }
-        }
-        return null;
-    }
-
-    private synchronized void addChannel(CoapChannel channel) {
+	private synchronized void addChannel(CoapChannel channel) {
         channels.add(channel);
     }
 
@@ -390,12 +394,8 @@ public class DefaultCoapSocketListener implements CoapSocketListener {
     }
 
     @Override
-    public synchronized void close() {
-        if (channels != null)
-            channels.clear();
-        if (socket != null)
-            socket.close(); // will throw SocketException in ReceiverThread
-        socket = null;
+    public void close() {
+    	workerThread.close();
     }
 
     // @Override
@@ -412,8 +412,8 @@ public class DefaultCoapSocketListener implements CoapSocketListener {
      */
     @Override
     public void sendMessage(CoapMessage message) {
-        if (sendThread != null) {
-            sendThread.sendMessage(message);
+        if (workerThread != null) {
+            workerThread.putMessageToSendMessageBuffer(message);
         }
     }
 
