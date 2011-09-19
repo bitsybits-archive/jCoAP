@@ -16,7 +16,6 @@
 package org.ws4d.coap.connection;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -147,7 +146,7 @@ public class DefaultCoapSocketListener implements CoapSocketListener {
 		    
 		    try {
 				selector = Selector.open();
-				SelectionKey key = dgramChannel.register(selector, SelectionKey.OP_READ);
+				dgramChannel.register(selector, SelectionKey.OP_READ);
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
@@ -159,12 +158,12 @@ public class DefaultCoapSocketListener implements CoapSocketListener {
 				
 				try {
 					selector.select(waitFor);
+					dgramBuffer.clear();
 					addr = (InetSocketAddress) dgramChannel.receive(dgramBuffer);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				logger.log(Level.INFO, "wakeup");
 
 				/* handle incoming packets */
 				if (addr != null){
