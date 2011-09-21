@@ -1,11 +1,15 @@
 package org.ws4d.coap.tools;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
-public class TimeoutHashMap<K, V> {
-	/* The RetransmissionObject itselfs provides the hashkey */
-	HashMap<K, TimoutType<V>> hashmap = new HashMap<K, TimoutType<V>>();
-	
+public class TimeoutHashMap<K, V> extends HashMap<Object, Object>{
+
+	private static final long serialVersionUID = 4987370276778256858L;
+
 	/* chronological list to remove expired elements when update() is called */ 
 	LinkedList<TimoutType<K>> timeoutQueue = new LinkedList<TimoutType<K>>();
 	
@@ -16,36 +20,43 @@ public class TimeoutHashMap<K, V> {
 		this.timeout = timeout;
 	}
 	
-	public V put(K key, V value){
+	@Override
+	public Object put(Object key, Object value) {
 		long expires = System.currentTimeMillis() + timeout;
-		TimoutType<V> timeoutValue = new TimoutType<V>(value, expires);
-		TimoutType<K> timeoutKey = new TimoutType<K>(key, expires);
+		TimoutType<V> timeoutValue = new TimoutType<V>((V) value, expires);
+		TimoutType<K> timeoutKey = new TimoutType<K>((K) key, expires);
 		timeoutQueue.add(timeoutKey);
-		timeoutValue = hashmap.put(key, timeoutValue);
+		timeoutValue = (TimoutType<V>) super.put((K) key, timeoutValue);
 		if (timeoutValue != null){
 			return timeoutValue.object;
 		}
 		return null;
 	}
-	
+
+
+
+
+	@Override
 	public Object get(Object key) {
-		TimoutType<V> timeoutValue = hashmap.get(key);	
+		TimoutType<V> timeoutValue = (TimoutType<V>) super.get(key);	
 		if (timeoutValueIsValid(timeoutValue)){
 			return timeoutValue.object;
 		} 
 		return null;
 	}	
 	
+	@Override
 	public Object remove(Object key) {
-		TimoutType<V> timeoutValue = hashmap.remove(key);
+		TimoutType<V> timeoutValue = (TimoutType<V>) super.remove(key);
 		if (timeoutValueIsValid(timeoutValue)){
 			return timeoutValue.object;
 		} 		
 		return null;
 	}
 	
+	@Override
 	public void clear() {
-		hashmap.clear();
+		super.clear();
 		timeoutQueue.clear();
 	}
 	
@@ -56,7 +67,7 @@ public class TimeoutHashMap<K, V> {
         	if (timeoutKey == null){
         		/* if the timeoutKey queue is empty, there must be no more elements in the hashmap 
         		 * otherwise there is a bug in the implementation */
-        		if (!hashmap.isEmpty()){
+        		if (!super.isEmpty()){
         			throw new IllegalStateException("Error in TimeoutHashMap. Timeout queue is empty but hashmap not!");
         		}
         		return;
@@ -65,7 +76,7 @@ public class TimeoutHashMap<K, V> {
         	long now = System.currentTimeMillis();
         	if (now > timeoutKey.expires){
         		timeoutQueue.poll();
-        		TimoutType<V> timeoutValue = hashmap.remove(timeoutKey.object);
+        		TimoutType<V> timeoutValue = (TimoutType<V>) super.remove(timeoutKey.object);
 
         		if (timeoutValueIsValid(timeoutValue)){
         			/* This is a very special case which happens if an entry is overridden:
@@ -74,7 +85,7 @@ public class TimeoutHashMap<K, V> {
         			 * - K is expired but V2 not 
         			 * because this is expected to be happened very seldom, we "reput" V2 to the hashmap 
         			 * wich is better than every time to making a get and than a remove */
-        			hashmap.put(timeoutKey.object, timeoutValue);
+        			super.put(timeoutKey.object, timeoutValue);
         		}
         	} else {
         		/* Key is not expired -> break the loop */
@@ -83,38 +94,75 @@ public class TimeoutHashMap<K, V> {
         }
 	}
 	
+	@Override
+	public Object clone() {
+		// TODO implement function
+		throw new IllegalStateException(); 
+//		return super.clone();
+	}
+
+	@Override
+	public boolean containsKey(Object arg0) {
+		// TODO implement function
+		throw new IllegalStateException(); 
+//		return super.containsKey(arg0);
+	}
+
+	@Override
+	public boolean containsValue(Object arg0) {
+		// TODO implement function
+		throw new IllegalStateException(); 
+//		return super.containsValue(arg0);
+	}
+
+	@Override
+	public Set<Entry<Object, Object>> entrySet() {
+		// TODO implement function
+		throw new IllegalStateException(); 
+//		return super.entrySet();
+	}
+
+	@Override
+	public boolean isEmpty() {
+		// TODO implement function
+		throw new IllegalStateException(); 
+//		return super.isEmpty();
+	}
+
+	@Override
+	public Set<Object> keySet() {
+		// TODO implement function
+		throw new IllegalStateException(); 
+//		return super.keySet();
+	}
+
+	@Override
+	public void putAll(Map<? extends Object, ? extends Object> arg0) {
+		// TODO implement function
+		throw new IllegalStateException(); 
+//		super.putAll(arg0);
+	}
+
+	@Override
+	public int size() {
+		// TODO implement function
+		throw new IllegalStateException(); 
+//		return super.size();
+	}
+
+	@Override
+	public Collection<Object> values() {
+		// TODO implement function
+		throw new IllegalStateException(); 
+//		return super.values();
+	}
+
+	
+	/* private classes and methods */
+	
 	private boolean timeoutValueIsValid(TimoutType<V> timeoutValue){
 		return timeoutValue != null && System.currentTimeMillis() < timeoutValue.expires;		
 	}
-	
-	
-	
-	
-	/* TODO: implement these sekeletons */
-//	public Object remove(Object key) {
-//		return null;
-//	}
-//	public boolean containsKey(Object key) {
-//		return false;
-//	}
-//	public boolean containsValue(Object value){
-//		return false;
-//	}
-//	public boolean isEmpty() {
-//		this.update();
-//		return hashtable.isEmpty();
-//	}
-//	public Object clone(){
-//		
-//	}
-
-	@Override
-	public String toString() {
-		return hashmap.toString();
-	}
-
-
-
 
 	private class TimoutType<T>{
 		public T object;
