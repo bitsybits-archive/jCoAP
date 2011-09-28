@@ -1,6 +1,6 @@
 
 package org.ws4d.coap.interfaces;
 
-public interface CoapServerHandler extends CoapChannelHandler {
+public interface CoapServerListener extends CoapChannelListener {
     public boolean onAccept(CoapChannel newChannel);
 }

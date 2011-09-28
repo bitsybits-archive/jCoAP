@@ -16,24 +16,23 @@
 package org.ws4d.coap.connection;
 
 import java.io.IOException;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Random;
 
 import org.ws4d.coap.Constants;
 import org.ws4d.coap.interfaces.CoapChannel;
+import org.ws4d.coap.interfaces.CoapChannelListener;
 import org.ws4d.coap.interfaces.CoapChannelManager;
-import org.ws4d.coap.interfaces.CoapServerHandler;
-import org.ws4d.coap.interfaces.CoapSocketListener;
+import org.ws4d.coap.interfaces.CoapServerListener;
+import org.ws4d.coap.interfaces.CoapSocketHandler;
 
 public class DefaultCoapChannelManager implements CoapChannelManager {
     // global message id
     private int globalMessageId;
     private static DefaultCoapChannelManager instance;
-    private HashMap<Integer, DefaultCoapSocketListener> socketListenerMap = new HashMap<Integer, DefaultCoapSocketListener>();
-    CoapServerHandler serverHandler = null;
+    private HashMap<Integer, SocketInformation> socketMap = new HashMap<Integer, SocketInformation>();
+    CoapServerListener serverListener = null;
 
     private DefaultCoapChannelManager() {
         reset();
@@ -45,22 +44,22 @@ public class DefaultCoapChannelManager implements CoapChannelManager {
         }
         return instance;
     }
-    
-	@Override
-	public void setCoapServerHandler(CoapServerHandler serverHandler) {
-		// TODO Auto-generated method stub
-		this.serverHandler = serverHandler;
-		
-	}
-    
+  
     /**
      * Creates a new server channel
      */
     @Override
-    public synchronized CoapChannel createServerChannel(CoapSocketListener socketListener, InetAddress addr, int port){
-    	CoapChannel newChannel= new DefaultCoapChannel( socketListener, null, addr, port);
+    public synchronized CoapChannel createServerChannel(CoapSocketHandler socketHandler, InetAddress addr, int port){
+    	SocketInformation socketInfo = socketMap.get(socketHandler.getLocalPort());
     	
-    	if (!serverHandler.onAccept(newChannel)){
+    	if (socketInfo.serverListener == null) {
+			/* this is not a server socket */
+    		return null;
+		}
+
+    	CoapChannel newChannel= new DefaultCoapChannel( socketHandler, null, addr, port);
+    	
+    	if (!socketInfo.serverListener.onAccept(newChannel)){
     		/* Server rejected channel */
     		return null;
     	}
@@ -87,21 +86,45 @@ public class DefaultCoapChannelManager implements CoapChannelManager {
         globalMessageId = random.nextInt(Constants.MESSAGE_ID_MAX + 1);
     }
 
+   
     @Override
-    public CoapSocketListener createSocketListener(int localPort) {
-    	DefaultCoapSocketListener socketListener = null;
-        if (!socketListenerMap.containsKey(localPort)) {
+    public void createServerListener(CoapServerListener serverListener, int localPort) {
+        if (!socketMap.containsKey(localPort)) {
             try {
-            	socketListener = new DefaultCoapSocketListener(this, localPort);
-            	socketListenerMap.put(localPort, socketListener);
+            	SocketInformation socketInfo = new SocketInformation(new DefaultCoapSocketHandler(this, localPort), serverListener);
+            	socketMap.put(localPort, socketInfo);
             } catch (IOException e) {
 				e.printStackTrace();
 			}
         } else {
-        	socketListener = socketListenerMap.get(localPort);
+        	/*TODO: raise exception: address already in use */
+        	throw new IllegalStateException();
         }
-		return socketListener;
     }
 
+    @Override
+	public CoapChannel connect(CoapChannelListener channelListener, InetAddress addr, int port) {
+    	CoapSocketHandler socketHandler = null;
+		try {
+			socketHandler = new DefaultCoapSocketHandler(this);
+			SocketInformation sockInfo = new SocketInformation(socketHandler, null); 
+			socketMap.put(socketHandler.getLocalPort(), sockInfo);
+			return socketHandler.connect(channelListener, addr, port);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
 
+	private class SocketInformation {
+		public CoapSocketHandler socketHandler = null;
+		public CoapServerListener serverListener = null;
+		public SocketInformation(CoapSocketHandler socketHandler,
+				CoapServerListener serverListener) {
+			super();
+			this.socketHandler = socketHandler;
+			this.serverListener = serverListener;
+		}
+	}
 }

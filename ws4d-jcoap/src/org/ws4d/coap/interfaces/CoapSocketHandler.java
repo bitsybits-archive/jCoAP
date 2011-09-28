@@ -17,7 +17,7 @@ package org.ws4d.coap.interfaces;
 
 import java.net.InetAddress;
 
-public interface CoapSocketListener {
+public interface CoapSocketHandler {
     // public void registerResponseListener(CoapResponseListener
     // responseListener);
     // public void unregisterResponseListener(CoapResponseListener
@@ -29,7 +29,7 @@ public interface CoapSocketListener {
     //
     // public boolean isOpen();
     /* TODO */
-    public CoapChannel connect(CoapChannelHandler channelListener, InetAddress remoteAddress,
+    public CoapChannel connect(CoapChannelListener channelListener, InetAddress remoteAddress,
             int remotePort);
 
     public void close();
@@ -39,4 +39,6 @@ public interface CoapSocketListener {
     public void sendMessage(CoapMessage msg);
 
     public CoapChannelManager getChannelManager();
+
+	int getLocalPort();
 }

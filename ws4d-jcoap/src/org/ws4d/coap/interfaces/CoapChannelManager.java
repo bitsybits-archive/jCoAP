@@ -19,17 +19,18 @@ import java.net.InetAddress;
 
 
 public interface CoapChannelManager {
-    
-    // public CoapClientChannel getClientChannel(String remoteHost, int
-    // remotePort);
-    // public CoapServerChannel getServerChannel(int port);
-    public CoapSocketListener createSocketListener(int localPort);
-
     public int getNewMessageID();
 
-    public void reset();
-    
-	public CoapChannel createServerChannel(CoapSocketListener socketListener, InetAddress addr, int port);
+    /* called by the socket Listener to create a new Server Channel
+     * the Channel Manager than asked the Server Listener if he wants to accept a new connection */
+	public CoapChannel createServerChannel(CoapSocketHandler socketHandler, InetAddress addr, int port);
 
-    public void setCoapServerHandler(CoapServerHandler serverListener);
+	/* creates a server socket listener for incoming connections */
+    public void createServerListener(CoapServerListener serverListener, int localPort);
+
+    /* called by a client to create a connection
+     * TODO: allow client to bind to a special port */
+    public CoapChannel connect(CoapChannelListener channelListener, InetAddress addr, int port);
+    
+    public void reset();
 }

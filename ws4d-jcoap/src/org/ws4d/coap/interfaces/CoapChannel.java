@@ -15,14 +15,14 @@ public interface CoapChannel {
 
     public int getRemotePort();
 
-    public CoapChannelHandler getCoapChannelHandler();
+    public CoapChannelListener getCoapChannelHandler();
 
-    /* these hooks can be used by SocketListener implementations */
+    /* these hooks can be used by SocketHandler implementations */
     public void setHookObject(Object o);
 
     public Object getHookObject();
 
-    public void setCoapChannelHandler(CoapChannelHandler handler);
+    public void setCoapChannelHandler(CoapChannelListener handler);
 
     public CoapMessage createRequest(boolean reliable, CoapMessageCode.MessageCode messageCode);
 

@@ -4,26 +4,26 @@ package org.ws4d.coap.connection;
 import java.net.InetAddress;
 
 import org.ws4d.coap.interfaces.CoapChannel;
-import org.ws4d.coap.interfaces.CoapChannelHandler;
+import org.ws4d.coap.interfaces.CoapChannelListener;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
-import org.ws4d.coap.interfaces.CoapSocketListener;
+import org.ws4d.coap.interfaces.CoapSocketHandler;
 import org.ws4d.coap.messages.CoapMessageCode;
 import org.ws4d.coap.messages.CoapPacketType;
 import org.ws4d.coap.messages.DefaultCoapMessage;
 
 public class DefaultCoapChannel implements CoapChannel {
-    private CoapSocketListener socketListener = null;
-    private CoapChannelHandler listener = null;
+    private CoapSocketHandler socketHandler = null;
+    private CoapChannelListener listener = null;
     private CoapChannelManager channelManager = null;
     private InetAddress remoteAddress;
     private int remotePort;
     private Object hook = null;
 
-    public DefaultCoapChannel(CoapSocketListener socketListener, CoapChannelHandler listener,
+    public DefaultCoapChannel(CoapSocketHandler socketHandler, CoapChannelListener listener,
             InetAddress remoteAddress, int remotePort) {
-        this.socketListener = socketListener;
-        channelManager = socketListener.getChannelManager();
+        this.socketHandler = socketHandler;
+        channelManager = socketHandler.getChannelManager();
         this.remoteAddress = remoteAddress;
         this.remotePort = remotePort;
         this.listener = listener;
@@ -31,13 +31,13 @@ public class DefaultCoapChannel implements CoapChannel {
 
     @Override
     public void close() {
-        socketListener.removeChannel(this);
+        socketHandler.removeChannel(this);
     }
 
     @Override
     public void sendMessage(CoapMessage msg) {
         msg.setChannel(this);
-        socketListener.sendMessage(msg);
+        socketHandler.sendMessage(msg);
     }
 
     @Override
@@ -51,7 +51,7 @@ public class DefaultCoapChannel implements CoapChannel {
     }
 
     @Override
-    public CoapChannelHandler getCoapChannelHandler() {
+    public CoapChannelListener getCoapChannelHandler() {
         return listener;
     }
 
@@ -66,7 +66,7 @@ public class DefaultCoapChannel implements CoapChannel {
     }
 
     @Override
-    public void setCoapChannelHandler(CoapChannelHandler listener) {
+    public void setCoapChannelHandler(CoapChannelListener listener) {
         this.listener = listener;
 
     }
@@ -101,8 +101,7 @@ public class DefaultCoapChannel implements CoapChannel {
 
 	@Override
 	public void newIncommingMessage(CoapMessage message) {
-		CoapMessage response = getCoapChannelHandler().onReceivedMessage(message);
-		socketListener.sendMessage(response);
+		getCoapChannelHandler().onReceivedMessage(message);
 	}
 
 }
