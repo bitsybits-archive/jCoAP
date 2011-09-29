@@ -20,9 +20,9 @@ package org.ws4d.coap.messages;
  * 
  * @author Nico Laum <nico.laum@uni-rostock.de>
  * @author Sebastian Unger <sebastian.unger@uni-rostock.de>
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 public enum CoapPacketType {
-    /* TODO: make them shorter? CON,NON,ACK,RST, UKN */
     CON(0x00),
     NON(0x01),
     ACK(0x02),

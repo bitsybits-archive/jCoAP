@@ -22,15 +22,15 @@ import java.net.UnknownHostException;
 
 import org.ws4d.coap.connection.DefaultCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannel;
-import org.ws4d.coap.interfaces.CoapChannelHandler;
+import org.ws4d.coap.interfaces.CoapChannelListener;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
-import org.ws4d.coap.interfaces.CoapSocketListener;
+import org.ws4d.coap.interfaces.CoapSocketHandler;
 import org.ws4d.coap.messages.CoapHeaderOption;
 import org.ws4d.coap.messages.CoapHeaderOptions.HeaderOptionNumber;
 import org.ws4d.coap.messages.CoapMessageCode.MessageCode;
 
-public class TestClient implements CoapChannelHandler {
+public class TestClient implements CoapChannelListener {
 
     // private static final String UNICAST_HOST = "[aaaa::212:7400:117b:6dd4]";
     private static final String UNICAST_HOST = "localhost";
@@ -60,10 +60,10 @@ public class TestClient implements CoapChannelHandler {
         }
 
         CoapChannelManager connectionManager = DefaultCoapChannelManager.getInstance();
-        CoapSocketListener socketListener = connectionManager.createSocketListener(LOCAL_PORT);
+        CoapSocketHandler socketHandler = connectionManager.createSocketHandler(LOCAL_PORT);
 
         /* To be a Server and accept channels */
-        CoapChannel channel = socketListener.connect(this, InetAddress.getByName(uri.getHost()),
+        CoapChannel channel = socketHandler.connect(this, InetAddress.getByName(uri.getHost()),
                 uri.getPort());
         channel.setCoapChannelHandler(this);
 

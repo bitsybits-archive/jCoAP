@@ -17,13 +17,13 @@ package org.ws4d.coap.testserver;
 
 import org.ws4d.coap.connection.DefaultCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannel;
-import org.ws4d.coap.interfaces.CoapChannelHandler;
+import org.ws4d.coap.interfaces.CoapChannelListener;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
-import org.ws4d.coap.interfaces.CoapServerHandler;
+import org.ws4d.coap.interfaces.CoapServerListener;
 import org.ws4d.coap.messages.CoapMessageCode.MessageCode;
 
-public class BasicCoapServer implements CoapServerHandler, CoapChannelHandler {
+public class BasicCoapServer implements CoapServerListener, CoapChannelListener {
     private static final int PORT = 61616;
     static int counter = 0;
 
@@ -32,8 +32,7 @@ public class BasicCoapServer implements CoapServerHandler, CoapChannelHandler {
         BasicCoapServer server = new BasicCoapServer();
 
         CoapChannelManager channelManager = DefaultCoapChannelManager.getInstance();
-        channelManager.createSocketListener(PORT);
-        channelManager.setCoapServerHandler(server);
+        channelManager.createServerListener(server, PORT);
     }
 
     @Override
@@ -49,11 +48,11 @@ public class BasicCoapServer implements CoapServerHandler, CoapChannelHandler {
     }
 
     @Override
-    public CoapMessage onReceivedMessage(CoapMessage msg) {
+    public void onReceivedMessage(CoapMessage msg) {
         System.out.println("Received message: " + msg.getHeader().toStringShort());
         CoapChannel channel = msg.getCoapChannel();
         CoapMessage response = channel.createResponse(msg,
                 MessageCode.Bad_Request_400);
-        return response;
+        channel.sendMessage(response);
     }
 }

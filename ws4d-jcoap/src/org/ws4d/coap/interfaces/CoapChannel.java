@@ -17,11 +17,6 @@ public interface CoapChannel {
 
     public CoapChannelListener getCoapChannelHandler();
 
-    /* these hooks can be used by SocketHandler implementations */
-    public void setHookObject(Object o);
-
-    public Object getHookObject();
-
     public void setCoapChannelHandler(CoapChannelListener handler);
 
     public CoapMessage createRequest(boolean reliable, CoapMessageCode.MessageCode messageCode);

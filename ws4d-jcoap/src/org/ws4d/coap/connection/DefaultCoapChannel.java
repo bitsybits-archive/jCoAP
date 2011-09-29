@@ -18,7 +18,6 @@ public class DefaultCoapChannel implements CoapChannel {
     private CoapChannelManager channelManager = null;
     private InetAddress remoteAddress;
     private int remotePort;
-    private Object hook = null;
 
     public DefaultCoapChannel(CoapSocketHandler socketHandler, CoapChannelListener listener,
             InetAddress remoteAddress, int remotePort) {
@@ -53,16 +52,6 @@ public class DefaultCoapChannel implements CoapChannel {
     @Override
     public CoapChannelListener getCoapChannelHandler() {
         return listener;
-    }
-
-    @Override
-    public void setHookObject(Object o) {
-        hook = o;
-    }
-
-    @Override
-    public Object getHookObject() {
-        return hook;
     }
 
     @Override

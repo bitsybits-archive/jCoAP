@@ -168,7 +168,7 @@ public class CoapHeader {
                 header_array[i + 4] = optionsArray[i];
         }
 
-        /* Voila�! */
+        /* Voila! */
         return header_array;
     }
 
