@@ -15,10 +15,6 @@ public interface CoapChannel {
 
     public int getRemotePort();
 
-    public CoapChannelListener getCoapChannelHandler();
-
-    public void setCoapChannelHandler(CoapChannelListener handler);
-
     public CoapMessage createRequest(boolean reliable, CoapMessageCode.MessageCode messageCode);
 
     public CoapMessage createResponse(CoapMessage request, CoapMessageCode.MessageCode messageCode);

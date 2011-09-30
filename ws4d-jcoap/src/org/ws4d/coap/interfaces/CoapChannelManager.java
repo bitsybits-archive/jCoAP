@@ -23,14 +23,14 @@ public interface CoapChannelManager {
 
     /* called by the socket Listener to create a new Server Channel
      * the Channel Manager than asked the Server Listener if he wants to accept a new connection */
-	public CoapChannel createServerChannel(CoapSocketHandler socketHandler, InetAddress addr, int port);
+	public CoapChannel createServerChannel(CoapSocketHandler socketHandler, CoapMessage request, InetAddress addr, int port);
 
 	/* creates a server socket listener for incoming connections */
-    public void createServerListener(CoapServerListener serverListener, int localPort);
+    public void createServerListener(CoapServer serverListener, int localPort);
 
     /* called by a client to create a connection
      * TODO: allow client to bind to a special port */
-    public CoapChannel connect(CoapChannelListener channelListener, InetAddress addr, int port);
+    public CoapChannel connect(CoapClient client, InetAddress addr, int port);
     
     public void reset();
 }

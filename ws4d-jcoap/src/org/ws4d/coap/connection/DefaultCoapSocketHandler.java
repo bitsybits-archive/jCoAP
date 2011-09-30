@@ -30,10 +30,10 @@ import java.util.logging.Logger;
 
 import org.ws4d.coap.Constants;
 import org.ws4d.coap.interfaces.CoapChannel;
-import org.ws4d.coap.interfaces.CoapChannelListener;
 import org.ws4d.coap.interfaces.CoapChannelManager;
+import org.ws4d.coap.interfaces.CoapClient;
+import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
-import org.ws4d.coap.interfaces.CoapServerListener;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
 import org.ws4d.coap.messages.CoapPacketType;
 import org.ws4d.coap.messages.DefaultCoapMessage;
@@ -195,7 +195,7 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 			if (channel == null){
 				if ((packetType == CoapPacketType.CON)|| (packetType == CoapPacketType.NON)) {
 					/* CON or NON create a new channel or reset connection */
-					channel = channelManager.createServerChannel(DefaultCoapSocketHandler.this, addr.getAddress(), addr.getPort());
+					channel = channelManager.createServerChannel(DefaultCoapSocketHandler.this, msg ,addr.getAddress(), addr.getPort());
 					if (channel == null){
 						logger.log(Level.INFO, "Reset connection...");
 						if (packetType == CoapPacketType.CON) {
@@ -408,6 +408,7 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 	private void addChannel(CoapChannel channel) {
         channels.put(new ChannelKey(channel.getRemoteAddress(), channel.getRemotePort()), channel);
     }
+	
 
 	@Override
     public int getLocalPort() {
@@ -467,14 +468,20 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
     // }
 
     @Override
-    public CoapChannel connect(CoapChannelListener channelListener, InetAddress remoteAddress,
+    public CoapClientChannel connect(CoapClient client, InetAddress remoteAddress,
             int remotePort) {
-    	if (channelListener == null){
+    	if (client == null){
+    		return null;
+    	}
+
+    	if (channels.containsKey(new ChannelKey(remoteAddress, remotePort))){
+    		/* channel already exists */
     		return null;
     	}
     	
-        CoapChannel channel = new DefaultCoapChannel(this, channelListener, remoteAddress,
+    	CoapClientChannel channel = new DefaultCoapClientChannel(this, client, remoteAddress,
                 remotePort);
+    	
         addChannel(channel);
         return channel;
     }

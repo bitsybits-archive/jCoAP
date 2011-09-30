@@ -20,10 +20,10 @@ import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelListener;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
-import org.ws4d.coap.interfaces.CoapServerListener;
+import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.messages.CoapMessageCode.MessageCode;
 
-public class BasicCoapServer implements CoapServerListener, CoapChannelListener {
+public class BasicCoapServer implements CoapServer {
     private static final int PORT = 61616;
     static int counter = 0;
 
@@ -36,23 +36,19 @@ public class BasicCoapServer implements CoapServerListener, CoapChannelListener 
     }
 
     @Override
-    public void onLostConnection() {
-        System.out.println("Connection lost...");
-    }
-
-    @Override
-    public boolean onAccept(CoapChannel newChannel) {
+    public CoapServer onAccept(CoapMessage request) {
         System.out.println("Accept connection...");
-        newChannel.setCoapChannelHandler(this);
-        return true;
+        return this;
     }
 
-    @Override
-    public void onReceivedMessage(CoapMessage msg) {
-        System.out.println("Received message: " + msg.getHeader().toStringShort());
-        CoapChannel channel = msg.getCoapChannel();
-        CoapMessage response = channel.createResponse(msg,
-                MessageCode.Bad_Request_400);
-        channel.sendMessage(response);
-    }
+	@Override
+	public void handleRequest(CoapChannel channel, CoapMessage request) {
+		System.out.println("Received message: " + request.getHeader().toStringShort());
+
+		CoapMessage response = channel.createResponse(request,
+				MessageCode.Bad_Request_400);
+		channel.sendMessage(response);
+		// TODO Auto-generated method stub
+		
+	}
 }

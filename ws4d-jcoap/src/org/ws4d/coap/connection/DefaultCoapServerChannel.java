@@ -15,7 +15,27 @@
 
 package org.ws4d.coap.connection;
 
-public class DefaultCoapServerChannel {
+import java.net.InetAddress;
+
+import org.ws4d.coap.interfaces.CoapMessage;
+import org.ws4d.coap.interfaces.CoapServer;
+import org.ws4d.coap.interfaces.CoapServerChannel;
+import org.ws4d.coap.interfaces.CoapSocketHandler;
+
+public class DefaultCoapServerChannel extends DefaultCoapChannel implements CoapServerChannel{
+	CoapServer server = null;
+	public DefaultCoapServerChannel(CoapSocketHandler socketHandler,
+			CoapServer server, InetAddress remoteAddress,
+			int remotePort) {
+		super(socketHandler, remoteAddress, remotePort);
+		this.server = server;
+	}
+	
+	
+	@Override
+	public void newIncommingMessage(CoapMessage message) {
+		server.handleRequest(message.getCoapChannel(), message);
+	}
 
     // public DefaultCoapServerChannel(CoapChannelManager channelManager) {
     // super(channelManager);

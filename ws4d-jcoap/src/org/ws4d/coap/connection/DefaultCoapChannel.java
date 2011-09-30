@@ -2,7 +2,6 @@
 package org.ws4d.coap.connection;
 
 import java.net.InetAddress;
-
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelListener;
 import org.ws4d.coap.interfaces.CoapChannelManager;
@@ -12,20 +11,17 @@ import org.ws4d.coap.messages.CoapMessageCode;
 import org.ws4d.coap.messages.CoapPacketType;
 import org.ws4d.coap.messages.DefaultCoapMessage;
 
-public class DefaultCoapChannel implements CoapChannel {
+public abstract class DefaultCoapChannel implements CoapChannel {
     private CoapSocketHandler socketHandler = null;
-    private CoapChannelListener listener = null;
     private CoapChannelManager channelManager = null;
     private InetAddress remoteAddress;
     private int remotePort;
 
-    public DefaultCoapChannel(CoapSocketHandler socketHandler, CoapChannelListener listener,
-            InetAddress remoteAddress, int remotePort) {
+    public DefaultCoapChannel(CoapSocketHandler socketHandler, InetAddress remoteAddress, int remotePort) {
         this.socketHandler = socketHandler;
         channelManager = socketHandler.getChannelManager();
         this.remoteAddress = remoteAddress;
         this.remotePort = remotePort;
-        this.listener = listener;
     }
 
     @Override
@@ -47,17 +43,6 @@ public class DefaultCoapChannel implements CoapChannel {
     @Override
     public int getRemotePort() {
         return remotePort;
-    }
-
-    @Override
-    public CoapChannelListener getCoapChannelHandler() {
-        return listener;
-    }
-
-    @Override
-    public void setCoapChannelHandler(CoapChannelListener listener) {
-        this.listener = listener;
-
     }
 
     @Override
@@ -87,10 +72,4 @@ public class DefaultCoapChannel implements CoapChannel {
 
         return null;
     }
-
-	@Override
-	public void newIncommingMessage(CoapMessage message) {
-		getCoapChannelHandler().onReceivedMessage(message);
-	}
-
 }
