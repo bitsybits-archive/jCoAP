@@ -68,6 +68,7 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
         
         workerThread = new WorkerThread();
         workerThread.start();
+        
         logger.setLevel(Level.ALL);
     }
     
@@ -98,6 +99,12 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 		public WorkerThread() {
 			dgramBuffer = ByteBuffer.allocate(1500);
 		    startTime = System.currentTimeMillis();
+		    try {
+				selector = Selector.open();
+				dgramChannel.register(selector, SelectionKey.OP_READ);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 		}
 
 		public void close() {
@@ -114,32 +121,23 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 		@Override
 		public void run() {
 		    logger.log(Level.INFO, "Receive Thread started.");
-		    
-		    try {
-				selector = Selector.open();
-				dgramChannel.register(selector, SelectionKey.OP_READ);
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			
-			long waitFor = POLLING_INTERVALL;
+
+		    long waitFor = POLLING_INTERVALL;
 			InetSocketAddress addr = null;
 			
 			while (dgramChannel != null) {
-				
-				try {
-					selector.select(waitFor);
-					dgramBuffer.clear();
-					addr = (InetSocketAddress) dgramChannel.receive(dgramBuffer);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
+
 				/* send all messages in the send buffer */
 				sendBufferedMessages();
 
 				/* handle incoming packets */
+				dgramBuffer.clear();
+				try {
+					addr = (InetSocketAddress) dgramChannel.receive(dgramBuffer);
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 				if (addr != null){
 					logger.log(Level.INFO, "handle incomming msg");
 					handleIncommingMessage(dgramBuffer, addr);
@@ -152,6 +150,18 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 		        duplicateMap.update();
 		        retransMsgMap.update();
 		        nonConfirmedMsgMap.update();
+		        
+		        /* wait until
+		         * 1. selector.wakeup() is called by sendMessage()
+		         * 2. incomming packet
+		         * 3. timeout */
+				try {
+					/*FIXME: don't make a select, when something is in the sendQueue, otherwise the packet will be sent after some delay */
+					selector.select(waitFor);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 		
@@ -229,6 +239,7 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 				TimeoutObject<MessageKey> tObj = timeoutQueue.peek();
 				if (tObj == null){
 					/* timeout queue is empty */
+					nextTimeout = POLLING_INTERVALL;
 					break;
 				}
 				

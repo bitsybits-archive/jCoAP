@@ -22,20 +22,22 @@ import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
 
+import com.sun.jmx.remote.internal.ClientCommunicatorAdmin;
+
 public class DefaultCoapClientChannel extends DefaultCoapChannel implements CoapClientChannel {
-	CoapClient coapClient = null;
+	CoapClient client = null;
 
 	public DefaultCoapClientChannel(CoapSocketHandler socketHandler,
 			CoapClient client, InetAddress remoteAddress,
 			int remotePort) {
 		super(socketHandler, remoteAddress, remotePort);
-		this.coapClient = client;
+		this.client = client;
 	}
 
 	@Override
 	public void newIncommingMessage(CoapMessage message) {
 		// TODO Auto-generated method stub
-		
+		client.onResponse(message.getCoapChannel(), message);
 	}
 
     // public DefaultCoapClientChannel(CoapChannelManager channelManager) {
