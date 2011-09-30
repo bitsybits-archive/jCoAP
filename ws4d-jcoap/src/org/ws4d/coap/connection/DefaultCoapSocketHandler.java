@@ -178,7 +178,7 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 			
 			/* check for duplicates */
 			MessageKey msgKey = new MessageKey(msgID, addr.getAddress(), addr.getPort());
-			if ((Boolean) duplicateMap.get(msgKey)){
+			if (duplicateMap.get(msgKey) != null){
 				/* detected retransmission
 				 * - sendMessage checks if the message is null
 				 * - for CON: send again corresponding ACK or RST, they are saved in the retransMsgMap when they are send */ 
@@ -206,7 +206,6 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 						return;
 					}
 					logger.log(Level.INFO, "Created new server channel...");
-					return;
 				} else {
 					/* Ignore ACK and RST if no channel exists */
 					return;
