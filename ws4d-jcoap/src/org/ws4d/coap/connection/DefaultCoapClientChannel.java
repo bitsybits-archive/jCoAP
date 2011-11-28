@@ -23,24 +23,24 @@ import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
 
 public class DefaultCoapClientChannel extends DefaultCoapChannel implements CoapClientChannel {
-	CoapClient coapClient = null;
-	
+	CoapClient client = null;
 	public DefaultCoapClientChannel(CoapSocketHandler socketHandler,
 			CoapClient client, InetAddress remoteAddress,
 			int remotePort) {
 		super(socketHandler, remoteAddress, remotePort);
-		this.coapClient = client;
-		
+		this.client = client;
 	}
 
 	@Override
 	public void newIncommingMessage(CoapMessage message) {
-		coapClient.onResponse(this, message);
+
+		client.onResponse(this, message);
 	}
 
 	@Override
 	public void lostConnection(boolean notReachable, boolean resetByServer) {
-		coapClient.onConnectionFailed(this, notReachable, resetByServer);		
+		client.onConnectionFailed(this, notReachable, resetByServer);		
+
 	}
 
     // public DefaultCoapClientChannel(CoapChannelManager channelManager) {

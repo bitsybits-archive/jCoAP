@@ -15,7 +15,7 @@ import org.ws4d.coap.messages.CoapPacketType;
 import org.ws4d.coap.messages.CoapMessageCode.MessageCode;
 
 public class BasicCoapClient implements CoapClient {
-    private static final String SERVER_ADDRESS = "139.30.201.117";
+    private static final String SERVER_ADDRESS = "139.30.201.221";
     private static final int PORT = 61616;
     static int counter = 0;
     CoapChannelManager channelManager = null;
@@ -42,7 +42,7 @@ public class BasicCoapClient implements CoapClient {
 
     @Override
 	public void onResponse(CoapChannel channel, CoapMessage response) {
-		System.out.println("Received response: " + response.getHeader().toStringShort());
+		System.out.println("Received response");
 		
 	}
 
