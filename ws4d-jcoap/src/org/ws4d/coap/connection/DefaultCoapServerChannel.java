@@ -36,6 +36,11 @@ public class DefaultCoapServerChannel extends DefaultCoapChannel implements Coap
 	public void newIncommingMessage(CoapMessage message) {
 		server.handleRequest(message.getCoapChannel(), message);
 	}
+	
+    /*TODO: implement Error Type*/
+	public void lostConnection(boolean notReachable, boolean resetByServer){
+		//TODO: this could never happen for a server???
+	}
 
     // public DefaultCoapServerChannel(CoapChannelManager channelManager) {
     // super(channelManager);

@@ -25,10 +25,10 @@ public class CoapMessageCode {
     public enum MessageCode {
         Empty, /* empty messages have code == 0 */
         GET, POST, PUT, DELETE,
-        OK_200, Created_201, Deleted_202, Valid_203, Changed_204,
+        OK_200, Created_201, Deleted_202, Valid_203, Changed_204, Content_205,
         Bad_Request_400, Unauthorized_401, Bad_Option_402, Forbidden_403,
-        Not_Found_404, Method_Not_Allowed_405, Request_Entity_To_Large_413,
-        Unsupported_Media_Type_415,
+        Not_Found_404, Method_Not_Allowed_405, Precondition_Failed_412,
+        Request_Entity_To_Large_413, Unsupported_Media_Type_415,
         Internal_Server_Error_500, Not_Implemented_501, Bad_Gateway_502,
         Service_Unavailable_503, Gateway_Timeout_504, Proxying_Not_Supported_505,
         UNKNOWN;
@@ -47,7 +47,47 @@ public class CoapMessageCode {
                 case DELETE:
                     return "DELETE";
                 case OK_200:
-                    return "OK 200";
+                    return "OK_200";
+                case Created_201:
+                	return "Created_201";   
+                case Deleted_202:
+                	return "Deleted_202";
+                case Valid_203:
+                	return "Valid_203";
+                case Changed_204:
+                    return "Changed_204";
+                case Content_205:
+                    return "Content_205";
+                case Bad_Request_400:
+                	return "Bad_Request_400";
+                case Unauthorized_401:
+                	return "Unauthorized_401";
+                case Bad_Option_402:
+                	return "Bad_Option_402";
+                case Forbidden_403:
+                	return "Forbidden_403";               
+                case Not_Found_404:
+                    return "Not_Found_404";
+                case Method_Not_Allowed_405:
+                    return "Method_Not_Allowed_405";
+                case Precondition_Failed_412:
+                    return "Precondition_Failed_412";
+                case Request_Entity_To_Large_413:
+                    return "Request_Entity_To_Large_413";
+                case Unsupported_Media_Type_415:
+                    return "Unsupported_Media_Type_415";
+                case Internal_Server_Error_500:
+                    return "Internal_Server_Error_500";
+                case Not_Implemented_501:
+                    return "Not_Implemented_501";
+                case Bad_Gateway_502:
+                    return "Bad_Gateway_502";
+                case Service_Unavailable_503:
+                    return "Service_Unavailable_503";
+                case Gateway_Timeout_504:
+                    return "Gateway_Timeout_504";
+                case Proxying_Not_Supported_505:
+                    return "Proxying_Not_Supported_505";                              
                 default:
                     return "Unknown MessageCode";
             }
@@ -110,6 +150,9 @@ public class CoapMessageCode {
             case 68:
                 this.Code = MessageCode.Changed_204;
                 break;
+            case 69:
+                this.Code = MessageCode.Content_205;
+                break;
             case 128:
                 this.Code = MessageCode.Bad_Request_400;
                 break;
@@ -127,6 +170,9 @@ public class CoapMessageCode {
                 break;
             case 133:
                 this.Code = MessageCode.Method_Not_Allowed_405;
+                break;
+            case 140:
+                this.Code = MessageCode.Precondition_Failed_412;
                 break;
             case 141:
                 this.Code = MessageCode.Request_Entity_To_Large_413;
@@ -193,6 +239,9 @@ public class CoapMessageCode {
             case Changed_204:
                 result = 68;
                 break;
+            case Content_205:
+                result = 69;
+                break;
             case Bad_Request_400:
                 result = 128;
                 break;
@@ -210,6 +259,9 @@ public class CoapMessageCode {
                 break;
             case Method_Not_Allowed_405:
                 result = 133;
+                break;
+            case Precondition_Failed_412:
+                result = 140;
                 break;
             case Request_Entity_To_Large_413:
                 result = 141;

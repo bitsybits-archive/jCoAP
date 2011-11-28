@@ -51,7 +51,7 @@ public class DefaultCoapMessage implements CoapMessage {
     private byte[] payload = null;
     private int length = 0; /* number of bytes */
     CoapChannel channel = null;
-
+    
     private int payloadLength = 0;
 
     private CoapHeader header;
@@ -75,6 +75,7 @@ public class DefaultCoapMessage implements CoapMessage {
         setPacketType(packetType);
         setMessageCode(messageCode);
         header.setMessageID(messageID);
+        
     }
 
     public void setHeader(CoapHeader header) {
@@ -112,6 +113,12 @@ public class DefaultCoapMessage implements CoapMessage {
     public int getMessageID() {
         return header.getMessageID();
     }
+    
+	@Override
+	public void setMessageID(int msgID) {
+		header.setMessageID(msgID);
+	}
+    
 
     public byte[] serialize() {
         byte[] header = this.header.serialize();
@@ -262,4 +269,47 @@ public class DefaultCoapMessage implements CoapMessage {
         }
         return null;
     }
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((channel == null) ? 0 : channel.hashCode());
+		result = prime * result + header.getMessageID();
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		DefaultCoapMessage other = (DefaultCoapMessage) obj;
+		if (channel == null) {
+			if (other.channel != null)
+				return false;
+		} else if (!channel.equals(other.channel))
+			return false;
+		if (header.getMessageID() != other.header.getMessageID())
+			return false;
+		return true;
+	}
+
+	@Override
+	public boolean isReliable() {
+		if (header.getType() == CoapPacketType.NON){
+			return false;
+		}
+		return true;
+	}
+	
+	@Override
+	public void copyHeaderOptions(CoapMessage other) {
+		for (CoapHeaderOption option : other.getHeader().getCoapHeaderOptions()) {
+			getHeader().addOption(option);
+		}
+	}
 }

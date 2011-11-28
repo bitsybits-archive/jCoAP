@@ -45,4 +45,9 @@ public class BasicCoapClient implements CoapClient {
 		System.out.println("Received response: " + response.getHeader().toStringShort());
 		
 	}
+
+	@Override
+	public void onConnectionFailed(CoapChannel channel, boolean notReachable, boolean resetByServer) {
+		System.out.println("Connection Failed");
+	}
 }

@@ -40,6 +40,8 @@ public interface CoapMessage {
     public CoapHeader getHeader();
 
     public int getMessageID();
+    
+    public void setMessageID(int msgID);
 
     public int getLength();
 
@@ -84,5 +86,13 @@ public interface CoapMessage {
     public void incRetransCounterAndTimeout();
     
     public String getUriPath();
+    
+    public boolean isReliable();
+    
+    public void copyHeaderOptions(CoapMessage other);
+    
+    /* unique by remote address, remote port, local port and message id */
+    public int hashCode();
+    public boolean equals(Object obj);
 
 }

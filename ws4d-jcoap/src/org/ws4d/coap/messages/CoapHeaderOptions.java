@@ -42,15 +42,28 @@ public class CoapHeaderOptions implements Iterable<CoapHeaderOption> {
         public static final int Uri_Host = 5;
         public static final int Location_Path = 6;
         public static final int Uri_Port = 7;
+        public static final int Location_Query = 8;
         public static final int Uri_Path = 9;
         public static final int Token = 11;
+        public static final int Accept = 12;
+        public static final int If_Match = 13;
         public static final int Uri_Query = 15;
+        public static final int If_None_Match = 21;
     }
 
     static public CoapHeaderOptions deserialize(byte[] bytes, int option_count) {
         return deserialize(bytes, 0, option_count);
     }
-
+    
+	public CoapHeaderOption getOption(int optionNumber) {
+		for (CoapHeaderOption headerOption : headerOptions) {
+			if (headerOption.getOptionNumber() == optionNumber) {
+				return headerOption;
+			}
+		}
+		return null;
+	}    
+    
     static public CoapHeaderOptions deserialize(byte[] bytes, int offset, int option_count) {
         CoapHeaderOptions result = new CoapHeaderOptions();
         /*
@@ -75,7 +88,9 @@ public class CoapHeaderOptions implements Iterable<CoapHeaderOption> {
             } else {
                 tmp.setShortLength(bytes[arrayIndex++] & 0x0F);
                 tmp.setLongLength(bytes[arrayIndex++]);
-                tmpLength = tmp.getLongLength();
+                /*FIXED: CL*/
+//              tmpLength = tmp.getLongLength();
+                tmpLength = tmp.getLongLength() + 15; 
                 result.length += 1; /* additional length byte */
             }
             result.length += tmpLength;
@@ -99,6 +114,24 @@ public class CoapHeaderOptions implements Iterable<CoapHeaderOption> {
 
     public void addOption(int option_number, byte[] value) throws Exception {
         headerOptions.add(new CoapHeaderOption(option_number, value));
+    }
+    
+    public void removeOption(int optNumber){
+		CoapHeaderOption headerOption;
+		// get elements of Vector
+		
+		/* note: iterating and changing a vector at the same time is not allowed */
+		int i = 0;
+		while (i < headerOptions.size()){
+			headerOption = headerOptions.get(i);
+			if (headerOption.getOptionNumber() == optNumber) {
+				headerOptions.remove(i);
+			} else {
+				/* only increase when no element was removed*/
+				i++;
+			}
+		}
+		Collections.sort(headerOptions);
     }
 
     public int getLength() {
@@ -159,4 +192,8 @@ public class CoapHeaderOptions implements Iterable<CoapHeaderOption> {
     public Iterator<CoapHeaderOption> iterator() {
         return headerOptions.iterator();
     }
+
+	public int getCount() {
+		return headerOptions.size();
+	}
 }

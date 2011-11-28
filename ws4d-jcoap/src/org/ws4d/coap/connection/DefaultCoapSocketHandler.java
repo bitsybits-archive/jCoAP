@@ -58,12 +58,8 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
     public DefaultCoapSocketHandler(CoapChannelManager channelManager, int port) throws IOException {
         this.channelManager = channelManager;
         dgramChannel = DatagramChannel.open();
-        if (port != 0){
-        	dgramChannel.socket().bind(new InetSocketAddress(port));
-        	this.localPort = port;
-        } else {
-        	this.localPort = dgramChannel.socket().getLocalPort();
-        }
+       	dgramChannel.socket().bind(new InetSocketAddress(port)); //port can be 0, then a free port is chosen 
+        this.localPort = dgramChannel.socket().getLocalPort();
         dgramChannel.configureBlocking(false);
         
         workerThread = new WorkerThread();
@@ -98,6 +94,13 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 		public WorkerThread() {
 			dgramBuffer = ByteBuffer.allocate(1500);
 		    startTime = System.currentTimeMillis();
+		    
+		    try {
+				selector = Selector.open();
+				dgramChannel.register(selector, SelectionKey.OP_READ);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 		}
 
 		public void close() {
@@ -115,19 +118,16 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 		public void run() {
 		    logger.log(Level.INFO, "Receive Thread started.");
 		    
-		    try {
-				selector = Selector.open();
-				dgramChannel.register(selector, SelectionKey.OP_READ);
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			
 			long waitFor = POLLING_INTERVALL;
 			InetSocketAddress addr = null;
 			
 			while (dgramChannel != null) {
 				
 				try {
+					//CL FIXME
+					if (waitFor < 0){
+						waitFor = 0;
+					}
 					selector.select(waitFor);
 					dgramBuffer.clear();
 					addr = (InetSocketAddress) dgramChannel.receive(dgramBuffer);
@@ -170,7 +170,7 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 		}
 
 		private void handleIncommingMessage(ByteBuffer buffer, InetSocketAddress addr) {
-			CoapMessage msg = new DefaultCoapMessage(buffer.array(), buffer.array().length);
+			CoapMessage msg = new DefaultCoapMessage(buffer.array(), buffer.position());
 			CoapPacketType packetType = msg.getPacketType();
 			int msgID = msg.getMessageID();
 			
@@ -260,8 +260,7 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 				if(msg.maxRetransReached()){
 					/* the connection is broken */
 					nonConfirmedMsgMap.remove(msgKey);
-					//TODO: implement: 
-					//msg.getCoapChannel().lostConnection();
+					msg.getCoapChannel().lostConnection(true, false);
 					return;
 				}
 				msg.incRetransCounterAndTimeout();
@@ -478,8 +477,8 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
     		return null;
     	}
     	
-    	CoapClientChannel channel = new DefaultCoapClientChannel(this, client, remoteAddress,
-                remotePort);
+    	CoapClientChannel channel = new DefaultCoapClientChannel(this, client, remoteAddress, remotePort);
+    	
     	
         addChannel(channel);
         return channel;

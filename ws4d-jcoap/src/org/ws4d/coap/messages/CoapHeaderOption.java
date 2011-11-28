@@ -26,7 +26,8 @@ public class CoapHeaderOption implements Comparable<CoapHeaderOption> {
 
     public CoapHeaderOption() {
     }
-
+    
+    //Andy: repaired header-long-length serializing: if length > 15 then make short-length = 15 and set long-length to length-15
     public CoapHeaderOption(int optionNumber, byte[] value) {
         this.optionNumber = optionNumber;
         this.optionValue = value;
@@ -35,7 +36,7 @@ public class CoapHeaderOption implements Comparable<CoapHeaderOption> {
             longLength = 0;
         } else {
             shortLength = 15;
-            longLength = value.length;
+            longLength = value.length - shortLength;	//Andy: added "- shortLength"
         }
     }
 

@@ -54,7 +54,6 @@ public class CoapHeader {
 
     private int version;
     private CoapPacketType type;
-    private int optionCount;
     private CoapMessageCode code;
 
     private int messageID;
@@ -67,7 +66,6 @@ public class CoapHeader {
                       * anything different than 1 is strongly discouraged right
                       * now...
                       */
-        optionCount = 0;
         code = new CoapMessageCode();
         this.options = null;
     }
@@ -81,7 +79,7 @@ public class CoapHeader {
         /* this is actually pretty straight forward */
         this.version = (bytes[offset + 0] & 0xC0) >> 6;
         this.setType((bytes[offset + 0] & 0x30) >> 4);
-        this.optionCount = bytes[offset + 0] & 0x0F;
+        int optionCount = bytes[offset + 0] & 0x0F;
         this.setCode(bytes[offset + 1] & 0xFF);
         this.messageID = ((bytes[offset + 2] << 8) & 0xFF00) + (bytes[offset + 3] & 0xFF);
         this.length = 4;
@@ -89,7 +87,7 @@ public class CoapHeader {
                                                     * Is this supposed to work
                                                     * like that..?
                                                     */
-            this.options = CoapHeaderOptions.deserialize(bytes, 4, this.optionCount);
+            this.options = CoapHeaderOptions.deserialize(bytes, 4, optionCount);
             this.length += this.options.getLength();
         }
     }
@@ -98,13 +96,12 @@ public class CoapHeader {
         if (this.options == null)
             this.options = new CoapHeaderOptions();
         this.options.addOption(option);
-        this.optionCount++;
     }
 
-    public void addOption(int option_number, byte[] value) {
-        this.addOption(new CoapHeaderOption(option_number, value));
+    public void addOption(int optionNumber, byte[] value) {
+        this.addOption(new CoapHeaderOption(optionNumber, value));
     }
-
+    
     public MessageCode getCode() {
         return code.getCode();
     }
@@ -126,7 +123,17 @@ public class CoapHeader {
     }
 
     public int getOptionCount() {
-        return optionCount;
+    	if (options == null){
+    		return 0;
+    	}
+        return options.getCount();
+    }
+    
+    public CoapHeaderOption getOption(int optionNumber) {
+    	if (options == null){
+    		return null;
+    	}
+    	return options.getOption(optionNumber);
     }
 
     public CoapPacketType getType() {
@@ -157,7 +164,7 @@ public class CoapHeader {
         /* ... assign the first four bytes ... */
         header_array[0] = (byte) ((this.version & 0x03) << 6);
         header_array[0] |= (byte) ((this.type.typeId() & 0x03) << 4);
-        header_array[0] |= (byte) (this.optionCount & 0x0F);
+        header_array[0] |= (byte) (getOptionCount() & 0x0F);
         header_array[1] = (byte) (this.code.toInt() & 0xFF);
         header_array[2] = (byte) ((this.messageID >> 8) & 0xFF);
         header_array[3] = (byte) (this.messageID & 0xFF);
@@ -167,8 +174,6 @@ public class CoapHeader {
             for (int i = 0; i < this.options.getLength(); i++)
                 header_array[i + 4] = optionsArray[i];
         }
-
-        /* Voila! */
         return header_array;
     }
 
@@ -186,10 +191,6 @@ public class CoapHeader {
 
     public void setMessageID(int messageID) {
         this.messageID = messageID;
-    }
-
-    public void setOptionCount(int optionCount) {
-        this.optionCount = optionCount;
     }
 
     public void setType(CoapPacketType type) {
@@ -210,7 +211,7 @@ public class CoapHeader {
         result += "Header:\n";
         result += "\tVersion:      " + this.version + ",\n";
         result += "\tType:         " + this.type.toString() + "(" + this.type.typeId() + "),\n";
-        result += "\tOption Count: " + this.optionCount + ",\n";
+        result += "\tOption Count: " + getOptionCount() + ",\n";
         result += "\tMessage Code: " + this.code.toString() + "(" + this.code.toInt() + "),\n";
         result += "\tMessage ID:   " + this.messageID + ",\n";
         if (this.options != null)
