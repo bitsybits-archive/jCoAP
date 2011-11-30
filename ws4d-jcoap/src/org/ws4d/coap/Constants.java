@@ -15,6 +15,11 @@
 
 package org.ws4d.coap;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
+
+
 public final class Constants {
     public final static int MESSAGE_ID_MIN = 0;
     public final static int MESSAGE_ID_MAX = 65535;

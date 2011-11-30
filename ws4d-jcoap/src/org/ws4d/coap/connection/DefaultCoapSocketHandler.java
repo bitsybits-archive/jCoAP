@@ -64,8 +64,6 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
         
         workerThread = new WorkerThread();
         workerThread.start();
-        
-        logger.setLevel(Level.ALL);
     }
     
     public DefaultCoapSocketHandler(CoapChannelManager channelManager) throws IOException {

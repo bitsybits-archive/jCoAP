@@ -22,6 +22,11 @@ import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
+
+
 public class DefaultCoapClientChannel extends DefaultCoapChannel implements CoapClientChannel {
 	CoapClient client = null;
 	public DefaultCoapClientChannel(CoapSocketHandler socketHandler,

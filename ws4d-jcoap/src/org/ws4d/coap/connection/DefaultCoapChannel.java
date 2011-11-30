@@ -11,6 +11,11 @@ import org.ws4d.coap.messages.CoapMessageCode;
 import org.ws4d.coap.messages.CoapPacketType;
 import org.ws4d.coap.messages.DefaultCoapMessage;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
+
+
 public abstract class DefaultCoapChannel implements CoapChannel {
     private CoapSocketHandler socketHandler = null;
     private CoapChannelManager channelManager = null;
