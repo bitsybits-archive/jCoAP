@@ -13,11 +13,10 @@
  * limitations under the License.
  *****************************************************************************/
 
-package org.ws4d.coap.testserver;
+package org.ws4d.coap.server;
 
 import org.ws4d.coap.connection.DefaultCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannel;
-import org.ws4d.coap.interfaces.CoapChannelListener;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapServer;

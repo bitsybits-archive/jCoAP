@@ -3,5 +3,14 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ws4d-jcoap"/>
+	<classpathentry kind="lib" path="Referenced Libraries/commons-codec-1.4.jar"/>
+	<classpathentry kind="lib" path="Referenced Libraries/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="Referenced Libraries/ehcache-core-2.4.3.jar"/>
+	<classpathentry kind="lib" path="Referenced Libraries/httpasyncclient-4.0-alpha2.jar"/>
+	<classpathentry kind="lib" path="Referenced Libraries/httpclient-4.1.1.jar"/>
+	<classpathentry kind="lib" path="Referenced Libraries/httpcore-4.1.1.jar"/>
+	<classpathentry kind="lib" path="Referenced Libraries/httpcore-nio-4.1.3.jar"/>
+	<classpathentry kind="lib" path="Referenced Libraries/slf4j-api-1.6.1.jar"/>
+	<classpathentry kind="lib" path="Referenced Libraries/slf4j-jdk14-1.6.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

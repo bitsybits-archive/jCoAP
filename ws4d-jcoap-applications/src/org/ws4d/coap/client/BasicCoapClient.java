@@ -1,17 +1,13 @@
-package org.ws4d.coap.testclient;
+package org.ws4d.coap.client;
 
 import java.net.InetAddress;
-import java.net.URI;
 import java.net.UnknownHostException;
 
 import org.ws4d.coap.connection.DefaultCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannel;
-import org.ws4d.coap.interfaces.CoapChannelListener;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapClient;
 import org.ws4d.coap.interfaces.CoapMessage;
-import org.ws4d.coap.messages.CoapHeader;
-import org.ws4d.coap.messages.CoapPacketType;
 import org.ws4d.coap.messages.CoapMessageCode.MessageCode;
 
 public class BasicCoapClient implements CoapClient {
