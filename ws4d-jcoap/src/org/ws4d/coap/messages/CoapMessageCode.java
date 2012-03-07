@@ -136,7 +136,7 @@ public class CoapMessageCode {
             /* ..31: more to come */
             /* 32..63: reserved */
             case 64:
-                this.Code = MessageCode.OK_200;
+                this.Code = MessageCode.OK_200; // not used since draft 08
                 break;
             case 65:
                 this.Code = MessageCode.Created_201;
