@@ -8,13 +8,12 @@ package org.ws4d.coap.test;
  *
  */
 public class PlugtestClient {
-
+    
     /**
      * @param args
      */
     public static void main(String[] args) {
-	// TODO Auto-generated method stub
-
+	
     }
 
 }

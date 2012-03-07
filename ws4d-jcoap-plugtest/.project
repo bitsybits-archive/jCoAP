@@ -3,6 +3,7 @@
 	<name>ws4d-jcoap-plugtest</name>
 	<comment></comment>
 	<projects>
+		<project>ws4d-jcoap</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
