@@ -2,6 +2,8 @@ package org.ws4d.coap.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Iterator;
+import java.util.Vector;
 
 import org.ws4d.coap.Constants;
 import org.ws4d.coap.connection.DefaultCoapChannelManager;
@@ -11,6 +13,7 @@ import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.messages.CoapHeaderOption;
 import org.ws4d.coap.messages.CoapHeaderOptions;
+import org.ws4d.coap.messages.CoapHeaderOptions.HeaderOptionNumber;
 import org.ws4d.coap.messages.CoapMessageCode.MessageCode;
 
 public class CoapResourceServer extends AbstractResourceServer implements
@@ -50,6 +53,23 @@ public class CoapResourceServer extends AbstractResourceServer implements
 	return this;
     }
     
+    // TODO The URI Query management should be done somewhere else
+    private Vector<String> returnUriQueries(CoapMessage message) {
+	CoapHeaderOption option = null;
+	Vector<String> uriQueries = new Vector<String>();
+	for (Iterator<CoapHeaderOption> options = message.getHeader().getCoapHeaderOptions().iterator(); options.hasNext();) {
+	    option=options.next();
+	    if (option!=null && HeaderOptionNumber.Uri_Query == option.getOptionNumber()) {
+		
+		byte[] data = option.getOptionValue();
+		if (data!=null) {
+		    uriQueries.add(data.toString());
+		}
+	    }
+	}
+	return null;
+    }
+    
     @Override
     public void handleRequest(CoapChannel channel, CoapMessage request) {
 	CoapMessage response = null;
@@ -60,7 +80,13 @@ public class CoapResourceServer extends AbstractResourceServer implements
 	    final Resource resource = readResource(targetPath);
 
 	    if (resource != null) {
-		final byte[] responseValue = resource.getValue();
+		// URI queries
+		Vector<String> uriQueries = returnUriQueries(request);
+		final byte[] responseValue;
+		if (uriQueries!=null) 
+		    responseValue = resource.getValue(uriQueries);
+		else
+		    responseValue = resource.getValue();
 		response = channel.createResponse(request,
 			MessageCode.Content_205);
 		// TODO content type handling needs to be implemented
@@ -86,7 +112,7 @@ public class CoapResourceServer extends AbstractResourceServer implements
 	    response = channel.createResponse(request,
 			MessageCode.Deleted_202);
 	} else if (messageCode == MessageCode.POST || messageCode == MessageCode.PUT) {
-	    Resource resource = parseMessage(request);
+	    CoapResource resource = parseMessage(request);
 	    if (createResource(resource)) {
 		response = channel.createResponse(request,
 			MessageCode.Created_201);
@@ -104,8 +130,8 @@ public class CoapResourceServer extends AbstractResourceServer implements
 	channel.sendMessage(response);
     }
     
-    private Resource parseMessage(CoapMessage message) {
-	Resource resource = new BasicResource(message.getUriPath(), message.getPayload());
+    private CoapResource parseMessage(CoapMessage message) {
+	CoapResource resource = new BasicResource(message.getUriPath(), message.getPayload());
 	// TODO add content type
 	return resource;
     }

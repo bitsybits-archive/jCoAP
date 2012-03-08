@@ -1,6 +1,8 @@
 package org.ws4d.coap.rest;
 
-public class BasicResource implements Resource {
+import java.util.Vector;
+
+public class BasicResource implements CoapResource {
     private String mimeType;
     private String path;
     private byte[] value;
@@ -35,7 +37,12 @@ public class BasicResource implements Resource {
     }
 
     @Override
-    public byte[] getValue(String query) {
+    public byte[] getValue(Vector<String> query) {
+	return null;
+    }
+
+    @Override
+    public String getResourceType() {
 	return null;
     }
 

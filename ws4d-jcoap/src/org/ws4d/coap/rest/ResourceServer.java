@@ -13,13 +13,13 @@ public interface ResourceServer {
      * 
      * @param resource The resource to be handled.
      */
-    public boolean createResource(Resource resource);
+    public boolean createResource(CoapResource resource);
     public Resource readResource(String path);
-    public boolean updateResource(Resource resource);
+    public boolean updateResource(CoapResource resource);
     public boolean deleteResource(String path);
 
     /*creates a resource, if resource exits the resource will be updated*/
-    public void createUpdateResource(Resource resource);
+    public void createUpdateResource(CoapResource resource);
 
     
     /**

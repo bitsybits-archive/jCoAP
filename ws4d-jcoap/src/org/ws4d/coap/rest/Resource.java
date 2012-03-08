@@ -1,6 +1,8 @@
 
 package org.ws4d.coap.rest;
 
+import java.util.Vector;
+
 /**
  * A resource known from the REST architecture style. A resource has a type,
  * name and data associated with it.
@@ -24,5 +26,5 @@ public interface Resource {
 
     public byte[] getValue();
     
-    public byte[] getValue(String query);
+    public byte[] getValue(Vector<String> query);
 }

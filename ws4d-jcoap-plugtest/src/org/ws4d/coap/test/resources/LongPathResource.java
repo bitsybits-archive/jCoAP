@@ -1,5 +1,7 @@
 package org.ws4d.coap.test.resources;
 
+import java.util.Vector;
+
 import org.ws4d.coap.rest.CoapResource;
 
 public class LongPathResource implements CoapResource {
@@ -25,7 +27,7 @@ public class LongPathResource implements CoapResource {
 	}
 
 	@Override
-	public byte[] getValue(String query) {
+	public byte[] getValue(Vector<String> query) {
 	    return null;
 	}
 
