@@ -2,7 +2,7 @@ package org.ws4d.coap.test.resources;
 
 import org.ws4d.coap.rest.CoapResource;
 
-public class TestResource implements CoapResource {
+public class LargeResource implements CoapResource {
     @Override
     public String getMimeType() {
 	return null;
@@ -10,7 +10,7 @@ public class TestResource implements CoapResource {
 
     @Override
     public String getPath() {
-	return "/test";
+	return "/large";
     }
 
     @Override

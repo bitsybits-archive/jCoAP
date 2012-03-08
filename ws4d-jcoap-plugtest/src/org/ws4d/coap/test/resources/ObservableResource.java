@@ -2,7 +2,7 @@ package org.ws4d.coap.test.resources;
 
 import org.ws4d.coap.rest.CoapResource;
 
-public class TestResource implements CoapResource {
+public class ObservableResource implements CoapResource {
     @Override
     public String getMimeType() {
 	return null;
@@ -10,7 +10,7 @@ public class TestResource implements CoapResource {
 
     @Override
     public String getPath() {
-	return "/test";
+	return "/obs";
     }
 
     @Override
@@ -20,6 +20,7 @@ public class TestResource implements CoapResource {
 
     @Override
     public byte[] getValue() {
+	// TODO should change temperature every 5s
 	return "Payload".getBytes();
     }
 
@@ -30,6 +31,6 @@ public class TestResource implements CoapResource {
 
     @Override
     public String getResourceType() {
-	return "TestResourceType";
+	return "Temperature";
     }
 }
