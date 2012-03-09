@@ -28,6 +28,7 @@ import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.interfaces.CoapServerChannel;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
+import org.ws4d.coap.messages.CoapRequest;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -56,22 +57,24 @@ public class DefaultCoapChannelManager implements CoapChannelManager {
      * Creates a new server channel
      */
     @Override
-    public synchronized CoapChannel createServerChannel(CoapSocketHandler socketHandler, CoapMessage request, InetAddress addr, int port){
+    public synchronized CoapChannel createServerChannel(CoapSocketHandler socketHandler, CoapMessage message, InetAddress addr, int port){
     	SocketInformation socketInfo = socketMap.get(socketHandler.getLocalPort());
-    	
+
     	if (socketInfo.serverListener == null) {
 			/* this is not a server socket */
-    		return null;
+    		throw new IllegalStateException("Invalid server socket");
 		}
+    	
+    	if (!message.isRequest()){
+    		throw new IllegalStateException("Incomming message is not a request message");
+    	}
 
-    	CoapServer server = socketInfo.serverListener.onAccept(request);
+    	CoapServer server = socketInfo.serverListener.onAccept((CoapRequest) message);
     	if (server == null){
     		/* Server rejected channel */
     		return null;
     	}
     	CoapServerChannel newChannel= new DefaultCoapServerChannel( socketHandler, server, addr, port);
-    	
-    	
     	return newChannel;
     }
 

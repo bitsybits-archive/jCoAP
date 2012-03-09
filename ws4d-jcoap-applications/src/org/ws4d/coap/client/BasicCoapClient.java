@@ -8,7 +8,8 @@ import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapClient;
 import org.ws4d.coap.interfaces.CoapMessage;
-import org.ws4d.coap.messages.CoapMessageCode.MessageCode;
+import org.ws4d.coap.messages.CoapRequest.CoapRequestCode;
+import org.ws4d.coap.messages.CoapResponse;
 
 public class BasicCoapClient implements CoapClient {
     private static final String SERVER_ADDRESS = "139.30.201.221";
@@ -27,7 +28,7 @@ public class BasicCoapClient implements CoapClient {
     public void runTestClient(){
     	try {
 			clientChannel = channelManager.connect(this, InetAddress.getByName(SERVER_ADDRESS), PORT);
-			CoapMessage coapRequest = clientChannel.createRequest(true, MessageCode.GET);
+			CoapMessage coapRequest = clientChannel.createRequest(true, CoapRequestCode.GET);
 			clientChannel.sendMessage(coapRequest);
 			System.out.println("Sent Request");
 		} catch (UnknownHostException e) {
@@ -36,14 +37,13 @@ public class BasicCoapClient implements CoapClient {
 		}
     }
 
-    @Override
-	public void onResponse(CoapChannel channel, CoapMessage response) {
-		System.out.println("Received response");
-		
-	}
-
 	@Override
 	public void onConnectionFailed(CoapChannel channel, boolean notReachable, boolean resetByServer) {
 		System.out.println("Connection Failed");
+	}
+
+	@Override
+	public void onResponse(CoapChannel channel, CoapResponse response) {
+		System.out.println("Received response");
 	}
 }

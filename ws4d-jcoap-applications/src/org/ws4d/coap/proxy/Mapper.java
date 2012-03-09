@@ -52,7 +52,7 @@ import org.ws4d.coap.messages.CoapHeaderOptions.HeaderOptionNumber;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapMessageCode.MessageCode;
 import org.ws4d.coap.messages.CoapPacketType;
-import org.ws4d.coap.messages.DefaultCoapMessage;
+import org.ws4d.coap.messages.AbstractCoapMessage;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -677,7 +677,7 @@ public class Mapper {
 	public static CoapMessage httpResponseToCoapResponse(ProxyMessageContext context) {
 		
 
-		CoapMessage coapResponse = new DefaultCoapMessage(CoapPacketType.ACK, MessageCode.Content_205, 0);
+		CoapMessage coapResponse = new AbstractCoapMessage(CoapPacketType.ACK, MessageCode.Content_205, 0);
 		
 		//get the coap-request to extract the method-code
 		String method = "get";
@@ -788,7 +788,7 @@ public class Mapper {
 			if (headers.length > 0) {
 				for (int i=0; i < headers.length; i++) {
 					String header_value = headers[i].getValue();
-					CoapHeaderOption option_etag = new CoapHeaderOption(HeaderOptionNumber.Etag, header_value.getBytes());
+					CoapHeaderOption option_etag = new CoapHeaderOption(CoapHeaderOptionType.Etag, header_value.getBytes());
 					header.addOption(option_etag);
 				}
 			}
@@ -808,7 +808,7 @@ public class Mapper {
 			String[] paths = uri.getPath().split("/");
 			for (String path : paths) {
 				if (!path.isEmpty()) {
-					CoapHeaderOption option_uri_path = new CoapHeaderOption(HeaderOptionNumber.Uri_Path, path.getBytes());	
+					CoapHeaderOption option_uri_path = new CoapHeaderOption(CoapHeaderOptionType.Uri_Path, path.getBytes());	
 					header.addOption(option_uri_path);
 				}
 			}
@@ -827,7 +827,7 @@ public class Mapper {
 				for (int i=0; i < headers.length; i++) {
 					String header_value = headers[i].getValue();
 					for (Integer mediatype : httpmediatypeTOcoapmediatype(header_value)) {
-						CoapHeaderOption option_accept = new CoapHeaderOption(HeaderOptionNumber.Accept, new String(""+mediatype).getBytes());
+						CoapHeaderOption option_accept = new CoapHeaderOption(CoapHeaderOptionType.Accept, new String(""+mediatype).getBytes());
 						header.addOption(option_accept);
 					}
 				}
@@ -840,7 +840,7 @@ public class Mapper {
 			if (headers.length > 0) {
 				for (int i=0; i < headers.length; i++) {
 					String header_value = headers[i].getValue();
-					CoapHeaderOption option_ifmatch = new CoapHeaderOption(HeaderOptionNumber.If_Match, header_value.getBytes());
+					CoapHeaderOption option_ifmatch = new CoapHeaderOption(CoapHeaderOptionType.If_Match, header_value.getBytes());
 					header.addOption(option_ifmatch );
 				}
 			}
@@ -853,7 +853,7 @@ public class Mapper {
 			if (uri.getQuery() != null) {						//only add options if there are some
 				String[] querys = uri.getQuery().split("&");
 				for (String query : querys) {
-					CoapHeaderOption option_uri_query = new CoapHeaderOption(HeaderOptionNumber.Uri_Query, query.getBytes());	
+					CoapHeaderOption option_uri_query = new CoapHeaderOption(CoapHeaderOptionType.Uri_Query, query.getBytes());	
 					header.addOption(option_uri_query);
 				}
 			}
@@ -871,7 +871,7 @@ public class Mapper {
 					System.out.println("multiple headers in request, ignoring all except the first");
 				}
 				String header_value = headers[0].getValue();
-				CoapHeaderOption option_ifnonematch = new CoapHeaderOption(HeaderOptionNumber.If_None_Match, header_value.getBytes());
+				CoapHeaderOption option_ifnonematch = new CoapHeaderOption(CoapHeaderOptionType.If_None_Match, header_value.getBytes());
 				header.addOption(option_ifnonematch);
 			}
 		}
@@ -887,7 +887,7 @@ public class Mapper {
 		//investigate all coap-headers and set corresponding http-headers
 		for (CoapHeaderOption option: coapResponse.getHeader().getCoapHeaderOptions()) {
 			switch (option.getOptionNumber()) {
-			case HeaderOptionNumber.Content_Type:
+			case CoapHeaderOptionType.Content_Type:
 			{
 				int type = -1;
 				try {
@@ -945,7 +945,7 @@ public class Mapper {
 					
 				break;
 			}
-			case HeaderOptionNumber.Max_Age:
+			case CoapHeaderOptionType.Max_Age:
 			{
 				//max-age is later mapped to "expires" http header field
 				max_age = new Integer(new String(option.getOptionValue()))*1000;	//milliseconds
@@ -953,25 +953,25 @@ public class Mapper {
 					httpResponse.addHeader("Retry-After", new String(option.getOptionValue()));
 				break;
 			}
-			case HeaderOptionNumber.Etag:
+			case CoapHeaderOptionType.Etag:
 			{
 				String etag = new String(option.getOptionValue());
 				httpResponse.addHeader("Etag", etag);
 				break;
 			}
-			case HeaderOptionNumber.Location_Path:
+			case CoapHeaderOptionType.Location_Path:
 			{
 				break;
 			}
-			case HeaderOptionNumber.Location_Query:
+			case CoapHeaderOptionType.Location_Query:
 			{
 				break;
 			}
-			case HeaderOptionNumber.Token:
+			case CoapHeaderOptionType.Token:
 			{
 				break;
 			}
-			case HeaderOptionNumber.Uri_Query:
+			case CoapHeaderOptionType.Uri_Query:
 			{
 				//TODO: add query(s) to http-uri
 				break;
@@ -1004,7 +1004,7 @@ public class Mapper {
 		
 		//create CoapMessage
 		/* FIXME: the request should be created by the corresponding channel*/
-		CoapMessage coaprequest = new DefaultCoapMessage(CoapPacketType.CON, MessageCode.GET, 0);
+		CoapMessage coaprequest = new AbstractCoapMessage(CoapPacketType.CON, MessageCode.GET, 0);
 		//Translate Headers
 		coaprequest = headerTranslateHttpToCoap(request, coaprequest);
 		
@@ -1016,7 +1016,7 @@ public class Mapper {
 
 		//create CoapMessage
 		/* FIXME: the request should be created by the corresponding channel*/
-		CoapMessage coaprequest = new DefaultCoapMessage(CoapPacketType.CON, MessageCode.PUT, 0);
+		CoapMessage coaprequest = new AbstractCoapMessage(CoapPacketType.CON, MessageCode.PUT, 0);
 		//Translate Headers
 		coaprequest = headerTranslateHttpToCoap(request,coaprequest);
 		
@@ -1037,7 +1037,7 @@ public class Mapper {
 		
 		//create CoapMessage
 		/* FIXME: the request should be created by the corresponding channel*/
-		CoapMessage coaprequest = new DefaultCoapMessage(CoapPacketType.CON, MessageCode.POST, 0);
+		CoapMessage coaprequest = new AbstractCoapMessage(CoapPacketType.CON, MessageCode.POST, 0);
 		//Translate Headers
 		coaprequest = headerTranslateHttpToCoap(request,coaprequest);
 		
@@ -1060,7 +1060,7 @@ public class Mapper {
 		
 		//create CoapMessage
 		/* FIXME: the request should be created by the corresponding channel*/
-		CoapMessage coaprequest = new DefaultCoapMessage(CoapPacketType.CON, MessageCode.DELETE, 0);
+		CoapMessage coaprequest = new AbstractCoapMessage(CoapPacketType.CON, MessageCode.DELETE, 0);
 		//Translate Headers
 		coaprequest = headerTranslateHttpToCoap(request,coaprequest);
 		return coaprequest;

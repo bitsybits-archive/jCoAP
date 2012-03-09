@@ -71,7 +71,7 @@ public class CoapResourceServer extends AbstractResourceServer implements
 		    response.getHeader()
 			    .addOption(
 				    new CoapHeaderOption(
-					    CoapHeaderOptions.HeaderOptionNumber.Content_Type,
+					    CoapHeaderOptions.CoapHeaderOptionType.Content_Type,
 					    value));
 		}
 		response.setPayload(responseValue);

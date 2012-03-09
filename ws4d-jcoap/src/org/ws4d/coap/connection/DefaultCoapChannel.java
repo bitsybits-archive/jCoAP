@@ -2,14 +2,16 @@
 package org.ws4d.coap.connection;
 
 import java.net.InetAddress;
+
 import org.ws4d.coap.interfaces.CoapChannel;
-import org.ws4d.coap.interfaces.CoapChannelListener;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
-import org.ws4d.coap.messages.CoapMessageCode;
 import org.ws4d.coap.messages.CoapPacketType;
-import org.ws4d.coap.messages.DefaultCoapMessage;
+import org.ws4d.coap.messages.CoapRequest;
+import org.ws4d.coap.messages.CoapRequest.CoapRequestCode;
+import org.ws4d.coap.messages.CoapResponse;
+import org.ws4d.coap.messages.CoapResponse.CoapResponseCode;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -36,19 +38,20 @@ public abstract class DefaultCoapChannel implements CoapChannel {
         socketHandler.removeChannel(this);
     }
 
-    @Override
-    public void sendMessage(CoapMessage msg, CoapMessage request) {
-        if (request.getPacketType() == CoapPacketType.CON) {
-            msg.setPacketType(CoapPacketType.ACK);
-        }
-
-        if (request.getPacketType() == CoapPacketType.NON) {
-            msg.setPacketType(CoapPacketType.NON);
-        }
-        msg.setChannel(this);
-        msg.setMessageID(request.getMessageID());
-        socketHandler.sendMessage(msg);
-    }
+//    @Override
+//    public void sendMessage(CoapMessage msg, CoapMessage request) {
+//    	/* TODO: remove this method, packet type should be determined by the channel */
+//        if (request.getPacketType() == CoapPacketType.CON) {
+//            msg.setPacketType(CoapPacketType.ACK);
+//        }
+//
+//        if (request.getPacketType() == CoapPacketType.NON) {
+//            msg.setPacketType(CoapPacketType.NON);
+//        }
+//        msg.setChannel(this);
+//        msg.setMessageID(request.getMessageID());
+//        socketHandler.sendMessage(msg);
+//    }
     
     @Override
     public void sendMessage(CoapMessage msg) {
@@ -67,25 +70,25 @@ public abstract class DefaultCoapChannel implements CoapChannel {
     }
 
     @Override
-    public CoapMessage createRequest(boolean reliable, CoapMessageCode.MessageCode messageCode) {
-        CoapMessage msg = new DefaultCoapMessage(
-                reliable ? CoapPacketType.CON : CoapPacketType.NON, messageCode,
+    public CoapRequest createRequest(boolean reliable, CoapRequestCode requestCode) {
+    	CoapRequest msg = new CoapRequest(
+                reliable ? CoapPacketType.CON : CoapPacketType.NON, requestCode,
                 channelManager.getNewMessageID());
         msg.setChannel(this);
         return msg;
     }
 
     @Override
-    public CoapMessage createResponse(CoapMessage request, CoapMessageCode.MessageCode messageCode) {
+    public CoapResponse createResponse(CoapMessage request, CoapResponseCode responseCode) {
         if (request.getPacketType() == CoapPacketType.CON) {
-            CoapMessage msg = new DefaultCoapMessage(CoapPacketType.ACK, messageCode,
+        	CoapResponse msg = new CoapResponse(CoapPacketType.ACK, responseCode,
                     request.getMessageID());
             msg.setChannel(this);
             return msg;
         }
 
         if (request.getPacketType() == CoapPacketType.NON) {
-            CoapMessage msg = new DefaultCoapMessage(CoapPacketType.NON, messageCode,
+        	CoapResponse msg = new CoapResponse(CoapPacketType.NON, responseCode,
                     channelManager.getNewMessageID());
             msg.setChannel(this);
             return msg;

@@ -21,6 +21,7 @@ import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.interfaces.CoapServerChannel;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
+import org.ws4d.coap.messages.CoapRequest;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -39,27 +40,16 @@ public class DefaultCoapServerChannel extends DefaultCoapChannel implements Coap
 	
 	@Override
 	public void newIncommingMessage(CoapMessage message) {
-		server.handleRequest(message.getCoapChannel(), message);
+		/* message MUST be a request */
+		if (!message.isRequest()){
+			throw new IllegalStateException("Incomming server message is not a request");
+		}
+		CoapRequest request= (CoapRequest) message;
+		server.handleRequest(request.getCoapChannel(), request);
 	}
 	
-    /*TODO: implement Error Type*/
+    /*TODO: implement */
 	public void lostConnection(boolean notReachable, boolean resetByServer){
-		//TODO: this could never happen for a server???
+		// this could never happen for a server???
 	}
-
-    // public DefaultCoapServerChannel(CoapChannelManager channelManager) {
-    // super(channelManager);
-    // }
-    //
-    // @Override
-    // public void listen(int port) {
-    // socket = null;
-    // try {
-    // socket = new DatagramSocket(port);
-    // super.establish(socket);
-    // } catch (SocketException e) {
-    // e.printStackTrace();
-    // }
-    // }
-
 }

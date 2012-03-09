@@ -35,8 +35,8 @@ import org.ws4d.coap.interfaces.CoapClient;
 import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
+import org.ws4d.coap.messages.AbstractCoapMessage;
 import org.ws4d.coap.messages.CoapPacketType;
-import org.ws4d.coap.messages.DefaultCoapMessage;
 import org.ws4d.coap.tools.TimeoutHashMap;
 
 public class DefaultCoapSocketHandler implements CoapSocketHandler {
@@ -172,7 +172,7 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 		}
 
 		private void handleIncommingMessage(ByteBuffer buffer, InetSocketAddress addr) {
-			CoapMessage msg = new DefaultCoapMessage(buffer.array(), buffer.position());
+			CoapMessage msg = AbstractCoapMessage.parseMessage(buffer.array(), buffer.position());
 			CoapPacketType packetType = msg.getPacketType();
 			int msgID = msg.getMessageID();
 			
@@ -197,13 +197,20 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 			if (channel == null){
 				if ((packetType == CoapPacketType.CON)|| (packetType == CoapPacketType.NON)) {
 					/* CON or NON create a new channel or reset connection */
-					channel = channelManager.createServerChannel(DefaultCoapSocketHandler.this, msg ,addr.getAddress(), addr.getPort());
+					try {
+						channel = channelManager.createServerChannel(DefaultCoapSocketHandler.this, msg, addr.getAddress(), addr.getPort());
+					} catch (Exception e) {
+						/* not a valid request */
+						e.printStackTrace();
+						logger.log(Level.WARNING, "Invalid request, packet dropped");
+					}
+					
 					if (channel == null){
 						logger.log(Level.INFO, "Reset connection...");
 						if (packetType == CoapPacketType.CON) {
 							/* server doesn't accept the connection -->
-							 * TODO Reset Connection (Send RST) */
-							throw new IllegalStateException(); 
+							 * TODO implement Reset Connection (Send RST) */
+							throw new IllegalStateException("resetting a connection is not implemented yet"); 
 						}
 						return;
 					}

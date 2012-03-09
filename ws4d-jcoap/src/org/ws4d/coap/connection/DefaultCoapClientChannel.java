@@ -21,6 +21,7 @@ import org.ws4d.coap.interfaces.CoapClient;
 import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
+import org.ws4d.coap.messages.CoapResponse;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -38,8 +39,12 @@ public class DefaultCoapClientChannel extends DefaultCoapChannel implements Coap
 
 	@Override
 	public void newIncommingMessage(CoapMessage message) {
-
-		client.onResponse(this, message);
+		/* incomming message must be a response */
+		if (!message.isResponse()){
+			throw new IllegalStateException("Incomming client message is not a response");
+		}
+		
+		client.onResponse(this, (CoapResponse) message);
 	}
 
 	@Override

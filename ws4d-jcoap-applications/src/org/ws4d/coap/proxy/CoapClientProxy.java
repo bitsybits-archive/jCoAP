@@ -80,7 +80,7 @@ public class CoapClientProxy {
 			if (request.getHeader().getOptionCount() > 0) {
 				for (CoapHeaderOption option : request.getHeader()
 						.getCoapHeaderOptions()) {
-					if (option.getOptionNumber() == HeaderOptionNumber.Uri_Host) {
+					if (option.getOptionNumber() == CoapHeaderOptionType.Uri_Host) {
 						String value = new String(option.getOptionValue());
 						try {
 							remoteAddress = InetAddress.getByName(value);
@@ -108,7 +108,7 @@ public class CoapClientProxy {
 			if (request.getHeader().getOptionCount() > 0) {
 				for (CoapHeaderOption option : request.getHeader()
 						.getCoapHeaderOptions()) {
-					if (option.getOptionNumber() == HeaderOptionNumber.Uri_Port) {
+					if (option.getOptionNumber() == CoapHeaderOptionType.Uri_Port) {
 						String value = new String(option.getOptionValue());
 						/* set port from Coap Header */
 						context.setRemotePort(Integer.parseInt(value));
@@ -172,9 +172,9 @@ public class CoapClientProxy {
 							 * and the proxy uri needs to be removed as this is no longer a proxy request */
 							String[] pathElements = UriParser.getPathElements(context.getUri().getPath());
 							for (String pathElement : pathElements) {
-								request.getHeader().addOption(HeaderOptionNumber.Uri_Path, pathElement.getBytes());
+								request.getHeader().addOption(CoapHeaderOptionType.Uri_Path, pathElement.getBytes());
 							}
-							request.getHeader().getCoapHeaderOptions().removeOption(HeaderOptionNumber.Proxy_Uri);
+							request.getHeader().getCoapHeaderOptions().removeOption(CoapHeaderOptionType.Proxy_Uri);
 					}
 						request.setPayload(originRequest.getPayload());
 						channel.sendMessage(request);

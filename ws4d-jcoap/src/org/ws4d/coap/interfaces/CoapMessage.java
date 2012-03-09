@@ -15,45 +15,30 @@
 
 package org.ws4d.coap.interfaces;
 
-import java.net.URI;
-
-import org.ws4d.coap.messages.CoapHeader;
-import org.ws4d.coap.messages.CoapMessageCode.MessageCode;
 import org.ws4d.coap.messages.CoapPacketType;
 
 public interface CoapMessage {
-    public static final int TYPE_CON = 0;
-    public static final int TYPE_NON = 1;
-    public static final int TYPE_ACK = 2;
-    public static final int TYPE_RST = 3;
-
     public static final int RESPONSE_TIMEOUT_MS = 2000;
     public static final double RESPONSE_RANDOM_FACTOR = 1.5;
     public static final int MAX_RETRANSMIT = 4;
     /* TODO: what is the right value? */
     public static final int ACK_RST_RETRANS_TIMEOUT_MS = 120000;
-
-    public byte[] serialize();
-
-    public int getProtocolVersion();
-
-    public CoapHeader getHeader();
+    
+    /* returns the value of the internal message code
+     * in case of an error this function returns -1 */
+    public int getMessageCodeValue();
 
     public int getMessageID();
-    
+
     public void setMessageID(int msgID);
+    
+    public boolean isEmptyMessage();
+    
+    public byte[] serialize();
 
-    public int getLength();
-
-    public MessageCode getMessageCode();
-
-    public void setMessageCode(MessageCode messageCode);
-
-    public void setOptions(URI uri);
+    public void incRetransCounterAndTimeout();
 
     public CoapPacketType getPacketType();
-
-    public void setPacketType(CoapPacketType packetType);
 
     public byte[] getPayload();
 
@@ -71,26 +56,20 @@ public interface CoapMessage {
 
     public void setChannel(CoapChannel channel);
 
-    public void setSendTimestamp(long timestamp);
-
-    public long getSendTimestamp();
-
-    public boolean isConfirmed();
-
-    public void confirmMessage();
-
     public int getTimeout();
 
     public boolean maxRetransReached();
 
-    public void incRetransCounterAndTimeout();
-    
     public String getUriPath();
     
     public boolean isReliable();
     
-    public void copyHeaderOptions(CoapMessage other);
+    public boolean isRequest();
     
+    public boolean isResponse();
+    
+    public boolean isEmpty();
+
     /* unique by remote address, remote port, local port and message id */
     public int hashCode();
     public boolean equals(Object obj);

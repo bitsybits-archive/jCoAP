@@ -17,13 +17,15 @@ package org.ws4d.coap.interfaces;
 
 import java.net.InetAddress;
 
+import org.ws4d.coap.messages.CoapRequest;
+
 
 public interface CoapChannelManager {
     public int getNewMessageID();
 
     /* called by the socket Listener to create a new Server Channel
-     * the Channel Manager than asked the Server Listener if he wants to accept a new connection */
-	public CoapChannel createServerChannel(CoapSocketHandler socketHandler, CoapMessage request, InetAddress addr, int port);
+     * the Channel Manager then asked the Server Listener if he wants to accept a new connection */
+	public CoapChannel createServerChannel(CoapSocketHandler socketHandler, CoapMessage message, InetAddress addr, int port);
 
 	/* creates a server socket listener for incoming connections */
     public void createServerListener(CoapServer serverListener, int localPort);

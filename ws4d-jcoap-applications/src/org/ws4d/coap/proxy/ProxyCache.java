@@ -148,7 +148,7 @@ public class ProxyCache {
 		}
 		logger.log(Level.INFO, "Cache CoAP Resource (" + uri.toString() + ")");
 		
-		CoapHeaderOption option = response.getHeader().getOption(HeaderOptionNumber.Max_Age);
+		CoapHeaderOption option = response.getHeader().getOption(CoapHeaderOptionType.Max_Age);
 		int timeToLive = defaultTimeToLive;
 		if (option != null){
 			/* TODO: implement parsing option */

@@ -26,29 +26,33 @@ public enum CoapPacketType {
     CON(0x00),
     NON(0x01),
     ACK(0x02),
-    RST(0x03),
-    UNKNOWN(-1);
+    RST(0x03);
 
-    private final int typeId;
+    private int packetType;
 
-    CoapPacketType(int typeId) {
-        this.typeId = typeId;
+    CoapPacketType(int packetType) {
+    	if (packetType >= 0x00 && packetType <= 0x03){
+    		this.packetType = packetType;
+    	} else {
+    		throw new IllegalStateException("Unknown CoAP Packet Type");
+		}
+    	
     }
 
-    public static CoapPacketType getPacketType(int typeId) {
-        if (typeId == 0x00)
+    public static CoapPacketType getPacketType(int packetType) {
+        if (packetType == 0x00)
             return CON;
-        else if (typeId == 0x01)
+        else if (packetType == 0x01)
             return NON;
-        else if (typeId == 0x02)
+        else if (packetType == 0x02)
             return ACK;
-        else if (typeId == 0x03)
+        else if (packetType == 0x03)
             return RST;
         else
-            return UNKNOWN;
+        	throw new IllegalStateException("Unknown CoAP Packet Type");
     }
-
-    public int typeId() {
-        return typeId;
+    
+    public int getValue() {
+        return packetType;
     }
 }

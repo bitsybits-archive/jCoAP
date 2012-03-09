@@ -120,7 +120,7 @@ public class CoapServerProxy implements CoapServer{
         
         //-------------------in this case we want a translation to http----------------------------
 
-		CoapHeaderOption option = request.getHeader().getOption(HeaderOptionNumber.Proxy_Uri);
+		CoapHeaderOption option = request.getHeader().getOption(CoapHeaderOptionType.Proxy_Uri);
 		if (option != null) {
 			try {
 				proxyUri = new URI(new String(option.getOptionValue()));
