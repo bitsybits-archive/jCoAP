@@ -1,8 +1,10 @@
 package org.ws4d.coap.test.resources;
 
-import org.ws4d.coap.rest.Resource;
+import java.util.Vector;
 
-public class LongPathResource implements Resource {
+import org.ws4d.coap.rest.CoapResource;
+
+public class LongPathResource implements CoapResource {
     @Override
 	public String getMimeType() {
 	    // TODO Auto-generated method stub
@@ -25,8 +27,12 @@ public class LongPathResource implements Resource {
 	}
 
 	@Override
-	public byte[] getValue(String query) {
-	    // TODO Auto-generated method stub
+	public byte[] getValue(Vector<String> query) {
 	    return null;
+	}
+
+	@Override
+	public String getResourceType() {
+	    return "LongPath";
 	}
 }

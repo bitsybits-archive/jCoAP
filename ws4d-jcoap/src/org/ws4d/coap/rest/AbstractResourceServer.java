@@ -10,7 +10,7 @@ public abstract class AbstractResourceServer implements ResourceServer {
     protected HashMap<String, Resource> resources = new HashMap<String, Resource>();
     private CoreResource coreResource = new CoreResource();
 
-    public final boolean createResource(Resource resource) {
+    public final boolean createResource(CoapResource resource) {
 	if (resource==null) return false;
 	
 	if (!resources.containsKey(resource.getPath())) {
@@ -21,7 +21,7 @@ public abstract class AbstractResourceServer implements ResourceServer {
 	    return false;
     }
 
-    public final boolean updateResource(Resource resource) {
+    public final boolean updateResource(CoapResource resource) {
 	if (resource==null) return false;
 	
 	if (resources.containsKey(resource.getPath())) {
@@ -31,7 +31,7 @@ public abstract class AbstractResourceServer implements ResourceServer {
 	    return false;
     }
     
-    public void createUpdateResource(Resource resource){
+    public void createUpdateResource(CoapResource resource){
 	if (resource==null) 
 	    return;
 	

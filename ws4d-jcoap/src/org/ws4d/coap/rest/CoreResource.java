@@ -2,6 +2,7 @@
 package org.ws4d.coap.rest;
 
 import java.util.HashMap;
+import java.util.Vector;
 
 /**
  * Well-Known CoRE support (draft-ietf-core-link-format-05)
@@ -29,29 +30,39 @@ public class CoreResource implements Resource {
 
     @Override
     public byte[] getValue() {
-        StringBuilder returnString = new StringBuilder();
-        for (String coreLine : coreStrings.values()) {
-            returnString.append(coreLine);
-            returnString.append(",");
-        }
-        return returnString.toString().getBytes();
+        return buildCoreString(null).getBytes();
     }
 
-    public void registerResource(Resource resource) {
+    public void registerResource(CoapResource resource) {
         if (resource != null) {
             StringBuilder coreLine = new StringBuilder();
             coreLine.append("<");
             coreLine.append(resource.getPath());
             coreLine.append(">");
             // coreLine.append(";ct=???");
-            // coreLine.append(";rt=\"" + resource.getShortName() + "\"");
+            coreLine.append(";rt=\"" + resource.getResourceType() + "\"");
             // coreLine.append(";if=\"observations\"");
             coreStrings.put(resource, coreLine.toString());
         }
     }
+    
+    private String buildCoreString(String resourceType) {
+	StringBuilder returnString = new StringBuilder();
+        for (String coreLine : coreStrings.values()) {
+            if (resourceType==null || coreLine.contains(resourceType)) {
+        	returnString.append(coreLine);
+        	returnString.append(",");
+            }
+        }
+        returnString.deleteCharAt(returnString.length()-1);
+        return returnString.toString();
+    }
 
     @Override
-    public byte[] getValue(String query) {
+    public byte[] getValue(Vector<String> queries) {
+	for (String query : queries) {
+	    if (query.startsWith("rt-")) return buildCoreString(query.substring(3)).getBytes();
+	}
 	return getValue();
     }
 }
