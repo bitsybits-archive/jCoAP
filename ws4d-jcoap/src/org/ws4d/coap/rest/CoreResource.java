@@ -4,12 +4,14 @@ package org.ws4d.coap.rest;
 import java.util.HashMap;
 import java.util.Vector;
 
+import org.ws4d.coap.messages.CoapMediaType;
+
 /**
  * Well-Known CoRE support (draft-ietf-core-link-format-05)
  * 
  * @author Nico Laum <nico.laum@uni-rostock.de>
  */
-public class CoreResource implements Resource {
+public class CoreResource implements CoapResource {
     private final static String uriPath = "/.well-known/core";
     private HashMap<Resource, String> coreStrings = new HashMap<Resource, String>();
 
@@ -65,4 +67,15 @@ public class CoreResource implements Resource {
 	}
 	return getValue();
     }
+
+	@Override
+	public String getResourceType() {
+		// TODO implement
+		return null;
+	}
+
+	@Override
+	public CoapMediaType getCoapMediaType() {
+		return CoapMediaType.link_format;
+	}
 }

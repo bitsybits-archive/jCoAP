@@ -18,8 +18,8 @@ public interface ResourceServer {
     public boolean updateResource(CoapResource resource);
     public boolean deleteResource(String path);
 
-    /*creates a resource, if resource exits the resource will be updated*/
-    public void createUpdateResource(CoapResource resource);
+//    /*creates a resource, if resource exits the resource will be updated*/
+//    public void createUpdateResource(CoapResource resource);
 
     
     /**

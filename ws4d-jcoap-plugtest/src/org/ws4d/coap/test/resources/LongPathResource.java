@@ -1,38 +1,15 @@
 package org.ws4d.coap.test.resources;
 
-import java.util.Vector;
+import org.ws4d.coap.messages.CoapMediaType;
+import org.ws4d.coap.rest.BasicCoapResource;
 
-import org.ws4d.coap.rest.CoapResource;
-
-public class LongPathResource implements CoapResource {
-    @Override
-	public String getMimeType() {
-	    // TODO Auto-generated method stub
-	    return null;
+public class LongPathResource extends BasicCoapResource{
+    private LongPathResource(String path, byte[] value, CoapMediaType mediaType) {
+		super(path, value, mediaType);
+		// TODO Auto-generated constructor stub
 	}
-
-	@Override
-	public String getPath() {
-	    return "/seg1/seg2/seg3";
-	}
-
-	@Override
-	public String getShortName() {
-	    return getPath();
-	}
-
-	@Override
-	public byte[] getValue() {
-	    return "Test".getBytes();
-	}
-
-	@Override
-	public byte[] getValue(Vector<String> query) {
-	    return null;
-	}
-
-	@Override
-	public String getResourceType() {
-	    return "LongPath";
-	}
+    
+    public LongPathResource(){
+    	this("/seg1/seg2/seg3", "LongPathResource Payload".getBytes(), CoapMediaType.text_plain);
+    }
 }

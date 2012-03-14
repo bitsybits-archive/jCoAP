@@ -7,6 +7,7 @@ import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
+import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapPacketType;
 import org.ws4d.coap.messages.BasicCoapRequest;
 import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
@@ -80,18 +81,28 @@ public abstract class BasicCoapChannel implements CoapChannel {
 
     @Override
     public BasicCoapResponse createResponse(CoapMessage request, CoapResponseCode responseCode) {
+    	return createResponse(request, responseCode, null);
+    }  
+    
+    @Override
+    public BasicCoapResponse createResponse(CoapMessage request, CoapResponseCode responseCode, CoapMediaType contentType){
     	BasicCoapResponse response;
-        if (request.getPacketType() == CoapPacketType.CON) {
-        	response = new BasicCoapResponse(CoapPacketType.ACK, responseCode, request.getMessageID(), request.getToken());
-            response.setChannel(this);
-        } else if (request.getPacketType() == CoapPacketType.NON) {
-        	response = new BasicCoapResponse(CoapPacketType.NON, responseCode, channelManager.getNewMessageID(), request.getToken());
-            response.setChannel(this);
-        } else {
-        	throw new IllegalStateException("Create Response failed, Request is neither a CON nor a NON packet");
-        }
-        return response;
-    }        
+    	if (request.getPacketType() == CoapPacketType.CON) {
+    		response = new BasicCoapResponse(CoapPacketType.ACK, responseCode, request.getMessageID(), request.getToken());
+    		response.setChannel(this);
+    	} else if (request.getPacketType() == CoapPacketType.NON) {
+    		response = new BasicCoapResponse(CoapPacketType.NON, responseCode, request.getMessageID(), request.getToken());
+    		response.setChannel(this);
+    	} else {
+    		throw new IllegalStateException("Create Response failed, Request is neither a CON nor a NON packet");
+    	}
+    	if (contentType != null && contentType != CoapMediaType.UNKNOWN){
+    		response.setContentType(contentType);
+    	}
+    	
+    	return response;
+    }
+
     
     /*A channel is identified (and therefore unique) by its remote address, remote port and the local port */
 	@Override

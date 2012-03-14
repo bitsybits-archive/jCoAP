@@ -69,7 +69,6 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 
 	public BasicCoapRequest(CoapPacketType packetType, CoapRequestCode requestCode, int messageId) {
 		this.version = 1;
-		this.optionCount = 0;
 
 		this.packetType = packetType;
 		this.requestCode = requestCode;
@@ -93,8 +92,8 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 	@Override
 	public void setUriHost(String host) {
 		if (host == null) return;
-		if (options.optionExist(CoapHeaderOptionType.Uri_Host)){
-			throw new IllegalArgumentException("Uri-Host option already exist");
+		if (options.optionExists(CoapHeaderOptionType.Uri_Host)){
+			throw new IllegalArgumentException("Uri-Host option already exists");
 		}
 		if (host.length() < 1 || host.length() > CoapHeaderOption.MAX_LENGTH){
 			throw new IllegalArgumentException("Invalid Uri-Host option length");
@@ -106,8 +105,8 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 	@Override
 	public void setUriPort(int port) {
 		if (port < 0) return;
-		if (options.optionExist(CoapHeaderOptionType.Uri_Port)){
-			throw new IllegalArgumentException("Uri-Port option already exist");
+		if (options.optionExists(CoapHeaderOptionType.Uri_Port)){
+			throw new IllegalArgumentException("Uri-Port option already exists");
 		}
 		byte[] value = long2CoapUint(port);
     	if(value.length < 0 || value.length > 2){
@@ -171,8 +170,8 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 	public void setProxyUri(String proxyUri) {
 		if (proxyUri == null) return;
 
-		if (options.optionExist(CoapHeaderOptionType.Proxy_Uri)){
-			throw new IllegalArgumentException("Proxy Uri already exist");
+		if (options.optionExists(CoapHeaderOptionType.Proxy_Uri)){
+			throw new IllegalArgumentException("Proxy Uri already exists");
 		}
 		
 		if (proxyUri.length() < 1){
@@ -314,4 +313,10 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 	public boolean isEmpty() {
 		return false;
 	}
+	
+    @Override
+	public String toString() {
+    	return packetType.toString() + ", " + requestCode.toString() + ", MsgId: " + getMessageID() +", #Options: " + options.getOptionCount(); 
+	}
+
 }

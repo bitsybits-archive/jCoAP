@@ -42,7 +42,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	protected int version;
 	protected CoapPacketType packetType;
 	protected int messageCodeValue;
-	protected int optionCount; 
+	//protected int optionCount; 
 	protected int messageId;
     
     /* Options */
@@ -63,7 +63,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
     	/* check length to avoid buffer overflow exceptions */
     	this.version = 1; 
         this.packetType = (CoapPacketType.getPacketType((bytes[offset + 0] & 0x30) >> 4)); 
-        this.optionCount = bytes[offset + 0] & 0x0F;
+        int optionCount = bytes[offset + 0] & 0x0F;
         this.messageCodeValue = (bytes[offset + 1] & 0xFF);
         this.messageId = ((bytes[offset + 2] << 8) & 0xFF00) + (bytes[offset + 3] & 0xFF);		
 		
@@ -212,7 +212,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
     public void setContentType(CoapMediaType mediaType){
     	CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Content_Type);
     	if (option != null){
-    		/* content Type MUST only exist once */
+    		/* content Type MUST only exists once */
     		throw new IllegalStateException("added content option twice");
     	}
     	
@@ -313,12 +313,6 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         retransmissionCounter += 1;
         timeout *= 2;
     }
-
-    @Override
-	public String toString() {
-    	/* TODO implement */
-    	return "toString not implemented yet"; 
-	}
 
 	@Override
 	public boolean isReliable() {
@@ -628,7 +622,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 			return null;
 		}
 	    
-	    public boolean optionExist(CoapHeaderOptionType optionType) {
+	    public boolean optionExists(CoapHeaderOptionType optionType) {
 			CoapHeaderOption option = getOption(optionType);
 			if (option == null){
 				return false;

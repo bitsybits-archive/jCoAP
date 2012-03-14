@@ -140,7 +140,6 @@ public class BasicCoapResponse extends AbstractCoapMessage implements CoapRespon
 	/* token can be null */
 	public BasicCoapResponse(CoapPacketType packetType, CoapResponseCode responseCode, int messageId, byte[] requestToken){
 		this.version = 1;
-		this.optionCount = 0;
 		
 		this.packetType = packetType;
 		
@@ -164,8 +163,8 @@ public class BasicCoapResponse extends AbstractCoapMessage implements CoapRespon
 
 	@Override
 	public void setMaxAge(int maxAge){
-		if (options.optionExist(CoapHeaderOptionType.Max_Age)){
-			throw new IllegalStateException("Max Age option already exist");
+		if (options.optionExists(CoapHeaderOptionType.Max_Age)){
+			throw new IllegalStateException("Max Age option already exists");
 		}
 		if (maxAge < 0){
 			throw new IllegalStateException("Max Age MUST be an unsigned value");
@@ -216,5 +215,11 @@ public class BasicCoapResponse extends AbstractCoapMessage implements CoapRespon
 	public boolean isEmpty() {
 		return false;
 	}
+	
+    @Override
+	public String toString() {
+    	return packetType.toString() + ", " + responseCode.toString() + ", MsgId: " + getMessageID() +", #Options: " + options.getOptionCount(); 
+	}
+
 
 }

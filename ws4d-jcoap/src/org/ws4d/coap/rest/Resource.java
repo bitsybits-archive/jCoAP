@@ -27,4 +27,5 @@ public interface Resource {
     public byte[] getValue();
     
     public byte[] getValue(Vector<String> query);
+    
 }

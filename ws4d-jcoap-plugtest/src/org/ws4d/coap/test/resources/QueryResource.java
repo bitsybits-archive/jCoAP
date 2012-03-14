@@ -1,37 +1,17 @@
 package org.ws4d.coap.test.resources;
 
-import java.util.Vector;
+import org.ws4d.coap.messages.CoapMediaType;
+import org.ws4d.coap.rest.BasicCoapResource;
 
-import org.ws4d.coap.rest.CoapResource;
-
-public class QueryResource implements CoapResource {
-    @Override
-    public String getMimeType() {
-	return null;
+public class QueryResource extends BasicCoapResource {
+	
+    private QueryResource(String path, byte[] value, CoapMediaType mediaType) {
+		super(path, value, mediaType);
+		// TODO Auto-generated constructor stub
+	}
+    
+    public QueryResource(){
+    	this("/query", "QueryResource Payload".getBytes(), CoapMediaType.text_plain);
     }
 
-    @Override
-    public String getPath() {
-	return "/query";
-    }
-
-    @Override
-    public String getShortName() {
-	return getPath();
-    }
-
-    @Override
-    public byte[] getValue() {
-	return "Payload".getBytes();
-    }
-
-    @Override
-    public byte[] getValue(Vector<String> query) {
-	return null;
-    }
-
-    @Override
-    public String getResourceType() {
-	return "Method";
-    }
 }

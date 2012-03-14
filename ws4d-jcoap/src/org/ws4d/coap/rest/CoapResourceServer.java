@@ -13,10 +13,8 @@ import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
 import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
-import org.ws4d.coap.messages.CoapMediaType;
 
-public class CoapResourceServer extends AbstractResourceServer implements
-	CoapServer {
+public class CoapResourceServer extends AbstractResourceServer implements CoapServer {
     private static final int PORT = Constants.COAP_DEFAULT_PORT;
 
     @Override
@@ -59,7 +57,8 @@ public class CoapResourceServer extends AbstractResourceServer implements
 		if (requestCode == CoapRequestCode.GET) {
 			// create response with value from responsible Resource object
 			String targetPath = request.getUriPath();
-			final Resource resource = readResource(targetPath);
+			//TODO make this cast safe
+			final CoapResource resource = (CoapResource) readResource(targetPath);
 
 			if (resource != null) {
 				// URI queries
@@ -71,17 +70,13 @@ public class CoapResourceServer extends AbstractResourceServer implements
 					responseValue = resource.getValue();
 				}
 				response = channel.createResponse(request,
-						CoapResponseCode.Content_205);
+						CoapResponseCode.Content_205, resource.getCoapMediaType());
 
-				if (resource.getClass().equals(CoreResource.class)) {
-					response.setContentType(CoapMediaType.link_format);
-				}
 				response.setPayload(responseValue);
 			} else {
 				response = channel.createResponse(request,
 						CoapResponseCode.Not_Found_404);
 			}
-			channel.sendMessage(response);
 		} else if (requestCode == CoapRequestCode.DELETE) {
 			String targetPath = request.getUriPath();
 			deleteResource(targetPath);
@@ -108,8 +103,9 @@ public class CoapResourceServer extends AbstractResourceServer implements
 	}
 
     private CoapResource parseRequest(CoapRequest request) {
-	CoapResource resource = new BasicResource(request.getUriPath(), request.getPayload());
+	CoapResource resource = new BasicCoapResource(request.getUriPath(), request.getPayload(), request.getContentType());
 	// TODO add content type
 	return resource;
     }
+
 }
