@@ -24,7 +24,8 @@ import java.net.URI;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.nio.protocol.NHttpResponseTrigger;
-import org.ws4d.coap.interfaces.CoapMessage;
+import org.ws4d.coap.interfaces.CoapRequest;
+import org.ws4d.coap.interfaces.CoapResponse;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -37,14 +38,14 @@ public class ProxyMessageContext {
 	private boolean translate;  //translate from coap to http
 
 	/*in case of incoming coap request */
-	private CoapMessage coapRequest;  //the coapRequest of the origin client (maybe translated)
+	private CoapRequest coapRequest;  //the coapRequest of the origin client (maybe translated)
 	
 	/* in case of incoming http request */
 	private HttpRequest httpRequest;	//the httpRequest of the origin client (maybe translated)
 	NHttpResponseTrigger trigger;
 
 	/* in case of a coap response */
-	private CoapMessage coapResponse; //the coap response of the final server
+	private CoapResponse coapResponse; //the coap response of the final server
 
 	/* in case of a http response */
 	private HttpResponse httpResponse; //the http response of the final server
@@ -56,7 +57,7 @@ public class ProxyMessageContext {
 	
 	private boolean fromCache = false;
 	
-	public ProxyMessageContext(CoapMessage request, boolean translate,
+	public ProxyMessageContext(CoapRequest request, boolean translate,
 			InetAddress remoteAddress, int remotePort, URI uri) {
 
 		this.coapRequest = request;
@@ -88,7 +89,7 @@ public class ProxyMessageContext {
 		return httpRequest != null;
 	}
 	
-	public CoapMessage getCoapRequest() {
+	public CoapRequest getCoapRequest() {
 		return coapRequest;
 	}
 	
@@ -96,11 +97,11 @@ public class ProxyMessageContext {
 		return httpRequest;
 	}
 	
-	public CoapMessage getCoapResponse() {
+	public CoapResponse getCoapResponse() {
 		return coapResponse;
 	}
 
-	public void setCoapResponse(CoapMessage coapResponse) {
+	public void setCoapResponse(CoapResponse coapResponse) {
 		this.coapResponse = coapResponse;
 	}
 
@@ -132,7 +133,7 @@ public class ProxyMessageContext {
 		return translate;
 	}
 
-	public void setTranslatedCoapRequest(CoapMessage request) {
+	public void setTranslatedCoapRequest(CoapRequest request) {
 		this.coapRequest = request;
 	}
 

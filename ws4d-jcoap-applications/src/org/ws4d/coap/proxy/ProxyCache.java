@@ -36,10 +36,9 @@ import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.ws4d.coap.connection.DefaultCoapSocketHandler;
+import org.ws4d.coap.connection.BasicCoapSocketHandler;
 import org.ws4d.coap.interfaces.CoapMessage;
-import org.ws4d.coap.messages.CoapHeaderOption;
-import org.ws4d.coap.messages.CoapHeaderOptions.HeaderOptionNumber;
+import org.ws4d.coap.interfaces.CoapResponse;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -52,7 +51,7 @@ public class ProxyCache {
 	/*0 disables the cache*/
 	private static int defaultTimeToLive = org.ws4d.coap.Constants.COAP_DEFAULT_MAX_AGE_S;	//max-age of an element by default in seconds
 	
-	private static Logger logger = Logger.getLogger(DefaultCoapSocketHandler.class.getName());
+	private static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class.getName());
 	
 	public ProxyCache() {
 		cacheManager = CacheManager.create();
@@ -142,16 +141,15 @@ public class ProxyCache {
 		}
 	}
 	
-	private void putCoapRes(URI uri, CoapMessage response){
+	private void putCoapRes(URI uri, CoapResponse response){
 		if (response == null){
 			return;
 		}
 		logger.log(Level.INFO, "Cache CoAP Resource (" + uri.toString() + ")");
 		
-		CoapHeaderOption option = response.getHeader().getOption(CoapHeaderOptionType.Max_Age);
-		int timeToLive = defaultTimeToLive;
-		if (option != null){
-			/* TODO: implement parsing option */
+		long timeToLive = response.getMaxAge();
+		if (timeToLive < 0){
+			timeToLive = defaultTimeToLive;
 		}
 		insertElement(uri, response, timeToLive);
 	}
@@ -168,13 +166,13 @@ public class ProxyCache {
 		}
 	}
 	
-	public CoapMessage getCoapRes(URI uri) {
+	public CoapResponse getCoapRes(URI uri) {
 		if (defaultTimeToLive == 0) return null;
 
 		if (cache.getQuiet(uri) != null) {
 			Object o = cache.get(uri).getObjectValue();
 			logger.log(Level.INFO, "Found in cache (" + uri.toString() + ")");
-			return (CoapMessage) o;
+			return (CoapResponse) o;
 		}else{
 			logger.log(Level.INFO, "Not in cache (" + uri.toString() + ")");
 			return null;
@@ -216,13 +214,17 @@ public class ProxyCache {
 		}
 	}
 
-	private void insertElement(URI uri, Object resource, int timeToLive) {
+	private void insertElement(URI uri, Object resource, long timeToLive) {
 		
 		
 		Element elem = new Element(uri,resource);
 		
 		if (timeToLive > 0){
-			elem.setTimeToLive(timeToLive);
+			/* TODO: this limits the maximum lifetime*/
+			if (timeToLive > Integer.MAX_VALUE){
+				timeToLive = Integer.MAX_VALUE;
+			}
+			elem.setTimeToLive((int)timeToLive);
 		}
 					
 		cache.put(elem);

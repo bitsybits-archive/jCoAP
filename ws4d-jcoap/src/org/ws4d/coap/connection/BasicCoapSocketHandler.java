@@ -39,12 +39,12 @@ import org.ws4d.coap.messages.AbstractCoapMessage;
 import org.ws4d.coap.messages.CoapPacketType;
 import org.ws4d.coap.tools.TimeoutHashMap;
 
-public class DefaultCoapSocketHandler implements CoapSocketHandler {
+public class BasicCoapSocketHandler implements CoapSocketHandler {
     /**
      * @author Christian Lerche <christian.lerche@uni-rostock.de>
      * @author Nico Laum <nico.laum@uni-rostock.de>
      */
-    private static Logger logger = Logger.getLogger(DefaultCoapSocketHandler.class.getName());
+    private static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class.getName());
     protected WorkerThread workerThread = null;
     protected HashMap<ChannelKey, CoapChannel> channels = new HashMap<ChannelKey, CoapChannel>();
     
@@ -55,7 +55,7 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
     
     private int localPort;
 
-    public DefaultCoapSocketHandler(CoapChannelManager channelManager, int port) throws IOException {
+    public BasicCoapSocketHandler(CoapChannelManager channelManager, int port) throws IOException {
         this.channelManager = channelManager;
         dgramChannel = DatagramChannel.open();
        	dgramChannel.socket().bind(new InetSocketAddress(port)); //port can be 0, then a free port is chosen 
@@ -66,7 +66,7 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
         workerThread.start();
     }
     
-    public DefaultCoapSocketHandler(CoapChannelManager channelManager) throws IOException {
+    public BasicCoapSocketHandler(CoapChannelManager channelManager) throws IOException {
         this(channelManager, 0);
     }
     
@@ -198,7 +198,7 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 				if ((packetType == CoapPacketType.CON)|| (packetType == CoapPacketType.NON)) {
 					/* CON or NON create a new channel or reset connection */
 					try {
-						channel = channelManager.createServerChannel(DefaultCoapSocketHandler.this, msg, addr.getAddress(), addr.getPort());
+						channel = channelManager.createServerChannel(BasicCoapSocketHandler.this, msg, addr.getAddress(), addr.getPort());
 					} catch (Exception e) {
 						/* not a valid request */
 						e.printStackTrace();
@@ -345,8 +345,8 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 				return false;
 			return true;
 		}
-		private DefaultCoapSocketHandler getOuterType() {
-			return DefaultCoapSocketHandler.this;
+		private BasicCoapSocketHandler getOuterType() {
+			return BasicCoapSocketHandler.this;
 		}
     }
     
@@ -388,8 +388,8 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
 				return false;
 			return true;
 		}
-		private DefaultCoapSocketHandler getOuterType() {
-			return DefaultCoapSocketHandler.this;
+		private BasicCoapSocketHandler getOuterType() {
+			return BasicCoapSocketHandler.this;
 		}
 		
     }
@@ -487,7 +487,7 @@ public class DefaultCoapSocketHandler implements CoapSocketHandler {
     		return null;
     	}
     	
-    	CoapClientChannel channel = new DefaultCoapClientChannel(this, client, remoteAddress, remotePort);
+    	CoapClientChannel channel = new BasicCoapClientChannel(this, client, remoteAddress, remotePort);
     	
     	
         addChannel(channel);

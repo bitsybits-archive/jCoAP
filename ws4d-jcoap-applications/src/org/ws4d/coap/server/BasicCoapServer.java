@@ -15,13 +15,14 @@
 
 package org.ws4d.coap.server;
 
-import org.ws4d.coap.connection.DefaultCoapChannelManager;
+import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
+import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapServer;
-import org.ws4d.coap.messages.CoapRequest;
-import org.ws4d.coap.messages.CoapResponse.CoapResponseCode;
+import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
+import org.ws4d.coap.messages.CoapMediaType;
 
 public class BasicCoapServer implements CoapServer {
     private static final int PORT = 5683;
@@ -31,7 +32,7 @@ public class BasicCoapServer implements CoapServer {
         System.out.println("Start CoAP Server on port " + PORT);
         BasicCoapServer server = new BasicCoapServer();
 
-        CoapChannelManager channelManager = DefaultCoapChannelManager.getInstance();
+        CoapChannelManager channelManager = BasicCoapChannelManager.getInstance();
         channelManager.createServerListener(server, PORT);
     }
 
@@ -46,7 +47,10 @@ public class BasicCoapServer implements CoapServer {
 		System.out.println("Received message: " + request.toString());
 		
 		CoapMessage response = channel.createResponse(request,
-				CoapResponseCode.Bad_Request_400);
+				CoapResponseCode.Content_205);
+		response.setContentType(CoapMediaType.text_plain);
+		
+		response.setPayload("payload...".getBytes());
 		channel.sendMessage(response);
 	}
 }

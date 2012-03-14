@@ -2,19 +2,18 @@ package org.ws4d.coap.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Iterator;
 import java.util.Vector;
 
 import org.ws4d.coap.Constants;
-import org.ws4d.coap.connection.DefaultCoapChannelManager;
+import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
+import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapServer;
-import org.ws4d.coap.messages.CoapHeaderOption;
-import org.ws4d.coap.messages.CoapHeaderOptions;
-import org.ws4d.coap.messages.CoapHeaderOptions.HeaderOptionNumber;
-import org.ws4d.coap.messages.CoapMessageCode.MessageCode;
+import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
+import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
+import org.ws4d.coap.messages.CoapMediaType;
 
 public class CoapResourceServer extends AbstractResourceServer implements
 	CoapServer {
@@ -23,7 +22,7 @@ public class CoapResourceServer extends AbstractResourceServer implements
     @Override
     public void start() throws Exception {
 	super.start();
-	CoapChannelManager channelManager = DefaultCoapChannelManager
+	CoapChannelManager channelManager = BasicCoapChannelManager
 		.getInstance();
 	channelManager.createServerListener(this, PORT);
     }
@@ -49,89 +48,67 @@ public class CoapResourceServer extends AbstractResourceServer implements
     }
 
     @Override
-    public CoapServer onAccept(CoapMessage request) {
-	return this;
-    }
-    
-    // TODO The URI Query management should be done somewhere else
-    private Vector<String> returnUriQueries(CoapMessage message) {
-	CoapHeaderOption option = null;
-	Vector<String> uriQueries = new Vector<String>();
-	for (Iterator<CoapHeaderOption> options = message.getHeader().getCoapHeaderOptions().iterator(); options.hasNext();) {
-	    option=options.next();
-	    if (option!=null && HeaderOptionNumber.Uri_Query == option.getOptionNumber()) {
-		
-		byte[] data = option.getOptionValue();
-		if (data!=null) {
-		    uriQueries.add(data.toString());
-		}
-	    }
-	}
-	return null;
+    public CoapServer onAccept(CoapRequest request) {
+    	return this;
     }
     
     @Override
-    public void handleRequest(CoapChannel channel, CoapMessage request) {
-	CoapMessage response = null;
-	MessageCode messageCode = request.getMessageCode();
-	if (messageCode == MessageCode.GET) {
-	    // create response with value from responsible Resource object
-	    String targetPath = request.getUriPath();
-	    final Resource resource = readResource(targetPath);
+	public void handleRequest(CoapChannel channel, CoapRequest request) {
+		CoapMessage response = null;
+		CoapRequestCode requestCode = request.getRequestCode();
+		if (requestCode == CoapRequestCode.GET) {
+			// create response with value from responsible Resource object
+			String targetPath = request.getUriPath();
+			final Resource resource = readResource(targetPath);
 
-	    if (resource != null) {
-		// URI queries
-		Vector<String> uriQueries = returnUriQueries(request);
-		final byte[] responseValue;
-		if (uriQueries!=null) 
-		    responseValue = resource.getValue(uriQueries);
-		else
-		    responseValue = resource.getValue();
-		response = channel.createResponse(request,
-			MessageCode.Content_205);
-		// TODO content type handling needs to be implemented
-		if (resource.getClass().equals(CoreResource.class)) {
-		    // hack to add content type for core resource (currently content types are not handled in responses)
-		    byte[] value = new byte[1];
-		    value[0] = 40; //
-		    response.getHeader()
-			    .addOption(
-				    new CoapHeaderOption(
-					    CoapHeaderOptions.CoapHeaderOptionType.Content_Type,
-					    value));
+			if (resource != null) {
+				// URI queries
+				Vector<String> uriQueries = request.getUriQuery();
+				final byte[] responseValue;
+				if (uriQueries != null) {
+					responseValue = resource.getValue(uriQueries);
+				} else {
+					responseValue = resource.getValue();
+				}
+				response = channel.createResponse(request,
+						CoapResponseCode.Content_205);
+
+				if (resource.getClass().equals(CoreResource.class)) {
+					response.setContentType(CoapMediaType.link_format);
+				}
+				response.setPayload(responseValue);
+			} else {
+				response = channel.createResponse(request,
+						CoapResponseCode.Not_Found_404);
+			}
+			channel.sendMessage(response);
+		} else if (requestCode == CoapRequestCode.DELETE) {
+			String targetPath = request.getUriPath();
+			deleteResource(targetPath);
+			response = channel.createResponse(request,
+					CoapResponseCode.Deleted_202);
+		} else if (requestCode == CoapRequestCode.POST
+				|| requestCode == CoapRequestCode.PUT) {
+			CoapResource resource = parseRequest(request);
+			if (createResource(resource)) {
+				response = channel.createResponse(request,
+						CoapResponseCode.Created_201);
+			} else if (updateResource(resource)) {
+				response = channel.createResponse(request,
+						CoapResponseCode.Changed_204);
+			} else
+				response = channel.createResponse(request,
+						CoapResponseCode.Bad_Request_400);
+		} else {
+			response = channel.createResponse(request,
+					CoapResponseCode.Bad_Request_400);
+			return;
 		}
-		response.setPayload(responseValue);
-	    } else {
-		response = channel.createResponse(request,
-			MessageCode.Not_Found_404);
-	    }
-	    channel.sendMessage(response);
-	} else if (messageCode == MessageCode.DELETE) {
-	    String targetPath = request.getUriPath();
-	    deleteResource(targetPath);
-	    response = channel.createResponse(request,
-			MessageCode.Deleted_202);
-	} else if (messageCode == MessageCode.POST || messageCode == MessageCode.PUT) {
-	    CoapResource resource = parseMessage(request);
-	    if (createResource(resource)) {
-		response = channel.createResponse(request,
-			MessageCode.Created_201);
-	    } else if (updateResource(resource)) {
-		response = channel.createResponse(request,
-			MessageCode.Changed_204);
-	    } else
-		response = channel.createResponse(request,
-			MessageCode.Bad_Request_400);
-	} else {
-	    response = channel.createResponse(request,
-		    MessageCode.Bad_Request_400);
-	    return;
+		channel.sendMessage(response);
 	}
-	channel.sendMessage(response);
-    }
-    
-    private CoapResource parseMessage(CoapMessage message) {
-	CoapResource resource = new BasicResource(message.getUriPath(), message.getPayload());
+
+    private CoapResource parseRequest(CoapRequest request) {
+	CoapResource resource = new BasicResource(request.getUriPath(), request.getPayload());
 	// TODO add content type
 	return resource;
     }

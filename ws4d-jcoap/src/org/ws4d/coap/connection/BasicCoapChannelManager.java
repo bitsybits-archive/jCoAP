@@ -28,27 +28,27 @@ import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.interfaces.CoapServerChannel;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
-import org.ws4d.coap.messages.CoapRequest;
+import org.ws4d.coap.messages.BasicCoapRequest;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 
 
-public class DefaultCoapChannelManager implements CoapChannelManager {
+public class BasicCoapChannelManager implements CoapChannelManager {
     // global message id
     private int globalMessageId;
-    private static DefaultCoapChannelManager instance;
+    private static BasicCoapChannelManager instance;
     private HashMap<Integer, SocketInformation> socketMap = new HashMap<Integer, SocketInformation>();
     CoapServer serverListener = null;
 
-    private DefaultCoapChannelManager() {
+    private BasicCoapChannelManager() {
         reset();
     }
 
     public synchronized static CoapChannelManager getInstance() {
         if (instance == null) {
-            instance = new DefaultCoapChannelManager();
+            instance = new BasicCoapChannelManager();
         }
         return instance;
     }
@@ -69,12 +69,12 @@ public class DefaultCoapChannelManager implements CoapChannelManager {
     		throw new IllegalStateException("Incomming message is not a request message");
     	}
 
-    	CoapServer server = socketInfo.serverListener.onAccept((CoapRequest) message);
+    	CoapServer server = socketInfo.serverListener.onAccept((BasicCoapRequest) message);
     	if (server == null){
     		/* Server rejected channel */
     		return null;
     	}
-    	CoapServerChannel newChannel= new DefaultCoapServerChannel( socketHandler, server, addr, port);
+    	CoapServerChannel newChannel= new BasicCoapServerChannel( socketHandler, server, addr, port);
     	return newChannel;
     }
 
@@ -102,7 +102,7 @@ public class DefaultCoapChannelManager implements CoapChannelManager {
     public void createServerListener(CoapServer serverListener, int localPort) {
         if (!socketMap.containsKey(localPort)) {
             try {
-            	SocketInformation socketInfo = new SocketInformation(new DefaultCoapSocketHandler(this, localPort), serverListener);
+            	SocketInformation socketInfo = new SocketInformation(new BasicCoapSocketHandler(this, localPort), serverListener);
             	socketMap.put(localPort, socketInfo);
             } catch (IOException e) {
 				e.printStackTrace();
@@ -117,7 +117,7 @@ public class DefaultCoapChannelManager implements CoapChannelManager {
 	public CoapChannel connect(CoapClient client, InetAddress addr, int port) {
     	CoapSocketHandler socketHandler = null;
 		try {
-			socketHandler = new DefaultCoapSocketHandler(this);
+			socketHandler = new BasicCoapSocketHandler(this);
 			SocketInformation sockInfo = new SocketInformation(socketHandler, null); 
 			socketMap.put(socketHandler.getLocalPort(), sockInfo);
 			return socketHandler.connect(client, addr, port);

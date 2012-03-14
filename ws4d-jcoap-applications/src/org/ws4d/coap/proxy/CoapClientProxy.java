@@ -25,22 +25,22 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.ws4d.coap.connection.DefaultCoapChannelManager;
-import org.ws4d.coap.connection.DefaultCoapSocketHandler;
+import org.ws4d.coap.connection.BasicCoapChannelManager;
+import org.ws4d.coap.connection.BasicCoapSocketHandler;
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapClient;
-import org.ws4d.coap.interfaces.CoapMessage;
-import org.ws4d.coap.messages.CoapHeaderOption;
-import org.ws4d.coap.messages.CoapHeaderOptions.HeaderOptionNumber;
-import org.ws4d.coap.tools.UriParser;
+import org.ws4d.coap.interfaces.CoapRequest;
+import org.ws4d.coap.interfaces.CoapResponse;
+import org.ws4d.coap.messages.AbstractCoapMessage.CoapHeaderOptionType;
+import org.ws4d.coap.messages.BasicCoapRequest;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Andy Seidel <andy.seidel@uni-rostock.de>
  */
 public class CoapClientProxy {
-	private static Logger logger = Logger.getLogger(DefaultCoapSocketHandler.class.getName());
+	private static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class.getName());
 
 	// queue is used to receive coap-requests from mapper
 	private ArrayBlockingQueue<ProxyMessageContext> coapClientRequestQueue = new ArrayBlockingQueue<ProxyMessageContext>(100);
@@ -69,7 +69,7 @@ public class CoapClientProxy {
 	}
 		
 	private boolean checkRemoteAddress(ProxyMessageContext context) {
-		CoapMessage request = context.getCoapRequest();
+		CoapRequest request = context.getCoapRequest();
 
 		/* Check remote Host */
 		if (context.getRemoteAddress() == null) {
@@ -77,20 +77,11 @@ public class CoapClientProxy {
 			InetAddress remoteAddress = null;
 
 			/* retrieve Host from CoapHeader Option */
-			if (request.getHeader().getOptionCount() > 0) {
-				for (CoapHeaderOption option : request.getHeader()
-						.getCoapHeaderOptions()) {
-					if (option.getOptionNumber() == CoapHeaderOptionType.Uri_Host) {
-						String value = new String(option.getOptionValue());
-						try {
-							remoteAddress = InetAddress.getByName(value);
-							context.setRemoteAddress(remoteAddress);
-						} catch (UnknownHostException e) {
-							remoteAddress = null;
-						}
-						break;
-					}
-				}
+			try {
+				remoteAddress = InetAddress.getByName(request.getUriHost());
+				context.setRemoteAddress(remoteAddress);
+			} catch (UnknownHostException e) {
+				remoteAddress = null;
 			}
 
 			/* check if Host could be found */
@@ -103,22 +94,14 @@ public class CoapClientProxy {
 
 		/* Check remote port */
 		if (context.getRemotePort() == 0) {
-			/* Coap Default Port */
-			context.setRemotePort(org.ws4d.coap.Constants.COAP_DEFAULT_PORT);
-			if (request.getHeader().getOptionCount() > 0) {
-				for (CoapHeaderOption option : request.getHeader()
-						.getCoapHeaderOptions()) {
-					if (option.getOptionNumber() == CoapHeaderOptionType.Uri_Port) {
-						String value = new String(option.getOptionValue());
-						/* set port from Coap Header */
-						context.setRemotePort(Integer.parseInt(value));
-						break;
-					}
-				}
+			int remotePort = request.getUriPort();
+			if (remotePort > 0) {
+				/* set port from Coap Header */
+				context.setRemotePort(remotePort);
+			} else {
+				context.setRemotePort(org.ws4d.coap.Constants.COAP_DEFAULT_PORT);
 			}
-
-		}
-		
+		}		
 
 		
 		
@@ -133,7 +116,7 @@ public class CoapClientProxy {
 			this.setName("CoapRequestListenerThread");
 
 			// start jcoap-framework
-			CoapChannelManager connectionManager = DefaultCoapChannelManager
+			CoapChannelManager connectionManager = BasicCoapChannelManager
 					.getInstance();
 
 			while (!Thread.interrupted()) {
@@ -162,19 +145,17 @@ public class CoapClientProxy {
 						/* save the request in a hashmap to assign the response to the right request */
 						coapContextMap.put(channel, context);
 						// send message
-						CoapMessage originRequest = context.getCoapRequest();
-						CoapMessage request= channel.createRequest(originRequest.isReliable(), originRequest.getMessageCode());
+						/* casting to BasicCoapRequest is necessary to allow an efficient header duplication*/
+						BasicCoapRequest originRequest = (BasicCoapRequest) context.getCoapRequest();
+						BasicCoapRequest request= channel.createRequest(originRequest.isReliable(), originRequest.getRequestCode());
 						request.copyHeaderOptions(originRequest); 
 
 						if (!context.isTranslate()){
 							/* CoAP to CoAP */
 							/* check path: if this is a coap-coap proxy request than the proxy uri needs to be translated to path options
 							 * and the proxy uri needs to be removed as this is no longer a proxy request */
-							String[] pathElements = UriParser.getPathElements(context.getUri().getPath());
-							for (String pathElement : pathElements) {
-								request.getHeader().addOption(CoapHeaderOptionType.Uri_Path, pathElement.getBytes());
-							}
-							request.getHeader().getCoapHeaderOptions().removeOption(CoapHeaderOptionType.Proxy_Uri);
+							request.setUriPath(context.getUri().getPath());
+							request.removeOption(CoapHeaderOptionType.Proxy_Uri);
 					}
 						request.setPayload(originRequest.getPayload());
 						channel.sendMessage(request);
@@ -187,7 +168,7 @@ public class CoapClientProxy {
 		}
 	        
 		@Override
-		public void onResponse(CoapChannel channel, CoapMessage response) {
+		public void onResponse(CoapChannel channel, CoapResponse response) {
 			ProxyMessageContext context = coapContextMap.get(channel);
 			channel.close();
 			if (context != null){

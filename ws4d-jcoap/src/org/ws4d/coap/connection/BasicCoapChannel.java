@@ -8,24 +8,24 @@ import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
 import org.ws4d.coap.messages.CoapPacketType;
-import org.ws4d.coap.messages.CoapRequest;
-import org.ws4d.coap.messages.CoapRequest.CoapRequestCode;
-import org.ws4d.coap.messages.CoapResponse;
-import org.ws4d.coap.messages.CoapResponse.CoapResponseCode;
+import org.ws4d.coap.messages.BasicCoapRequest;
+import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
+import org.ws4d.coap.messages.BasicCoapResponse;
+import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 
 
-public abstract class DefaultCoapChannel implements CoapChannel {
+public abstract class BasicCoapChannel implements CoapChannel {
     private CoapSocketHandler socketHandler = null;
     private CoapChannelManager channelManager = null;
     private InetAddress remoteAddress;
     private int remotePort;
     private int localPort;
 
-    public DefaultCoapChannel(CoapSocketHandler socketHandler, InetAddress remoteAddress, int remotePort) {
+    public BasicCoapChannel(CoapSocketHandler socketHandler, InetAddress remoteAddress, int remotePort) {
         this.socketHandler = socketHandler;
         channelManager = socketHandler.getChannelManager();
         this.remoteAddress = remoteAddress;
@@ -70,8 +70,8 @@ public abstract class DefaultCoapChannel implements CoapChannel {
     }
 
     @Override
-    public CoapRequest createRequest(boolean reliable, CoapRequestCode requestCode) {
-    	CoapRequest msg = new CoapRequest(
+    public BasicCoapRequest createRequest(boolean reliable, CoapRequestCode requestCode) {
+    	BasicCoapRequest msg = new BasicCoapRequest(
                 reliable ? CoapPacketType.CON : CoapPacketType.NON, requestCode,
                 channelManager.getNewMessageID());
         msg.setChannel(this);
@@ -79,23 +79,19 @@ public abstract class DefaultCoapChannel implements CoapChannel {
     }
 
     @Override
-    public CoapResponse createResponse(CoapMessage request, CoapResponseCode responseCode) {
+    public BasicCoapResponse createResponse(CoapMessage request, CoapResponseCode responseCode) {
+    	BasicCoapResponse response;
         if (request.getPacketType() == CoapPacketType.CON) {
-        	CoapResponse msg = new CoapResponse(CoapPacketType.ACK, responseCode,
-                    request.getMessageID());
-            msg.setChannel(this);
-            return msg;
+        	response = new BasicCoapResponse(CoapPacketType.ACK, responseCode, request.getMessageID(), request.getToken());
+            response.setChannel(this);
+        } else if (request.getPacketType() == CoapPacketType.NON) {
+        	response = new BasicCoapResponse(CoapPacketType.NON, responseCode, channelManager.getNewMessageID(), request.getToken());
+            response.setChannel(this);
+        } else {
+        	throw new IllegalStateException("Create Response failed, Request is neither a CON nor a NON packet");
         }
-
-        if (request.getPacketType() == CoapPacketType.NON) {
-        	CoapResponse msg = new CoapResponse(CoapPacketType.NON, responseCode,
-                    channelManager.getNewMessageID());
-            msg.setChannel(this);
-            return msg;
-        }
-
-        return null;
-    }
+        return response;
+    }        
     
     /*A channel is identified (and therefore unique) by its remote address, remote port and the local port */
 	@Override
@@ -117,7 +113,7 @@ public abstract class DefaultCoapChannel implements CoapChannel {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		DefaultCoapChannel other = (DefaultCoapChannel) obj;
+		BasicCoapChannel other = (BasicCoapChannel) obj;
 		if (localPort != other.localPort)
 			return false;
 		if (remoteAddress == null) {

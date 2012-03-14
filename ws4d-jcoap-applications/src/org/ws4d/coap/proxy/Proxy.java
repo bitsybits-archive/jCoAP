@@ -21,7 +21,7 @@ package org.ws4d.coap.proxy;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.ws4d.coap.connection.DefaultCoapSocketHandler;
+import org.ws4d.coap.connection.BasicCoapSocketHandler;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -29,7 +29,7 @@ import org.ws4d.coap.connection.DefaultCoapSocketHandler;
  */
 
 public class Proxy {
-	static Logger logger = Logger.getLogger(DefaultCoapSocketHandler.class.getName());
+	static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class.getName());
 
 	public static void main(String[] args) {
 		if (args.length > 0){

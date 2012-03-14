@@ -15,6 +15,8 @@
 
 package org.ws4d.coap.interfaces;
 
+import org.ws4d.coap.messages.AbstractCoapMessage.CoapHeaderOptionType;
+import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapPacketType;
 
 public interface CoapMessage {
@@ -49,7 +51,19 @@ public interface CoapMessage {
     public void setPayload(String payload);
 
     public int getPayloadLength();
-
+    
+    public void setContentType(CoapMediaType mediaType);
+    
+    public CoapMediaType getContentType();
+    
+    public byte[] getToken();
+    
+//    public URI getRequestUri();
+//
+//    public void setRequestUri(URI uri); //TODO:allow this method only for Clients, Define Token Type
+    
+    public void removeOption(CoapHeaderOptionType optionType); //TODO: could this compromise the internal state?
+    
     public String toString();
 
     public CoapChannel getCoapChannel();
@@ -60,8 +74,6 @@ public interface CoapMessage {
 
     public boolean maxRetransReached();
 
-    public String getUriPath();
-    
     public boolean isReliable();
     
     public boolean isRequest();

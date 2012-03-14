@@ -3,10 +3,10 @@ package org.ws4d.coap.interfaces;
 
 import java.net.InetAddress;
 
-import org.ws4d.coap.messages.CoapRequest;
-import org.ws4d.coap.messages.CoapRequest.CoapRequestCode;
-import org.ws4d.coap.messages.CoapResponse;
-import org.ws4d.coap.messages.CoapResponse.CoapResponseCode;
+import org.ws4d.coap.messages.BasicCoapRequest;
+import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
+import org.ws4d.coap.messages.BasicCoapResponse;
+import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
 
 public interface CoapChannel {
 
@@ -20,9 +20,9 @@ public interface CoapChannel {
 
     public int getRemotePort();
 
-    public CoapRequest createRequest(boolean reliable, CoapRequestCode requestCode);
+    public BasicCoapRequest createRequest(boolean reliable, CoapRequestCode requestCode);
 
-    public CoapResponse createResponse(CoapMessage request, CoapResponseCode responseCode);
+    public BasicCoapResponse createResponse(CoapMessage request, CoapResponseCode responseCode);
 
     public void newIncommingMessage(CoapMessage message);
     /*TODO: implement Error Type*/

@@ -17,7 +17,7 @@ package org.ws4d.coap.interfaces;
 
 import java.net.InetAddress;
 
-import org.ws4d.coap.messages.CoapRequest;
+import org.ws4d.coap.messages.BasicCoapRequest;
 
 
 public interface CoapChannelManager {

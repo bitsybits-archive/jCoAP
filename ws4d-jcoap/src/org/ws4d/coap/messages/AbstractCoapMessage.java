@@ -22,6 +22,9 @@
 package org.ws4d.coap.messages;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Random;
@@ -29,6 +32,8 @@ import java.util.Vector;
 
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
+
+import sun.awt.SunHints.Value;
 
 public abstract class AbstractCoapMessage implements CoapMessage {
 	protected static final int HEADER_LENGTH = 4;
@@ -79,7 +84,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 		}
     }
     
-    
+    /* TODO: this function should be in another class */
     public static CoapMessage parseMessage(byte[] bytes, int length){
     	return parseMessage(bytes, length, 0);
     }
@@ -92,9 +97,9 @@ public abstract class AbstractCoapMessage implements CoapMessage {
     	if (messageCodeValue == 0){
     		return new CoapEmptyMessage(bytes, length, offset);
     	} else if (messageCodeValue >= 0 && messageCodeValue <= 31 ){
-    		return new CoapRequest(bytes, length, offset);
+    		return new BasicCoapRequest(bytes, length, offset);
     	} else if (messageCodeValue >= 64 && messageCodeValue <= 191){
-    		return new CoapResponse(bytes, length, offset);
+    		return new BasicCoapResponse(bytes, length, offset);
     	} else {
     		throw new IllegalArgumentException("unknown CoAP message");
     	}
@@ -182,7 +187,6 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         return serializedPacket;
     }
     
-    /* TODO: check payload implementation */
     public void setPayload(byte[] payload) {
         this.payload = payload;
         if (payload!=null)
@@ -203,25 +207,78 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         setPayload(payload.toCharArray());
     }
 
+   
     @Override
-	public String getUriPath() {
-		StringBuilder uriPathBuilder = new StringBuilder();
-		for (CoapHeaderOption coapHeaderOption : options) {
-			if (coapHeaderOption.getOptionNumber() == CoapHeaderOptionType.Uri_Path.getValue()) {
-				String uriPathElement;
-				try {
-					uriPathElement = new String(coapHeaderOption.getOptionValue(), "UTF-8");
-					uriPathBuilder.append("/");
-					uriPathBuilder.append(uriPathElement);
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return uriPathBuilder.toString();
+    public void setContentType(CoapMediaType mediaType){
+    	CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Content_Type);
+    	if (option != null){
+    		/* content Type MUST only exist once */
+    		throw new IllegalStateException("added content option twice");
+    	}
+    	
+    	if ( mediaType == CoapMediaType.UNKNOWN){
+    		throw new IllegalStateException("unknown content type");
+    	}
+    	/* convert value */
+    	byte[] data = long2CoapUint(mediaType.getValue());
+    	/* no need to check result, mediaType is safe */
+    	/* add option to Coap Header*/
+    	options.addOption(new CoapHeaderOption(CoapHeaderOptionType.Content_Type, data));
+    }
+    
+    @Override    
+    public CoapMediaType getContentType(){
+    	CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Content_Type);
+    	if (option == null){
+    		/* not content type TODO: return UNKNOWN ?*/
+    		return null;
+    	}
+    	/* no need to check length, CoapMediaType parse function will do*/
+    	int mediaTypeCode = (int) coapUint2Long(options.getOption(CoapHeaderOptionType.Content_Type).getOptionData());
+    	return CoapMediaType.parse(mediaTypeCode);
+    }
+   
+    @Override
+    public byte[] getToken(){
+    	CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Token);
+    	if (option == null){
+    		return null;
+    	}
+   		return option.getOptionData();
+    }
+    
+    protected void setToken(byte[] token){
+    	if (token == null){
+    		return;
+    	}
+    	if (token.length < 1 || token.length > 8){
+    		throw new IllegalArgumentException("Invalid Token Length");
+    	}
+    	options.addOption(CoapHeaderOptionType.Token, token);
+    }
+    
+    
 
-	}
-
+    
+    public void copyHeaderOptions(AbstractCoapMessage origin){
+    	/**/
+    	options.removeAll();
+    	options.copyFrom(origin.options);
+    }
+    
+    public void removeOption(CoapHeaderOptionType optionType){
+    	options.removeOption(optionType);
+    }
+	
+//    @Override
+//    public URI getRequestUri(){
+//    	return null;
+//    }
+//    
+//    @Override
+//    public void setRequestUri(URI uri){
+//    }
+    
 	@Override
 	public CoapChannel getCoapChannel() {
 	    return channel;
@@ -300,6 +357,58 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	}
 	
 	
+	protected static long coapUint2Long(byte[] data){
+		/* avoid buffer overflow */
+		if(data.length > 8){
+			return -1;
+		}
+		
+		/* fill with leading zeros */
+		byte[] tmp = new byte[8];
+		for (int i = 0; i < data.length; i++) {
+			tmp[i + data.length] = data[i];
+		}
+		
+		/* convert to long */
+		ByteBuffer buf = ByteBuffer.wrap(tmp);
+		/* byte buffer contains 8 bytes */
+		return buf.getLong();
+	}
+	
+	protected static byte[] long2CoapUint(long value){
+		/* only unsigned values supported */
+		if (value < 0){
+			return null;
+		}
+
+		/* a zero length value implies zero */
+		if (value == 0){
+			return new byte[0];
+		}
+		
+		/* convert long to byte array with a fixed length of 8 byte*/
+		ByteBuffer buf = ByteBuffer.allocate(8);
+		buf.putLong(value);
+		byte[] tmp = buf.array();
+		
+		/* remove leading zeros */
+		int leadingZeros = 0;
+		for (int i = 0; i < tmp.length; i++) {
+			if (tmp[i] == 0){
+				leadingZeros = i+1;
+			} else {
+				break;
+			}
+		}
+		/* copy to byte array without leading zeros */
+		byte[] result = new byte[8 - leadingZeros];
+		for (int i = 0; i < result.length; i++) {
+			result[i] = tmp[i + leadingZeros];
+		}
+		
+		return result;
+	}
+	
 	/*TODO use enum*/
 	public enum CoapHeaderOptionType {
 	    UNKNOWN(-1),
@@ -324,28 +433,60 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    	value = optionValue;
 	    }
 	    
+	    public static CoapHeaderOptionType parse(int optionTypeValue){
+	    	switch(optionTypeValue){
+	    	case 1: return Content_Type;
+	    	case 2: return Max_Age;
+	    	case 3: return Proxy_Uri;
+	    	case 4: return Etag;
+	    	case 5: return Uri_Host;
+	    	case 6: return Location_Path;
+	    	case 7: return Uri_Port;
+	    	case 8: return Location_Query;
+	    	case 9: return Uri_Path;
+	    	case 11:return Token;
+	    	case 12:return Accept;
+	    	case 13:return If_Match;
+	    	case 15:return Uri_Query;
+	    	case 21:return If_None_Match;
+	    		default: return UNKNOWN;
+	    	}
+	    }
+	    
 	    public int getValue(){
 	    	return value;
 	    }
 	    /* TODO: implement validity checks */
-	    /*TODO: implement isCritical(), isElective()*/
+	    /*TODO: implement isCritical(int optionTypeValue), isElective()*/
 	    
 	
 	}
 
 	protected class CoapHeaderOption implements Comparable<CoapHeaderOption> {
 	
-	    int optionNumber = CoapHeaderOptionType.UNKNOWN.getValue();
-	    byte[] optionValue = null;
-	    int shortLength = 0;
-	    int longLength = 0;
+	    CoapHeaderOptionType optionType; 
+	    int optionTypeValue; /* integer representation of optionType*/
+	    byte[] optionData;
+	    int shortLength;
+	    int longLength;
+	    int deserializedLength;
+	    static final int MAX_LENGTH = 270;
 	
-	    public CoapHeaderOption() {
-	    }
-	    
-	    public CoapHeaderOption(int optionNumber, byte[] value) {
-	        this.optionNumber = optionNumber;
-	        this.optionValue = value;
+	    public int getDeserializedLength() {
+			return deserializedLength;
+		}
+
+		public CoapHeaderOption(CoapHeaderOptionType optionType, byte[] value) {
+	    	if (optionType == CoapHeaderOptionType.UNKNOWN){
+	    		/*TODO: implement check if it is a critical option */
+	    		throw new IllegalStateException("Unknown header option");
+	    	}
+	    	if (value == null){
+	    		throw new IllegalArgumentException("Header option value MUST NOT be null");
+	    	}
+	    	
+	        this.optionTypeValue = optionType.getValue();
+	        this.optionData = value;
 	        if (value.length < 15) {
 	            shortLength = value.length;
 	            longLength = 0;
@@ -354,13 +495,51 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	            longLength = value.length - shortLength;	
 	        }
 	    }
+	    
+	    public CoapHeaderOption(byte[] bytes, int offset, int lastOptionNumber){
+	    	int headerLength;
+	    	/* parse option type */
+	    	optionTypeValue = ((bytes[offset] & 0xF0) >> 4) + lastOptionNumber;
+	    	optionType = CoapHeaderOptionType.parse(optionTypeValue);
+	    	if (optionType == CoapHeaderOptionType.UNKNOWN){
+	    		/*TODO: implement check if it is a critical option */
+	    		throw new IllegalArgumentException("Unknown header option");
+	    	}
+	    	/* parse length */
+			if ((bytes[offset] & 0x0F) < 15) {
+				shortLength = bytes[offset] & 0x0F;
+				longLength = 0;
+				headerLength = 1;
+			} else {
+				shortLength = 15;
+				longLength = bytes[offset + 1];
+				headerLength = 2; /* additional length byte */
+			}
+			
+			/* copy value */
+			optionData = new byte[shortLength + longLength];
+			for (int i = 0; i < shortLength + longLength; i++){
+				optionData[i] = bytes[i + headerLength + offset];
+			}
+			
+			deserializedLength += headerLength + shortLength + longLength;
+	    }
 	
 	    @Override
 	    public int compareTo(CoapHeaderOption option) {
-	        if (this.optionNumber != option.optionNumber)
-	            return this.optionNumber < option.optionNumber ? -1 : 1;
+	    	/* compare function for sorting 
+	    	 * TODO: check what happens in case of equal option values 
+	    	 * IMPORTANT: order must be the same for e.g., URI path*/
+	        if (this.optionTypeValue != option.optionTypeValue)
+	            return this.optionTypeValue < option.optionTypeValue ? -1 : 1;
 	        else
 	            return 0;
+	    }
+	    
+	    public boolean hasLongLength(){
+	    	if (shortLength == 15){
+	    		return true;
+	    	} else return false;
 	    }
 	
 	    public int getLongLength() {
@@ -371,85 +550,58 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    	return shortLength;
 	    }
 	
-	    public int getOptionNumber() {
-	        return optionNumber;
+	    public int getOptionTypeValue() {
+	        return optionTypeValue;
 	    }
 	
-	    public byte[] getOptionValue() {
-	        return optionValue;
+	    public byte[] getOptionData() {
+	        return optionData;
 	    }
-	
 	    
-	    
-	    private void setLongLength(int l) {
-	    	this.longLength = l;
-	    }
-	
-	
-	    private void setOptionNumber(int optionNumber) {
-	        this.optionNumber = optionNumber;
-	    }
-	
-	    private void setOptionValue(byte[] v) {
-	        this.optionValue = v;
-	    }
-	
-	    private void setShortLength(int l) {
-	        this.shortLength = l;
+	    public int getSerializeLength(){
+	    	if (hasLongLength()){
+	    		return optionData.length + 2;
+	    	} else {
+	    		return optionData.length + 1;
+	    	}
 	    }
 	
 	    @Override
 	    public String toString() {
-	        char[] printableOptionValue = new char[optionValue.length];
-	        for (int i = 0; i < optionValue.length; i++)
-	            printableOptionValue[i] = (char) optionValue[i];
+	        char[] printableOptionValue = new char[optionData.length];
+	        for (int i = 0; i < optionData.length; i++)
+	            printableOptionValue[i] = (char) optionData[i];
 	        return "Option Number: "
-	                + " (" + optionNumber + ")"
+	                + " (" + optionTypeValue + ")"
 	                + ", Option Value: " + String.copyValueOf(printableOptionValue);
 	    }
+
+		public CoapHeaderOptionType getOptionType() {
+			return optionType;
+		}
 	}
 
 	protected class CoapHeaderOptions implements Iterable<CoapHeaderOption>{
 
 		private Vector<CoapHeaderOption> headerOptions = new Vector<CoapHeaderOption>();
-		private int deserializedLength = 0;
+		private int deserializedLength;
 		private int serializedLength = 0;
 		
 		public CoapHeaderOptions(byte[] bytes, int option_count){
 			this(bytes, option_count, option_count);
 		}
 		
-		public CoapHeaderOptions(byte[] bytes, int offset, int option_count){
+		public CoapHeaderOptions(byte[] bytes, int offset, int optionCount){
 			/* note: we only receive deltas and never concrete numbers */
-			/* TODO: check integrity (in case of an error raise an exception)*/
+			/* TODO: check integrity */
+			deserializedLength = 0;
 			int lastOptionNumber = 0;
-			int arrayIndex = offset;
-			for (int i = 0; i < option_count; i++) {
-				CoapHeaderOption option = new CoapHeaderOption();
-				/* Calculate Option Number from Delta */
-				option.setOptionNumber(((bytes[arrayIndex] & 0xF0) >> 4) + lastOptionNumber);
-				lastOptionNumber = option.getOptionNumber();
-				deserializedLength += 1; /* keep track of length */
-				
-				/* Calculate length fields and real length */
-				int tmpLength = 0;
-				if ((bytes[arrayIndex] & 0x0F) < 15) {
-					option.setShortLength(bytes[arrayIndex++] & 0x0F);
-					option.setLongLength(0);
-					tmpLength = option.getShortLength();
-				} else {
-					option.setShortLength(bytes[arrayIndex++] & 0x0F);
-					option.setLongLength(bytes[arrayIndex++]);
-					tmpLength = option.getLongLength() + 15; 
-					deserializedLength += 1; /* additional length byte */
-				}
-				deserializedLength += tmpLength;
-				/* TODO: allocate memory only once and work with lengths*/
-				byte[] optionValue = new byte[tmpLength];
-				for (int j = 0; j < tmpLength; j++)
-					optionValue[j] = bytes[arrayIndex + j];
-				option.setOptionValue(optionValue);
-				arrayIndex += tmpLength;
+			int optionOffset = offset;
+			for (int i = 0; i < optionCount; i++) {
+				CoapHeaderOption option = new CoapHeaderOption(bytes, optionOffset, lastOptionNumber);
+				lastOptionNumber = option.getOptionTypeValue();
+				deserializedLength += option.getDeserializedLength(); 
+				optionOffset += option.getDeserializedLength();
 				addOption(option);
 			}
 		}
@@ -460,11 +612,27 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 		
 	    public CoapHeaderOption getOption(int optionNumber) {
 			for (CoapHeaderOption headerOption : headerOptions) {
-				if (headerOption.getOptionNumber() == optionNumber) {
+				if (headerOption.getOptionTypeValue() == optionNumber) {
 					return headerOption;
 				}
 			}
 			return null;
+		}
+	    
+	    public CoapHeaderOption getOption(CoapHeaderOptionType optionType) {
+			for (CoapHeaderOption headerOption : headerOptions) {
+				if (headerOption.getOptionType() == optionType) {
+					return headerOption;
+				}
+			}
+			return null;
+		}
+	    
+	    public boolean optionExist(CoapHeaderOptionType optionType) {
+			CoapHeaderOption option = getOption(optionType);
+			if (option == null){
+				return false;
+			} else return true;
 		}
 
 		public void addOption(CoapHeaderOption option) {
@@ -473,19 +641,19 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	        Collections.sort(headerOptions);
 	    }
 
-	    public void addOption(int optNumber, byte[] value) throws Exception {
-	        headerOptions.add(new CoapHeaderOption(optNumber, value));
+	    public void addOption(CoapHeaderOptionType optionType, byte[] value){
+	    	addOption(new CoapHeaderOption(optionType, value));
 	    }
 	    
-	    public void removeOption(int optNumber){
+	    public void removeOption(CoapHeaderOptionType optionType){
 			CoapHeaderOption headerOption;
 			// get elements of Vector
 			
-			/* note: iterating and changing a vector at the same time is not allowed */
+			/* note: iterating over and changing a vector at the same time is not allowed */
 			int i = 0;
 			while (i < headerOptions.size()){
 				headerOption = headerOptions.get(i);
-				if (headerOption.getOptionNumber() == optNumber) {
+				if (headerOption.getOptionType() == optionType) {
 					headerOptions.remove(i);
 				} else {
 					/* only increase when no element was removed*/
@@ -494,40 +662,45 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 			}
 			Collections.sort(headerOptions);
 	    }
+	    
+	    public void removeAll(){
+	    	headerOptions.clear();
+	    }
+	    
+	    public void copyFrom(CoapHeaderOptions origin){
+	    	for (CoapHeaderOption option : origin) {
+				addOption(option);
+			}
+	    }
 
 	    public int getOptionCount() {
 	        return headerOptions.size();
 	    }
 
 	    public byte[] serialize() {
+	    	/* options are serialized here to be more efficient (only one byte array necessary)*/
 	        int length = 0;
 
-	        /* find length of options_string. Each option contains ... */
+	        /* calculate the overall length first */
 	        for (CoapHeaderOption option : headerOptions) {
-	            ++length;
-	            // ... sometimes an additional length-byte
-	            if (option.getLongLength() > 0) {
-	                ++length;
-	            }
-	            length += option.getOptionValue().length;
+	            length += option.getSerializeLength();
 	        }
 
-	        // TODO: don't allocate new memory every time serialize() is called
 	        byte[] data = new byte[length];
 	        int arrayIndex = 0;
 
 	        int lastOptionNumber = 0; /* let's keep track of this */
 	        for (CoapHeaderOption headerOption : headerOptions) {
-	            int optionDelta = headerOption.getOptionNumber() - lastOptionNumber;
-	            lastOptionNumber = headerOption.getOptionNumber();
+	        	/* TODO: move the serialization implementation to CoapHeaderOption */
+	            int optionDelta = headerOption.getOptionTypeValue() - lastOptionNumber;
+	            lastOptionNumber = headerOption.getOptionTypeValue();
 	            // set length(s)
-	            data[arrayIndex++] = (byte) (((optionDelta & 0x0F) << 4) | (headerOption
-	                    .getShortLength() & 0x0F));
-	            if (headerOption.getLongLength() > 0) {
+	            data[arrayIndex++] = (byte) (((optionDelta & 0x0F) << 4) | (headerOption.getShortLength() & 0x0F));
+	            if (headerOption.hasLongLength()) {
 	                data[arrayIndex++] = (byte) (headerOption.getLongLength() & 0xFF);
 	            }
 	            // copy option value
-	            byte[] value = headerOption.getOptionValue();
+	            byte[] value = headerOption.getOptionData();
 	            for (int i = 0; i < value.length; i++) {
 	                data[arrayIndex++] = value[i];
 	            }

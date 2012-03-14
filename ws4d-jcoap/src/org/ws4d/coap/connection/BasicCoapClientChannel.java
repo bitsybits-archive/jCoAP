@@ -21,16 +21,16 @@ import org.ws4d.coap.interfaces.CoapClient;
 import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
-import org.ws4d.coap.messages.CoapResponse;
+import org.ws4d.coap.messages.BasicCoapResponse;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 
 
-public class DefaultCoapClientChannel extends DefaultCoapChannel implements CoapClientChannel {
+public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClientChannel {
 	CoapClient client = null;
-	public DefaultCoapClientChannel(CoapSocketHandler socketHandler,
+	public BasicCoapClientChannel(CoapSocketHandler socketHandler,
 			CoapClient client, InetAddress remoteAddress,
 			int remotePort) {
 		super(socketHandler, remoteAddress, remotePort);
@@ -44,7 +44,7 @@ public class DefaultCoapClientChannel extends DefaultCoapChannel implements Coap
 			throw new IllegalStateException("Incomming client message is not a response");
 		}
 		
-		client.onResponse(this, (CoapResponse) message);
+		client.onResponse(this, (BasicCoapResponse) message);
 	}
 
 	@Override

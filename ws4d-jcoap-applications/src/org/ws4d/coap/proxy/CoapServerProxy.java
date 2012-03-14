@@ -24,14 +24,13 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.concurrent.ArrayBlockingQueue;
 
-import org.ws4d.coap.connection.DefaultCoapChannelManager;
+import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
-import org.ws4d.coap.interfaces.CoapMessage;
+import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapServer;
-import org.ws4d.coap.messages.CoapHeaderOption;
-import org.ws4d.coap.messages.CoapHeaderOptions.HeaderOptionNumber;
-import org.ws4d.coap.messages.CoapMessageCode.MessageCode;
+import org.ws4d.coap.messages.BasicCoapResponse;
+import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
 
 
 /**
@@ -56,13 +55,14 @@ public class CoapServerProxy implements CoapServer{
     					/*FIXME: response can be NULL, than generate Error*/
     					ProxyMessageContext context = coapOutQueue.take();		
     					CoapChannel channel = context.getCoapRequest().getCoapChannel();
-    					CoapMessage clientResponse = context.getCoapResponse();
-						CoapMessage response = channel.createResponse(context.getCoapRequest(), clientResponse.getMessageCode());
+    					/* we need to cast to allow an efficient header copy */
+    					BasicCoapResponse clientResponse = (BasicCoapResponse) context.getCoapResponse();
+    					BasicCoapResponse response = channel.createResponse(context.getCoapRequest(), clientResponse.getResponseCode());
 						/* copy header and payload */
 						response.copyHeaderOptions(clientResponse);
 						response.setPayload(clientResponse.getPayload());
 
-						channel.sendMessage(response, context.getCoapRequest());
+						channel.sendMessage(response);
 						channel.close();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
@@ -74,7 +74,7 @@ public class CoapServerProxy implements CoapServer{
     //constructor of coapserver-class, initiates the jcoap-components and starts CoapSender
     public CoapServerProxy() {
 
-        channelManager = DefaultCoapChannelManager.getInstance();
+        channelManager = BasicCoapChannelManager.getInstance();
         channelManager.createServerListener(this, LOCAL_PORT);
         CoapSender sender = new CoapSender();
         sender.start();
@@ -92,14 +92,14 @@ public class CoapServerProxy implements CoapServer{
     }
 
     @Override
-    public CoapServer onAccept(CoapMessage request) {
+    public CoapServer onAccept(CoapRequest request) {
         System.out.println("Accept connection...");
         /* accept every incomming connection */
         return this;
     }
 
     @Override
-    public void handleRequest(CoapChannel channel, CoapMessage request)  {    	
+	public void handleRequest(CoapChannel channel, CoapRequest request) {
     	/* draft-08:
     	 *  CoAP distinguishes between requests to an origin server and a request
    			made through a proxy.  A proxy is a CoAP end-point that can be tasked
@@ -120,20 +120,17 @@ public class CoapServerProxy implements CoapServer{
         
         //-------------------in this case we want a translation to http----------------------------
 
-		CoapHeaderOption option = request.getHeader().getOption(CoapHeaderOptionType.Proxy_Uri);
-		if (option != null) {
-			try {
-				proxyUri = new URI(new String(option.getOptionValue()));
-			} catch (URISyntaxException e) {
-				proxyUri = null;
-			}
+		try {
+			proxyUri = new URI(request.getProxyUri());
+		} catch (URISyntaxException e) {
+			proxyUri = null;
 		}
 
     	if (proxyUri == null){
     		/* PROXY URI MUST BE AVAILABLE */
     		System.out.println("Received a Non Proxy CoAP Request, send error");
     		/*FIXME What is the right error code for this case?*/
-    		channel.sendMessage(channel.createResponse(request,MessageCode.Not_Found_404));
+    		channel.sendMessage(channel.createResponse(request, CoapResponseCode.Not_Found_404));
     		channel.close();
     		return;    		
     	}
@@ -148,7 +145,7 @@ public class CoapServerProxy implements CoapServer{
     		/*unknown scheme, TODO send error*/
     		System.out.println("Unknown Proxy Uri Scheme, send error");
     		/*FIXME What is the right error code for this case?*/
-    		channel.sendMessage(channel.createResponse(request,MessageCode.Not_Found_404));
+    		channel.sendMessage(channel.createResponse(request, CoapResponseCode.Not_Found_404));
     		channel.close();
     		return;
     	}
@@ -166,12 +163,12 @@ public class CoapServerProxy implements CoapServer{
 			/*bad proxy URI*/
     		System.out.println("Invalid Proxy Uri Scheme, send error");
     		/*FIXME What is the right error code for this case?*/
-    		channel.sendMessage(channel.createResponse(request,MessageCode.Not_Found_404));
+    		channel.sendMessage(channel.createResponse(request, CoapResponseCode.Not_Found_404));
     		channel.close();
 			e.printStackTrace();
 		}
     	
     }
-    
+   
 }
 
