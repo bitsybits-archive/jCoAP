@@ -12,4 +12,10 @@ public class LongPathResource extends BasicCoapResource{
     public LongPathResource(){
     	this("/seg1/seg2/seg3", "LongPathResource Payload".getBytes(), CoapMediaType.text_plain);
     }
+    
+    @Override
+    public String getResourceType() {
+	return "TypeC";
+    }
+
 }

@@ -14,4 +14,10 @@ public class QueryResource extends BasicCoapResource {
     	this("/query", "QueryResource Payload".getBytes(), CoapMediaType.text_plain);
     }
 
+    @Override
+    public String getResourceType() {
+	return "TypeB";
+    }
+
+
 }

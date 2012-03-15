@@ -63,7 +63,7 @@ public class CoreResource implements CoapResource {
     @Override
     public byte[] getValue(Vector<String> queries) {
 	for (String query : queries) {
-	    if (query.startsWith("rt-")) return buildCoreString(query.substring(3)).getBytes();
+	    if (query.startsWith("rt=")) return buildCoreString(query.substring(3)).getBytes();
 	}
 	return getValue();
     }

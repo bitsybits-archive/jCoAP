@@ -125,6 +125,15 @@ public class PlugtestClient implements CoapClient{
 			init(false, CoapRequestCode.GET);
 			request.setUriPath("/separate");
 		} 
+		else if (testId.equals("TD_COAP_LINK_01")) {
+			init(false, CoapRequestCode.GET);
+			request.setUriPath("/.well-known/core");
+		} 
+		else if (testId.equals("TD_COAP_LINK_02")) {
+			init(false, CoapRequestCode.GET);
+			request.setUriPath("/.well-known/core");
+			request.setUriQuery("rt=" + TestConfiguration.LINK_FORMAT_TYPE);
+		} 
 		else {
 			System.out.println("===Failure=== (unknown test case)");
 			System.exit(-1);

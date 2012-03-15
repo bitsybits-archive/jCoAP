@@ -111,6 +111,9 @@ public class PlugtestServer {
 		PlugtestSeparateResponseCoapServer server = new PlugtestSeparateResponseCoapServer();
 		server.start(TestConfiguration.SEPARATE_RESPONSE_TIME_MS);
 	} else if (testId.equals("TD_COAP_LINK_01")) {
+	    resourceServer.createResource(new LongPathResource());
+	    resourceServer.createResource(new TestResource());
+	    run();
 	} else if (testId.equals("TD_COAP_LINK_02")) {
 	    resourceServer.createResource(new LongPathResource());
 	    resourceServer.createResource(new TestResource());

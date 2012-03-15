@@ -12,4 +12,9 @@ public class TestResource extends BasicCoapResource{
     public TestResource(){
     	this("/test", "TestResource Payload".getBytes(), CoapMediaType.text_plain);
     }
+    
+    @Override
+    public String getResourceType() {
+	return "TypeA";
+    }
 }
