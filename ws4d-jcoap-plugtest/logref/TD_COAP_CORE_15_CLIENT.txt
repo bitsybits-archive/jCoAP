@@ -1,0 +1,6 @@
+===START=== (Run Test Client: TD_COAP_CORE_15)
+Send Request: CON, GET, MsgId: 1001, #Options: 1
+Received Ack of Separate Response
+Received Separate Response
+Response: CON, Content_205, MsgId: 2001, #Options: 1 (payload...)
+===END===

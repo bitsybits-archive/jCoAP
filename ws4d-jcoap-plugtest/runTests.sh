@@ -26,7 +26,7 @@ run_test() {
   build_exec_string $TEST
   eval $EXEC_SERVER
   eval $EXEC_CLIENT
-  sleep 1
+  sleep 3
   killall java >/dev/null 2>/dev/null
   sleep 1
 
@@ -58,7 +58,7 @@ do
   run_test TD_COAP_CORE_0$i
 done
 
-for i in 10 11 12 13 14 15
+for i in 10 11 12 13 14 15 16
 do
   run_test TD_COAP_CORE_$i
 done

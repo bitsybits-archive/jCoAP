@@ -1,0 +1,5 @@
+===Run Test Server: TD_COAP_CORE_12===
+Created Resource: /seg1/seg2/seg3
+Read Resource: /seg1/seg2/seg3
+PlugtestServer is now stopping.
+===END===

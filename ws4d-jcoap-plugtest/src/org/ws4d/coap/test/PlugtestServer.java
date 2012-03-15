@@ -94,12 +94,8 @@ public class PlugtestServer {
 	    resourceServer.createResource(new QueryResource());
 	    run();
 	} else if (testId.equals("TD_COAP_CORE_14")) {
-			/*
-			 * === SPECIAL CASE: Separate Response: for these tests we cannot
-			 * use the resource server
-			 */
-			PlugtestSeparateResponseCoapServer server = new PlugtestSeparateResponseCoapServer();
-			server.start(TestConfiguration.SEPARATE_RESPONSE_TIME_MS);
+	    resourceServer.createResource(new TestResource());
+	    run();
 	} else if (testId.equals("TD_COAP_CORE_15")) {
 		/*
 		 * === SPECIAL CASE: Separate Response: for these tests we cannot

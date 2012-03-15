@@ -1,0 +1,6 @@
+===Run Test Server: TD_COAP_CORE_16===
+Accept connection...
+Received message: NON, GET, MsgId: 1001, #Options: 1
+Send separate Response: NON, Content_205, MsgId: 1001, #Options: 1
+PlugtestServer is now stopping.
+===END===

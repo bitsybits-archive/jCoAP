@@ -1,0 +1,4 @@
+===START=== (Run Test Client: TD_COAP_CORE_04)
+Send Request: CON, DELETE, MsgId: 1001, #Options: 1
+Response: ACK, Deleted_202, MsgId: 1001, #Options: 0 ()
+===END===
