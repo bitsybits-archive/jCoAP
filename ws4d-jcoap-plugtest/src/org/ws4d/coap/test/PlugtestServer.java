@@ -42,6 +42,7 @@ public class PlugtestServer {
 	    @Override
 	    public void run() {
 		System.out.println("PlugtestServer is now stopping.");
+		System.out.println("===END===");
 	    }
 	});
     }
