@@ -35,6 +35,7 @@ import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.messages.AbstractCoapMessage.CoapHeaderOptionType;
 import org.ws4d.coap.messages.BasicCoapRequest;
+import org.ws4d.coap.messages.CoapEmptyMessage;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -188,6 +189,20 @@ public class CoapClientProxy {
 				context.setCoapResponse(null); //null indicates no response
 				Mapper.getInstance().putCoapResponse(context);
 			}
+		}
+
+		@Override
+		public void onSeparateResponseAck(CoapClientChannel channel,
+				CoapEmptyMessage message) {
+			System.out.println("Error: Separate Response not implemented!");
+			
+		}
+
+		@Override
+		public void onSeparateResponse(CoapClientChannel channel,
+				CoapResponse message) {
+			System.out.println("Error: Separate Response not implemented!");
+			
 		}
 	}
 }

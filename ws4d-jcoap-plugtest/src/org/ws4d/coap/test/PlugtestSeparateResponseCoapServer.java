@@ -49,8 +49,7 @@ public class PlugtestSeparateResponseCoapServer implements CoapServer {
 
 		this.channel = channel;
 		response = channel.createSeparateResponse(request, CoapResponseCode.Content_205);
-		Thread t =   new Thread( new SendDelayedResponse() );
-	    t.start();
+		(new Thread( new SendDelayedResponse())).start();
 	}
 	
 	public class SendDelayedResponse implements Runnable

@@ -34,8 +34,6 @@ public interface CoapMessage {
 
     public void setMessageID(int msgID);
     
-    public boolean isEmptyMessage();
-    
     public byte[] serialize();
 
     public void incRetransCounterAndTimeout();

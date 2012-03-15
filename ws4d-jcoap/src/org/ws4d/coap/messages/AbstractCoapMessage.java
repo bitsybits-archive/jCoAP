@@ -99,16 +99,6 @@ public abstract class AbstractCoapMessage implements CoapMessage {
     		throw new IllegalArgumentException("unknown CoAP message");
     	}
     }
-    
-    
-    @Override
-	public boolean isEmptyMessage() {
-		if (messageCodeValue == 0){
-			return true;
-		} else {
-			return false;
-		}
-	}
 
     public int getVersion() {
 		return version;

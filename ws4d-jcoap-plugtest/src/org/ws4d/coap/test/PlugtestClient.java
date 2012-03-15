@@ -19,7 +19,9 @@ import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
+import org.ws4d.coap.messages.CoapEmptyMessage;
 import org.ws4d.coap.messages.CoapMediaType;
+import org.ws4d.coap.test.PlugtestSeparateResponseCoapServer.SendDelayedResponse;
 
 /**
  * @author Nico Laum <nico.laum@uni-rostock.de>
@@ -90,9 +92,8 @@ public class PlugtestClient implements CoapClient{
 			request.setUriPath("/test");
 		} 
 		else if (testId.equals("TD_COAP_CORE_09")) {
-			//TODO
-			System.out.println("===Failure=== (NOT IMPLEMENTED)");
-			System.exit(-1);
+			init(true, CoapRequestCode.GET);
+			request.setUriPath("/separate");
 		} 
 		else if (testId.equals("TD_COAP_CORE_10")) {
 			init(true, CoapRequestCode.GET);
@@ -113,8 +114,16 @@ public class PlugtestClient implements CoapClient{
 			request.setUriQuery("first=1&second=2&third=3");
 		} 
 		else if (testId.equals("TD_COAP_CORE_14")) {
+			init(true, CoapRequestCode.GET);
+			request.setUriPath("/test");
 		} 
 		else if (testId.equals("TD_COAP_CORE_15")) {
+			init(true, CoapRequestCode.GET);
+			request.setUriPath("/separate");
+		} 
+		else if (testId.equals("TD_COAP_CORE_16")) {
+			init(false, CoapRequestCode.GET);
+			request.setUriPath("/separate");
 		} 
 		else {
 			System.out.println("===Failure=== (unknown test case)");
@@ -170,5 +179,41 @@ public class PlugtestClient implements CoapClient{
 			System.out.println("===END===");
 			System.exit(0);
 		}
+	}
+
+
+	@Override
+	public void onSeparateResponseAck(CoapClientChannel channel,
+			CoapEmptyMessage message) {
+		System.out.println("Received Ack of Separate Response");
+	}
+
+	@Override
+	public void onSeparateResponse(CoapClientChannel channel, CoapResponse response) {
+		System.out.println("Received Separate Response");
+		if (response.getPayload() != null){
+			System.out.println("Response: " + response.toString() + " (" + new String(response.getPayload()) +")");
+		} else {
+			System.out.println("Response: " + response.toString());
+		}
+		if (exitAfterResponse){
+			/* FIXME: This is a hack to give the Worker Thread time to send the ACK.
+			 * Implement shutdown method*/
+			(new Thread( new WaitAndExit())).start();
+		}
+	}
+	
+	public class WaitAndExit implements Runnable
+	  {
+	    public void run()
+	    {
+	    	try {
+	    		Thread.sleep(1000);
+	    	} catch (InterruptedException e) {
+	    		e.printStackTrace();
+	    	}
+	    	System.out.println("===END===");
+	    	System.exit(0);
+	    }
 	}
 }

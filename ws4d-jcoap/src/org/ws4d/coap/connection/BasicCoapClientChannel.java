@@ -23,6 +23,7 @@ import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
 import org.ws4d.coap.messages.BasicCoapRequest;
 import org.ws4d.coap.messages.BasicCoapResponse;
+import org.ws4d.coap.messages.CoapEmptyMessage;
 import org.ws4d.coap.messages.CoapPacketType;
 import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
 
@@ -42,12 +43,23 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 
 	@Override
 	public void newIncommingMessage(CoapMessage message) {
-		/* incomming message must be a response */
-		if (!message.isResponse()){
-			throw new IllegalStateException("Incomming client message is not a response");
+		if (message.isEmpty() && message.getPacketType() == CoapPacketType.ACK){
+			/* this is the ACK of a separate response */
+			client.onSeparateResponseAck(this, (CoapEmptyMessage) message);
+		} else 
+		if (message.isResponse()){
+			if (message.getPacketType() == CoapPacketType.CON){
+				/* this is a separate response */
+				/* send ACK */
+				message.getChannel().sendMessage(new CoapEmptyMessage(CoapPacketType.ACK, message.getMessageID()));
+				client.onSeparateResponse(this, (BasicCoapResponse) message);
+			} else {
+				/* normal response*/
+				client.onResponse(this, (BasicCoapResponse) message);
+			}
+		} else {
+			throw new IllegalStateException("Incomming client message is not a valid response");
 		}
-		
-		client.onResponse(this, (BasicCoapResponse) message);
 	}
 
 	@Override

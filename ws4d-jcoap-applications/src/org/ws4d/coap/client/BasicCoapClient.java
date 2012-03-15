@@ -12,6 +12,7 @@ import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
+import org.ws4d.coap.messages.CoapEmptyMessage;
 
 public class BasicCoapClient implements CoapClient {
     private static final String SERVER_ADDRESS = "localhost";
@@ -53,5 +54,17 @@ public class BasicCoapClient implements CoapClient {
 	@Override
 	public void onResponse(CoapClientChannel channel, CoapResponse response) {
 		System.out.println("Received response");
+	}
+
+	@Override
+	public void onSeparateResponseAck(CoapClientChannel channel,
+			CoapEmptyMessage message) {
+		System.out.println("Received Ack of Separate Response");
+	}
+
+	@Override
+	public void onSeparateResponse(CoapClientChannel channel,
+			CoapResponse message) {
+		System.out.println("Received Separate Response");
 	}
 }

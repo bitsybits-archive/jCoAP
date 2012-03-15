@@ -98,6 +98,8 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 		if (request.getPacketType() == CoapPacketType.CON) {
 			/* The separate Response is CON (normally a Response is ACK or NON) */
     		response = new BasicCoapResponse(CoapPacketType.CON, responseCode, channelManager.getNewMessageID(), request.getToken());
+    		/*send ack immediately */
+    		sendMessage(new CoapEmptyMessage(CoapPacketType.ACK, request.getMessageID()));
 		} else if (request.getPacketType() == CoapPacketType.NON){
 			/* Just a normal response*/
 			response = new BasicCoapResponse(CoapPacketType.NON, responseCode, request.getMessageID(), request.getToken());
@@ -105,9 +107,6 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
     		throw new IllegalStateException("Create Response failed, Request is neither a CON nor a NON packet");
 		}
 
-		/*send ack immediately */
-		sendMessage(new CoapEmptyMessage(CoapPacketType.ACK, request.getMessageID()));
-		
 		response.setChannel(this);
 		return response;
 	}
