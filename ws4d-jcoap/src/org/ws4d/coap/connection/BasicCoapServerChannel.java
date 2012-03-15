@@ -17,11 +17,19 @@ package org.ws4d.coap.connection;
 
 import java.net.InetAddress;
 
+import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
+import org.ws4d.coap.interfaces.CoapRequest;
+import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.interfaces.CoapServerChannel;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
 import org.ws4d.coap.messages.BasicCoapRequest;
+import org.ws4d.coap.messages.BasicCoapResponse;
+import org.ws4d.coap.messages.CoapEmptyMessage;
+import org.ws4d.coap.messages.CoapMediaType;
+import org.ws4d.coap.messages.CoapPacketType;
+import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -41,15 +49,74 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 	@Override
 	public void newIncommingMessage(CoapMessage message) {
 		/* message MUST be a request */
+		if (message.isEmpty()){
+			return; /*TODO: is this the right strategy?*/
+		}
+		
 		if (!message.isRequest()){
 			throw new IllegalStateException("Incomming server message is not a request");
 		}
-		BasicCoapRequest request= (BasicCoapRequest) message;
-		server.handleRequest(request.getCoapChannel(), request);
+		BasicCoapRequest request = (BasicCoapRequest) message;
+		CoapChannel channel = request.getChannel();
+		/* TODO make this cast safe */
+		server.handleRequest((CoapServerChannel) channel, request);
 	}
 	
     /*TODO: implement */
 	public void lostConnection(boolean notReachable, boolean resetByServer){
-		// this could never happen for a server???
+		server.separateResponseFailed(this);
 	}
+	
+    @Override
+    public BasicCoapResponse createResponse(CoapMessage request, CoapResponseCode responseCode) {
+    	return createResponse(request, responseCode, null);
+    }  
+    
+    @Override
+    public BasicCoapResponse createResponse(CoapMessage request, CoapResponseCode responseCode, CoapMediaType contentType){
+    	BasicCoapResponse response;
+    	if (request.getPacketType() == CoapPacketType.CON) {
+    		response = new BasicCoapResponse(CoapPacketType.ACK, responseCode, request.getMessageID(), request.getToken());
+    	} else if (request.getPacketType() == CoapPacketType.NON) {
+    		response = new BasicCoapResponse(CoapPacketType.NON, responseCode, request.getMessageID(), request.getToken());
+    	} else {
+    		throw new IllegalStateException("Create Response failed, Request is neither a CON nor a NON packet");
+    	}
+    	if (contentType != null && contentType != CoapMediaType.UNKNOWN){
+    		response.setContentType(contentType);
+    	}
+    	
+    	response.setChannel(this);
+    	return response;
+    }
+
+
+	@Override
+	public CoapResponse createSeparateResponse(CoapRequest request,	CoapResponseCode responseCode) {
+		
+		BasicCoapResponse response = null;
+		if (request.getPacketType() == CoapPacketType.CON) {
+			/* The separate Response is CON (normally a Response is ACK or NON) */
+    		response = new BasicCoapResponse(CoapPacketType.CON, responseCode, channelManager.getNewMessageID(), request.getToken());
+		} else if (request.getPacketType() == CoapPacketType.NON){
+			/* Just a normal response*/
+			response = new BasicCoapResponse(CoapPacketType.NON, responseCode, request.getMessageID(), request.getToken());
+		} else {
+    		throw new IllegalStateException("Create Response failed, Request is neither a CON nor a NON packet");
+		}
+
+		/*send ack immediately */
+		sendMessage(new CoapEmptyMessage(CoapPacketType.ACK, request.getMessageID()));
+		
+		response.setChannel(this);
+		return response;
+	}
+
+
+	@Override
+	public void sendSeparateResponse(CoapResponse response) {
+		sendMessage(response);
+		
+	}
+
 }

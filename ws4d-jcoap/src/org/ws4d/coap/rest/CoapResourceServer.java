@@ -6,11 +6,11 @@ import java.util.Vector;
 
 import org.ws4d.coap.Constants;
 import org.ws4d.coap.connection.BasicCoapChannelManager;
-import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapServer;
+import org.ws4d.coap.interfaces.CoapServerChannel;
 import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
 import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
 
@@ -51,7 +51,7 @@ public class CoapResourceServer extends AbstractResourceServer implements CoapSe
     }
     
     @Override
-	public void handleRequest(CoapChannel channel, CoapRequest request) {
+	public void handleRequest(CoapServerChannel channel, CoapRequest request) {
 		CoapMessage response = null;
 		CoapRequestCode requestCode = request.getRequestCode();
 		if (requestCode == CoapRequestCode.GET) {
@@ -107,5 +107,11 @@ public class CoapResourceServer extends AbstractResourceServer implements CoapSe
 	// TODO add content type
 	return resource;
     }
+
+	@Override
+	public void separateResponseFailed(CoapServerChannel channel) {
+		// TODO Auto-generated method stub
+		
+	}
 
 }

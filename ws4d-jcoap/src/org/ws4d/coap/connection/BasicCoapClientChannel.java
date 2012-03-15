@@ -21,7 +21,10 @@ import org.ws4d.coap.interfaces.CoapClient;
 import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
+import org.ws4d.coap.messages.BasicCoapRequest;
 import org.ws4d.coap.messages.BasicCoapResponse;
+import org.ws4d.coap.messages.CoapPacketType;
+import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -52,6 +55,15 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		client.onConnectionFailed(this, notReachable, resetByServer);		
 
 	}
+	
+    @Override
+    public BasicCoapRequest createRequest(boolean reliable, CoapRequestCode requestCode) {
+    	BasicCoapRequest msg = new BasicCoapRequest(
+                reliable ? CoapPacketType.CON : CoapPacketType.NON, requestCode,
+                channelManager.getNewMessageID());
+        msg.setChannel(this);
+        return msg;
+    }
 
     // public DefaultCoapClientChannel(CoapChannelManager channelManager) {
     // super(channelManager);

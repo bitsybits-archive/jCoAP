@@ -21,9 +21,6 @@
 
 package org.ws4d.coap.messages;
 
-import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Iterator;
@@ -32,8 +29,6 @@ import java.util.Vector;
 
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
-
-import sun.awt.SunHints.Value;
 
 public abstract class AbstractCoapMessage implements CoapMessage {
 	protected static final int HEADER_LENGTH = 4;
@@ -46,7 +41,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	protected int messageId;
     
     /* Options */
-    protected CoapHeaderOptions options;
+    protected CoapHeaderOptions options = new CoapHeaderOptions();
 
     /* Payload */
     protected byte[] payload = null;
@@ -279,8 +274,9 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 //    public void setRequestUri(URI uri){
 //    }
     
+
 	@Override
-	public CoapChannel getCoapChannel() {
+	public CoapChannel getChannel() {
 	    return channel;
 	}
 
@@ -288,7 +284,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	public void setChannel(CoapChannel channel) {
 	    this.channel = channel;
 	}
-
+    
 	@Override
     public int getTimeout() {
         if (timeout == 0) {

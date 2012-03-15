@@ -15,10 +15,11 @@ import org.ws4d.coap.connection.BasicCoapSocketHandler;
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapClient;
+import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
-import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
+import org.ws4d.coap.messages.CoapMediaType;
 
 /**
  * @author Nico Laum <nico.laum@uni-rostock.de>
@@ -27,7 +28,7 @@ import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
  */
 public class PlugtestClient implements CoapClient{
     CoapChannelManager channelManager = null;
-    CoapChannel clientChannel = null;
+    CoapClientChannel clientChannel = null;
     CoapRequest request = null; 
     private static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class.getName());
     boolean exitAfterResponse = true;
@@ -151,13 +152,13 @@ public class PlugtestClient implements CoapClient{
 
 
 	@Override
-	public void onConnectionFailed(CoapChannel channel, boolean notReachable, boolean resetByServer) {
+	public void onConnectionFailed(CoapClientChannel channel, boolean notReachable, boolean resetByServer) {
 		System.out.println("Connection Failed");
 		System.exit(-1);
 	}
 
 	@Override
-	public void onResponse(CoapChannel channel, CoapResponse response) {
+	public void onResponse(CoapClientChannel channel, CoapResponse response) {
 		if (response.getPayload() != null){
 			System.out.println("Response: " + response.toString() + " (" + new String(response.getPayload()) +")");
 		} else {

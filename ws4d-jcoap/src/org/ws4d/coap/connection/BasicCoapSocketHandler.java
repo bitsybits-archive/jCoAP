@@ -70,13 +70,15 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
         this(channelManager, 0);
     }
     
-    
-
     protected class WorkerThread extends Thread {
         Selector selector = null;
 
+        /* contains all received message keys to detect duplications 
+         * TODO: implement it like this: map with sender: last messageID */
         TimeoutHashMap<MessageKey, Boolean> duplicateMap = new TimeoutHashMap<MessageKey, Boolean>(CoapMessage.ACK_RST_RETRANS_TIMEOUT_MS);
+        /* contains all messages that (possibly) needs to be retransmitted (ACK, RST)*/
         TimeoutHashMap<MessageKey, CoapMessage> retransMsgMap = new TimeoutHashMap<MessageKey, CoapMessage>(CoapMessage.ACK_RST_RETRANS_TIMEOUT_MS);
+        /* contains all messages that are not confirmed yet (CON)*/
         TimeoutHashMap<MessageKey, CoapMessage> nonConfirmedMsgMap = new TimeoutHashMap<MessageKey, CoapMessage>(CoapMessage.ACK_RST_RETRANS_TIMEOUT_MS);
         
 		private PriorityQueue<TimeoutObject<MessageKey>> timeoutQueue = new PriorityQueue<TimeoutObject<MessageKey>>(); 
@@ -148,7 +150,8 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 		         * 2. incomming packet
 		         * 3. timeout */
 				try {
-					/*FIXME: don't make a select, when something is in the sendQueue, otherwise the packet will be sent after some delay */
+					/*FIXME: don't make a select, when something is in the sendQueue, otherwise the packet will be sent after some delay
+					 * move this check and the select to a critical section */
 					selector.select(waitFor);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
@@ -172,11 +175,17 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 		}
 
 		private void handleIncommingMessage(ByteBuffer buffer, InetSocketAddress addr) {
-			CoapMessage msg = AbstractCoapMessage.parseMessage(buffer.array(), buffer.position());
+			CoapMessage msg;
+			try {
+				/* TODO drop invalid messages (invalid version, type etc.) */
+				 msg = AbstractCoapMessage.parseMessage(buffer.array(), buffer.position());
+			} catch (Exception e) {
+				logger.log(Level.WARNING, "Received Invalid Message: Message dropped!");
+				return;
+			}
+			
 			CoapPacketType packetType = msg.getPacketType();
 			int msgID = msg.getMessageID();
-			
-			/* TODO drop invalid messages (invalid version, type etc.) */
 			
 			/* check for duplicates */
 			MessageKey msgKey = new MessageKey(msgID, addr.getAddress(), addr.getPort());
@@ -188,9 +197,8 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 				sendMsg((CoapMessage) retransMsgMap.get(msgKey));
 				return;
 			}
-			
-			/* add this message key to the retransmission map*/
 			duplicateMap.put(msgKey, true);
+			
 			
 			/* get the channel or create a new one */
 			CoapChannel channel = getChannel(addr.getAddress(),	addr.getPort());
@@ -199,10 +207,11 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 					/* CON or NON create a new channel or reset connection */
 					try {
 						channel = channelManager.createServerChannel(BasicCoapSocketHandler.this, msg, addr.getAddress(), addr.getPort());
+						addChannel(channel);
 					} catch (Exception e) {
 						/* not a valid request */
-						e.printStackTrace();
-						logger.log(Level.WARNING, "Invalid request, packet dropped");
+						logger.log(Level.WARNING, "Create Channel failed (invalid request)");
+						return;
 					}
 					
 					if (channel == null){
@@ -219,12 +228,15 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 					/* Ignore ACK and RST if no channel exists */
 					return;
 				}
-			}
+			} 
+			
 			
 			msg.setChannel(channel);
 			
-			if ((packetType == CoapPacketType.ACK)|| (packetType == CoapPacketType.RST)) {
+//			if ((packetType == CoapPacketType.ACK)|| (packetType == CoapPacketType.RST)) {
+			if (packetType != CoapPacketType.CON) {
 				/* confirm message by removing it from the non confirmedMsgMap*/
+				/* Corresponding to coap-09 the server should be aware of a NON as answer to a CON*/
 				nonConfirmedMsgMap.remove(msgKey);
 			}
 
@@ -262,15 +274,15 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 			}
 			
 			CoapPacketType packetType = msg.getPacketType();
-			InetAddress inetAddr = msg.getCoapChannel().getRemoteAddress();
-			int port = msg.getCoapChannel().getRemotePort();
+			InetAddress inetAddr = msg.getChannel().getRemoteAddress();
+			int port = msg.getChannel().getRemotePort();
 			MessageKey msgKey = new MessageKey(msg.getMessageID(), inetAddr, port);
 			
 			if (packetType == CoapPacketType.CON){
 				if(msg.maxRetransReached()){
 					/* the connection is broken */
 					nonConfirmedMsgMap.remove(msgKey);
-					msg.getCoapChannel().lostConnection(true, false);
+					msg.getChannel().lostConnection(true, false);
 					return;
 				}
 				msg.incRetransCounterAndTimeout();
@@ -286,6 +298,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 			
 			/* send message*/
 			ByteBuffer buf = ByteBuffer.wrap(msg.serialize());
+			/*TODO: check if serilization could fail... then do not put it to any Map!*/
 		    try {
 		    	dgramChannel.send(buf, new InetSocketAddress(inetAddr, port));
 		        logger.log(Level.INFO, "Send Msg with ID: " + msg.getMessageID());

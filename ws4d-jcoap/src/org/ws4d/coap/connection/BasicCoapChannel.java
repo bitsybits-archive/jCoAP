@@ -20,11 +20,11 @@ import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
 
 
 public abstract class BasicCoapChannel implements CoapChannel {
-    private CoapSocketHandler socketHandler = null;
-    private CoapChannelManager channelManager = null;
-    private InetAddress remoteAddress;
-    private int remotePort;
-    private int localPort;
+	protected CoapSocketHandler socketHandler = null;
+    protected CoapChannelManager channelManager = null;
+    protected InetAddress remoteAddress;
+    protected int remotePort;
+    protected int localPort;
 
     public BasicCoapChannel(CoapSocketHandler socketHandler, InetAddress remoteAddress, int remotePort) {
         this.socketHandler = socketHandler;
@@ -70,40 +70,6 @@ public abstract class BasicCoapChannel implements CoapChannel {
         return remotePort;
     }
 
-    @Override
-    public BasicCoapRequest createRequest(boolean reliable, CoapRequestCode requestCode) {
-    	BasicCoapRequest msg = new BasicCoapRequest(
-                reliable ? CoapPacketType.CON : CoapPacketType.NON, requestCode,
-                channelManager.getNewMessageID());
-        msg.setChannel(this);
-        return msg;
-    }
-
-    @Override
-    public BasicCoapResponse createResponse(CoapMessage request, CoapResponseCode responseCode) {
-    	return createResponse(request, responseCode, null);
-    }  
-    
-    @Override
-    public BasicCoapResponse createResponse(CoapMessage request, CoapResponseCode responseCode, CoapMediaType contentType){
-    	BasicCoapResponse response;
-    	if (request.getPacketType() == CoapPacketType.CON) {
-    		response = new BasicCoapResponse(CoapPacketType.ACK, responseCode, request.getMessageID(), request.getToken());
-    		response.setChannel(this);
-    	} else if (request.getPacketType() == CoapPacketType.NON) {
-    		response = new BasicCoapResponse(CoapPacketType.NON, responseCode, request.getMessageID(), request.getToken());
-    		response.setChannel(this);
-    	} else {
-    		throw new IllegalStateException("Create Response failed, Request is neither a CON nor a NON packet");
-    	}
-    	if (contentType != null && contentType != CoapMediaType.UNKNOWN){
-    		response.setContentType(contentType);
-    	}
-    	
-    	return response;
-    }
-
-    
     /*A channel is identified (and therefore unique) by its remote address, remote port and the local port */
 	@Override
 	public int hashCode() {

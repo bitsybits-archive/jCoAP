@@ -17,20 +17,22 @@ package org.ws4d.coap.server;
 
 import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannelManager;
-import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapRequest;
+import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.interfaces.CoapServerChannel;
 import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
 import org.ws4d.coap.messages.CoapMediaType;
 
-public class BasicCoapServer implements CoapServer {
+public class SeparateResponseCoapServer implements CoapServer {
     private static final int PORT = 5683;
     static int counter = 0;
+    CoapResponse response = null;
+    CoapServerChannel channel = null;
 
     public static void main(String[] args) {
         System.out.println("Start CoAP Server on port " + PORT);
-        BasicCoapServer server = new BasicCoapServer();
+        SeparateResponseCoapServer server = new SeparateResponseCoapServer();
 
         CoapChannelManager channelManager = BasicCoapChannelManager.getInstance();
         channelManager.createServerListener(server, PORT);
@@ -46,17 +48,33 @@ public class BasicCoapServer implements CoapServer {
 	public void handleRequest(CoapServerChannel channel, CoapRequest request) {
 		System.out.println("Received message: " + request.toString());
 		
-		CoapMessage response = channel.createResponse(request,
-				CoapResponseCode.Content_205);
-		response.setContentType(CoapMediaType.text_plain);
 		
-		response.setPayload("payload...".getBytes());
-		channel.sendMessage(response);
+		this.channel = channel;
+		response = channel.createSeparateResponse(request, CoapResponseCode.Content_205);
+		Thread t =   new Thread( new SendDelayedResponse() );
+	    t.start();
+	}
+	
+	public class SendDelayedResponse implements Runnable
+	  {
+	    public void run()
+	    {
+	    	response.setContentType(CoapMediaType.text_plain);
+	    	response.setPayload("payload...".getBytes());
+	    	try {
+	    		Thread.sleep(4000);
+	    	} catch (InterruptedException e) {
+	    		e.printStackTrace();
+	    	}
+	    	channel.sendSeparateResponse(response);
+
+	    }
 	}
 
 	@Override
 	public void separateResponseFailed(CoapServerChannel channel) {
-		// TODO Auto-generated method stub
+		System.out.println("Separate Response failed");
 		
 	}
+	
 }

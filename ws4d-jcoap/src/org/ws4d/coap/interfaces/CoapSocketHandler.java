@@ -29,7 +29,7 @@ public interface CoapSocketHandler {
     //
     // public boolean isOpen();
     /* TODO */
-    public CoapChannel connect(CoapClient client, InetAddress remoteAddress, int remotePort);
+    public CoapClientChannel connect(CoapClient client, InetAddress remoteAddress, int remotePort);
 
     public void close();
 

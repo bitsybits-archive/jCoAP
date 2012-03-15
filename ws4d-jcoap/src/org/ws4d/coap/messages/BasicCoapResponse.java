@@ -151,7 +151,6 @@ public class BasicCoapResponse extends AbstractCoapMessage implements CoapRespon
 		this.messageCodeValue = responseCode.getValue();
 		this.messageId = messageId;		
 		
-		this.options = new CoapHeaderOptions();
 		setToken(requestToken);
 	}
 	

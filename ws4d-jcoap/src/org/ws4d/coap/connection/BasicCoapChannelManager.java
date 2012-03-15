@@ -21,9 +21,9 @@ import java.util.HashMap;
 import java.util.Random;
 
 import org.ws4d.coap.Constants;
-import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapClient;
+import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.interfaces.CoapServerChannel;
@@ -57,7 +57,7 @@ public class BasicCoapChannelManager implements CoapChannelManager {
      * Creates a new server channel
      */
     @Override
-    public synchronized CoapChannel createServerChannel(CoapSocketHandler socketHandler, CoapMessage message, InetAddress addr, int port){
+    public synchronized CoapServerChannel createServerChannel(CoapSocketHandler socketHandler, CoapMessage message, InetAddress addr, int port){
     	SocketInformation socketInfo = socketMap.get(socketHandler.getLocalPort());
 
     	if (socketInfo.serverListener == null) {
@@ -114,7 +114,7 @@ public class BasicCoapChannelManager implements CoapChannelManager {
     }
 
     @Override
-	public CoapChannel connect(CoapClient client, InetAddress addr, int port) {
+	public CoapClientChannel connect(CoapClient client, InetAddress addr, int port) {
     	CoapSocketHandler socketHandler = null;
 		try {
 			socketHandler = new BasicCoapSocketHandler(this);

@@ -29,6 +29,7 @@ import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapServer;
+import org.ws4d.coap.interfaces.CoapServerChannel;
 import org.ws4d.coap.messages.BasicCoapResponse;
 import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
 
@@ -53,11 +54,12 @@ public class CoapServerProxy implements CoapServer{
     		while (!Thread.interrupted()) {
     			try {
     					/*FIXME: response can be NULL, than generate Error*/
-    					ProxyMessageContext context = coapOutQueue.take();		
-    					CoapChannel channel = context.getCoapRequest().getCoapChannel();
+    					ProxyMessageContext context = coapOutQueue.take();	
+    					/* TODO: make cast safe */
+    					CoapServerChannel channel = (CoapServerChannel) context.getCoapRequest().getChannel();
     					/* we need to cast to allow an efficient header copy */
     					BasicCoapResponse clientResponse = (BasicCoapResponse) context.getCoapResponse();
-    					BasicCoapResponse response = channel.createResponse(context.getCoapRequest(), clientResponse.getResponseCode());
+    					BasicCoapResponse response = (BasicCoapResponse) channel.createResponse(context.getCoapRequest(), clientResponse.getResponseCode());
 						/* copy header and payload */
 						response.copyHeaderOptions(clientResponse);
 						response.setPayload(clientResponse.getPayload());
@@ -99,7 +101,7 @@ public class CoapServerProxy implements CoapServer{
     }
 
     @Override
-	public void handleRequest(CoapChannel channel, CoapRequest request) {
+	public void handleRequest(CoapServerChannel channel, CoapRequest request) {
     	/* draft-08:
     	 *  CoAP distinguishes between requests to an origin server and a request
    			made through a proxy.  A proxy is a CoAP end-point that can be tasked
@@ -169,6 +171,12 @@ public class CoapServerProxy implements CoapServer{
 		}
     	
     }
+
+	@Override
+	public void separateResponseFailed(CoapServerChannel channel) {
+		// TODO Auto-generated method stub
+		
+	}
    
 }
 

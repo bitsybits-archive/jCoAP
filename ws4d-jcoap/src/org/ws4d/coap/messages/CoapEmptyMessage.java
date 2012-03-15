@@ -12,6 +12,10 @@ public class CoapEmptyMessage extends AbstractCoapMessage {
 		if (this.messageCodeValue != 0){
 			throw new IllegalArgumentException("Not an empty CoAP message.");
 		}
+		
+		if (length != HEADER_LENGTH){
+			throw new IllegalArgumentException("Invalid length of an empty message");
+		}
 	}
 
 	public CoapEmptyMessage(CoapPacketType packetType, int messageId) {

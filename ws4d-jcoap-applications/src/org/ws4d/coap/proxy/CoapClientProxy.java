@@ -30,6 +30,7 @@ import org.ws4d.coap.connection.BasicCoapSocketHandler;
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapClient;
+import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.messages.AbstractCoapMessage.CoapHeaderOptionType;
@@ -139,7 +140,7 @@ public class CoapClientProxy {
 
 				if (checkRemoteAddress(context)){
 					// create channel
-					CoapChannel channel;
+					CoapClientChannel channel;
 					channel = connectionManager.connect(this, context.getRemoteAddress(), context.getRemotePort());
 					if (channel != null) {
 						/* save the request in a hashmap to assign the response to the right request */
@@ -147,7 +148,7 @@ public class CoapClientProxy {
 						// send message
 						/* casting to BasicCoapRequest is necessary to allow an efficient header duplication*/
 						BasicCoapRequest originRequest = (BasicCoapRequest) context.getCoapRequest();
-						BasicCoapRequest request= channel.createRequest(originRequest.isReliable(), originRequest.getRequestCode());
+						BasicCoapRequest request= (BasicCoapRequest) channel.createRequest(originRequest.isReliable(), originRequest.getRequestCode());
 						request.copyHeaderOptions(originRequest); 
 
 						if (!context.isTranslate()){
@@ -168,7 +169,7 @@ public class CoapClientProxy {
 		}
 	        
 		@Override
-		public void onResponse(CoapChannel channel, CoapResponse response) {
+		public void onResponse(CoapClientChannel channel, CoapResponse response) {
 			ProxyMessageContext context = coapContextMap.get(channel);
 			channel.close();
 			if (context != null){
@@ -178,7 +179,7 @@ public class CoapClientProxy {
 		}
 
 		@Override
-		public void onConnectionFailed(CoapChannel channel,
+		public void onConnectionFailed(CoapClientChannel channel,
 				boolean notReachable, boolean resetByServer) {
 			ProxyMessageContext context = coapContextMap.get(channel);
 			channel.close();

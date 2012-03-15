@@ -8,6 +8,7 @@ import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapClient;
+import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
@@ -17,7 +18,7 @@ public class BasicCoapClient implements CoapClient {
     private static final int PORT = Constants.COAP_DEFAULT_PORT;
     static int counter = 0;
     CoapChannelManager channelManager = null;
-    CoapChannel clientChannel = null;
+    CoapClientChannel clientChannel = null;
 
     public static void main(String[] args) {
         System.out.println("Start CoAP Client");
@@ -45,12 +46,12 @@ public class BasicCoapClient implements CoapClient {
     }
 
 	@Override
-	public void onConnectionFailed(CoapChannel channel, boolean notReachable, boolean resetByServer) {
+	public void onConnectionFailed(CoapClientChannel channel, boolean notReachable, boolean resetByServer) {
 		System.out.println("Connection Failed");
 	}
 
 	@Override
-	public void onResponse(CoapChannel channel, CoapResponse response) {
+	public void onResponse(CoapClientChannel channel, CoapResponse response) {
 		System.out.println("Received response");
 	}
 }

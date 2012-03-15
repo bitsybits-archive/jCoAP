@@ -3,6 +3,7 @@ package org.ws4d.coap.messages;
 import java.io.UnsupportedEncodingException;
 import java.util.Vector;
 
+import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.messages.AbstractCoapMessage.CoapHeaderOption;
 import org.ws4d.coap.messages.AbstractCoapMessage.CoapHeaderOptionType;
@@ -74,8 +75,6 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 		this.requestCode = requestCode;
 		this.messageCodeValue = requestCode.getValue();
 		this.messageId = messageId;
-		
-		this.options = new CoapHeaderOptions();
 	}
 	
     @Override
@@ -296,8 +295,6 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 		return etagList;
 	}
 
-	
-	
 	
 	@Override
 	public boolean isRequest() {

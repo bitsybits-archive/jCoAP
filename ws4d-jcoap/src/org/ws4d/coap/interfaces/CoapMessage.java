@@ -66,7 +66,7 @@ public interface CoapMessage {
     
     public String toString();
 
-    public CoapChannel getCoapChannel();
+    public CoapChannel getChannel();
 
     public void setChannel(CoapChannel channel);
 
