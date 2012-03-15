@@ -138,4 +138,9 @@ public class BasicCoapChannelManager implements CoapChannelManager {
 			this.serverListener = serverListener;
 		}
 	}
+
+	@Override
+	public void setMessageId(int globalMessageId) {
+		this.globalMessageId = globalMessageId;
+	}
 }

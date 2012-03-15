@@ -8,6 +8,7 @@ package org.ws4d.coap.test;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.connection.BasicCoapSocketHandler;
 import org.ws4d.coap.rest.CoapResourceServer;
 import org.ws4d.coap.test.resources.LongPathResource;
@@ -25,7 +26,6 @@ public class PlugtestServer {
     private CoapResourceServer resourceServer;
     private static Logger logger = Logger
 	    .getLogger(BasicCoapSocketHandler.class.getName());
-
     /**
      * @param args
      */
@@ -52,37 +52,73 @@ public class PlugtestServer {
 	init();
 	if (testId.equals("TD_COAP_CORE_01")) {
 	    resourceServer.createResource(new TestResource());
+	    run();
 	} else if (testId.equals("TD_COAP_CORE_02")) {
 	    /* Nothing to setup, POST creates new resource */
+	    run();
 	} else if (testId.equals("TD_COAP_CORE_03")) {
 	    resourceServer.createResource(new TestResource());
+	    run();
 	} else if (testId.equals("TD_COAP_CORE_04")) {
 	    resourceServer.createResource(new TestResource());
+	    run();
 	} else if (testId.equals("TD_COAP_CORE_05")) {
 	    resourceServer.createResource(new TestResource());
+	    run();
 	} else if (testId.equals("TD_COAP_CORE_06")) {
 	    /* Nothing to setup, POST creates new resource */
+	    run();
 	} else if (testId.equals("TD_COAP_CORE_07")) {
 	    resourceServer.createResource(new TestResource());
+	    run();
 	} else if (testId.equals("TD_COAP_CORE_08")) {
 	    resourceServer.createResource(new TestResource());
+	    run();
 	} else if (testId.equals("TD_COAP_CORE_09")) {
-	    System.out.println("NOT IMPLEMENTED");
-	    System.exit(-1);
+			/*
+			 * === SPECIAL CASE: Separate Response: for these tests we cannot
+			 * use the resource server
+			 */
+		PlugtestSeparateResponseCoapServer server = new PlugtestSeparateResponseCoapServer();
+		server.start(TestConfiguration.SEPARATE_RESPONSE_TIME_MS);
 	} else if (testId.equals("TD_COAP_CORE_10")) {
 	    resourceServer.createResource(new TestResource());
+	    run();
 	} else if (testId.equals("TD_COAP_CORE_11")) {
 	    resourceServer.createResource(new TestResource());
+	    run();
 	} else if (testId.equals("TD_COAP_CORE_12")) {
 	    resourceServer.createResource(new LongPathResource());
+	    run();
 	} else if (testId.equals("TD_COAP_CORE_13")) {
 	    resourceServer.createResource(new QueryResource());
+	    run();
 	} else if (testId.equals("TD_COAP_CORE_14")) {
+			/*
+			 * === SPECIAL CASE: Separate Response: for these tests we cannot
+			 * use the resource server
+			 */
+			PlugtestSeparateResponseCoapServer server = new PlugtestSeparateResponseCoapServer();
+			server.start(TestConfiguration.SEPARATE_RESPONSE_TIME_MS);
 	} else if (testId.equals("TD_COAP_CORE_15")) {
+		/*
+		 * === SPECIAL CASE: Separate Response: for these tests we cannot
+		 * use the resource server
+		 */
+		PlugtestSeparateResponseCoapServer server = new PlugtestSeparateResponseCoapServer();
+		server.start(TestConfiguration.SEPARATE_RESPONSE_TIME_MS);
+	} else if (testId.equals("TD_COAP_CORE_16")) {
+		/*
+		 * === SPECIAL CASE: Separate Response: for these tests we cannot
+		 * use the resource server
+		 */
+		PlugtestSeparateResponseCoapServer server = new PlugtestSeparateResponseCoapServer();
+		server.start(TestConfiguration.SEPARATE_RESPONSE_TIME_MS);
 	} else if (testId.equals("TD_COAP_LINK_01")) {
 	} else if (testId.equals("TD_COAP_LINK_02")) {
 	    resourceServer.createResource(new LongPathResource());
 	    resourceServer.createResource(new TestResource());
+	    run();
 	} else if (testId.equals("TD_COAP_BLOCK_01")) {
 	} else if (testId.equals("TD_COAP_BLOCK_02")) {
 	} else if (testId.equals("TD_COAP_BLOCK_03")) {
@@ -97,13 +133,14 @@ public class PlugtestServer {
 	    System.exit(-1);
 	}
 
-	run();
     }
 
     private void init() {
-	if (resourceServer != null)
+    BasicCoapChannelManager.getInstance().setMessageId(2000);
+    if (resourceServer != null)
 	    resourceServer.stop();
 	resourceServer = new CoapResourceServer();
+	
     }
 
     private void run() {

@@ -126,6 +126,8 @@ public class PlugtestClient implements CoapClient{
     
 	public void init(boolean reliable, CoapRequestCode requestCode) {
 		channelManager = BasicCoapChannelManager.getInstance();
+		channelManager.setMessageId(1000);
+		
 		try {
 			clientChannel = channelManager.connect(this, InetAddress.getByName(TestConfiguration.TEST_SERVER_ADDRESS), TestConfiguration.TEST_SERVER_PORT);
 			if (clientChannel == null){

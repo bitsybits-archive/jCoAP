@@ -22,12 +22,12 @@ build_exec_string() {
 run_test() {
   TEST=$1
 
-  killall java >/dev/null 2>/dev/null
-  sleep 1
   echo "Running Test $TEST"
   build_exec_string $TEST
   eval $EXEC_SERVER
   eval $EXEC_CLIENT
+  sleep 1
+  killall java >/dev/null 2>/dev/null
   sleep 1
 
   diff -i -b -B -q $LOG_DIR/${TEST}_SERVER.txt $REF_LOG_DIR/${TEST}_SERVER.txt
@@ -47,6 +47,9 @@ run_test() {
   fi
 }
 
+killall java >/dev/null 2>/dev/null
+sleep 1
+
 mkdir -p $LOG_DIR
 
 # CoAP CORE Tests
@@ -61,19 +64,19 @@ do
 done
 
 # CoAP Link Tests
-for i in 1 2
-do
-  run_test TD_COAP_LINK_0$i
-done
+#for i in 1 2
+#do
+#  run_test TD_COAP_LINK_0$i
+#done
 
 # CoAP Block Tests
-for i in 1 2 3 4
-do
-  run_test TD_COAP_BLOCK_0$i
-done
+#for i in 1 2 3 4
+#do
+#  run_test TD_COAP_BLOCK_0$i
+#done
 
 # CoAP Observation Tests
-for i in 1 2 3 4 5
-do
-  run_test TD_COAP_OBS_0$i
-done
+#for i in 1 2 3 4 5
+#do
+#  run_test TD_COAP_OBS_0$i
+#done

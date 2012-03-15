@@ -34,5 +34,8 @@ public interface CoapChannelManager {
      * TODO: allow client to bind to a special port */
     public CoapClientChannel connect(CoapClient client, InetAddress addr, int port);
     
+    /* This function is for testing purposes only, to have a determined message id*/
+    public void setMessageId(int globalMessageId);
+    
     public void reset();
 }
