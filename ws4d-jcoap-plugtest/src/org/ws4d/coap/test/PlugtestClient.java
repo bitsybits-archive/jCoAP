@@ -34,22 +34,26 @@ public class PlugtestClient implements CoapClient{
     CoapRequest request = null; 
     private static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class.getName());
     boolean exitAfterResponse = true;
+    String serverAddress = null;
+    int serverPort = 0;
 
 	public static void main(String[] args) {
-		if (args.length > 1 || args.length < 1) {
+		if (args.length > 3 || args.length < 3) {
 			System.err.println("illegal number of arguments");
 			System.exit(1);
 		}
 		
 		logger.setLevel(Level.WARNING);
 		PlugtestClient client = new PlugtestClient();
-		client.start(args[0]);
+		client.start(args[0], Integer.parseInt(args[1]), args[2]);
 	}
 	
 	
-	public void start(String testcase){
+	public void start(String serverAddress, int serverPort, String testcase){
 		System.out.println("===START=== (Run Test Client: " + testcase + ")");
 		String testId = testcase;
+		this.serverAddress = serverAddress;
+		this.serverPort = serverPort;
 		
 		if (testId.equals("TD_COAP_CORE_01")) {
 			init(true, CoapRequestCode.GET);
@@ -147,7 +151,7 @@ public class PlugtestClient implements CoapClient{
 		channelManager.setMessageId(1000);
 		
 		try {
-			clientChannel = channelManager.connect(this, InetAddress.getByName(TestConfiguration.TEST_SERVER_ADDRESS), TestConfiguration.TEST_SERVER_PORT);
+			clientChannel = channelManager.connect(this, InetAddress.getByName(this.serverAddress), this.serverPort);
 			if (clientChannel == null){
 				System.out.println("Connect failed.");
 				System.exit(-1);
