@@ -3,6 +3,7 @@
 # for short output, run
 # ./runTests.sh | grep FAILED
 # ./runTests.sh | grep PASSED
+#master branch
 SERVER_CLASS="org.ws4d.coap.test.PlugtestServer"
 CLIENT_CLASS="org.ws4d.coap.test.PlugtestClient"
 CLASSPATH="bin/:../ws4d-jcoap/bin"
