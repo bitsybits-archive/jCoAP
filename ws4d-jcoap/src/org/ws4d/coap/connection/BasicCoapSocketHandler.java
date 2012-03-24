@@ -61,7 +61,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
        	dgramChannel.socket().bind(new InetSocketAddress(port)); //port can be 0, then a free port is chosen 
         this.localPort = dgramChannel.socket().getLocalPort();
         dgramChannel.configureBlocking(false);
-        
+       
         workerThread = new WorkerThread();
         workerThread.start();
     }
