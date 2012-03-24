@@ -36,24 +36,26 @@ public class PlugtestClient implements CoapClient{
     boolean exitAfterResponse = true;
     String serverAddress = null;
     int serverPort = 0;
+    String filter = null;
 
 	public static void main(String[] args) {
-		if (args.length > 3 || args.length < 3) {
+		if (args.length > 4 || args.length < 4) {
 			System.err.println("illegal number of arguments");
 			System.exit(1);
 		}
 		
 		logger.setLevel(Level.WARNING);
 		PlugtestClient client = new PlugtestClient();
-		client.start(args[0], Integer.parseInt(args[1]), args[2]);
+		client.start(args[0], Integer.parseInt(args[1]), args[2], args[3]);
 	}
 	
 	
-	public void start(String serverAddress, int serverPort, String testcase){
+	public void start(String serverAddress, int serverPort, String testcase, String filter){
 		System.out.println("===START=== (Run Test Client: " + testcase + ")");
 		String testId = testcase;
 		this.serverAddress = serverAddress;
 		this.serverPort = serverPort;
+		this.filter = filter;
 		
 		if (testId.equals("TD_COAP_CORE_01")) {
 			init(true, CoapRequestCode.GET);
@@ -136,7 +138,7 @@ public class PlugtestClient implements CoapClient{
 		else if (testId.equals("TD_COAP_LINK_02")) {
 			init(false, CoapRequestCode.GET);
 			request.setUriPath("/.well-known/core");
-			request.setUriQuery("rt=" + TestConfiguration.LINK_FORMAT_TYPE);
+			request.setUriQuery("rt=" + this.filter);
 		} 
 		else {
 			System.out.println("===Failure=== (unknown test case)");
