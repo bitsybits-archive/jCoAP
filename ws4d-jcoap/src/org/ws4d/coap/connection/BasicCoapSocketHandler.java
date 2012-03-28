@@ -50,8 +50,10 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
     
     private CoapChannelManager channelManager = null;
     private DatagramChannel dgramChannel = null;
+    
+	public static final int UDP_BUFFER_SIZE = 66000; // max UDP size = 65535 
 
-    byte[] sendBuffer = new byte[Constants.COAP_MESSAGE_SIZE_MAX];
+    byte[] sendBuffer = new byte[UDP_BUFFER_SIZE];
     
     private int localPort;
 
@@ -93,7 +95,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 		ByteBuffer dgramBuffer;
 
 		public WorkerThread() {
-			dgramBuffer = ByteBuffer.allocate(1500);
+			dgramBuffer = ByteBuffer.allocate(UDP_BUFFER_SIZE); 
 		    startTime = System.currentTimeMillis();
 		    try {
 				selector = Selector.open();
