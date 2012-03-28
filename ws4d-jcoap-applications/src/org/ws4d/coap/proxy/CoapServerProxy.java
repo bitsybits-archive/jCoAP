@@ -25,13 +25,12 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import org.ws4d.coap.connection.BasicCoapChannelManager;
-import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.interfaces.CoapServerChannel;
 import org.ws4d.coap.messages.BasicCoapResponse;
-import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
+import org.ws4d.coap.messages.CoapResponseCode;
 
 
 /**

@@ -29,7 +29,7 @@ import org.ws4d.coap.messages.BasicCoapResponse;
 import org.ws4d.coap.messages.CoapEmptyMessage;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapPacketType;
-import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
+import org.ws4d.coap.messages.CoapResponseCode;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>

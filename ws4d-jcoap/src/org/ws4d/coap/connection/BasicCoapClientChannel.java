@@ -25,7 +25,7 @@ import org.ws4d.coap.messages.BasicCoapRequest;
 import org.ws4d.coap.messages.BasicCoapResponse;
 import org.ws4d.coap.messages.CoapEmptyMessage;
 import org.ws4d.coap.messages.CoapPacketType;
-import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
+import org.ws4d.coap.messages.CoapRequestCode;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>

@@ -12,16 +12,14 @@ import java.util.logging.Logger;
 
 import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.connection.BasicCoapSocketHandler;
-import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapClient;
 import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
-import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
 import org.ws4d.coap.messages.CoapEmptyMessage;
 import org.ws4d.coap.messages.CoapMediaType;
-import org.ws4d.coap.test.PlugtestSeparateResponseCoapServer.SendDelayedResponse;
+import org.ws4d.coap.messages.CoapRequestCode;
 
 /**
  * @author Nico Laum <nico.laum@uni-rostock.de>

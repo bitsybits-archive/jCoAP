@@ -21,8 +21,8 @@ import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.interfaces.CoapServerChannel;
-import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
 import org.ws4d.coap.messages.CoapMediaType;
+import org.ws4d.coap.messages.CoapResponseCode;
 
 public class SeparateResponseCoapServer implements CoapServer {
     private static final int PORT = 5683;

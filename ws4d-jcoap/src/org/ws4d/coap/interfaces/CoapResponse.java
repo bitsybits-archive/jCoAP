@@ -1,6 +1,6 @@
 package org.ws4d.coap.interfaces;
 
-import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
+import org.ws4d.coap.messages.CoapResponseCode;
 
 public interface CoapResponse extends CoapMessage{
 	

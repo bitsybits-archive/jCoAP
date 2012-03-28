@@ -5,14 +5,13 @@ import java.net.UnknownHostException;
 
 import org.ws4d.coap.Constants;
 import org.ws4d.coap.connection.BasicCoapChannelManager;
-import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapClient;
 import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
-import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
 import org.ws4d.coap.messages.CoapEmptyMessage;
+import org.ws4d.coap.messages.CoapRequestCode;
 
 public class BasicCoapClient implements CoapClient {
     private static final String SERVER_ADDRESS = "localhost";

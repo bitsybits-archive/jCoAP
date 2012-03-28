@@ -7,12 +7,6 @@ import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
-import org.ws4d.coap.messages.CoapMediaType;
-import org.ws4d.coap.messages.CoapPacketType;
-import org.ws4d.coap.messages.BasicCoapRequest;
-import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
-import org.ws4d.coap.messages.BasicCoapResponse;
-import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>

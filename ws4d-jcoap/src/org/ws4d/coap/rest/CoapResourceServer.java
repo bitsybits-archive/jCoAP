@@ -11,8 +11,8 @@ import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.interfaces.CoapServerChannel;
-import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
-import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
+import org.ws4d.coap.messages.CoapRequestCode;
+import org.ws4d.coap.messages.CoapResponseCode;
 
 public class CoapResourceServer extends AbstractResourceServer implements CoapServer {
     private static final int PORT = Constants.COAP_DEFAULT_PORT;

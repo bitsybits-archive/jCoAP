@@ -1,7 +1,7 @@
 
 package org.ws4d.coap.interfaces;
 
-import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
+import org.ws4d.coap.messages.CoapRequestCode;
 
 
 public interface CoapClientChannel extends CoapChannel {

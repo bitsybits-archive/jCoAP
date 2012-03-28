@@ -47,11 +47,11 @@ import org.apache.http.util.EntityUtils;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.messages.BasicCoapRequest;
-import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
 import org.ws4d.coap.messages.BasicCoapResponse;
-import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapPacketType;
+import org.ws4d.coap.messages.CoapRequestCode;
+import org.ws4d.coap.messages.CoapResponseCode;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -59,7 +59,7 @@ import org.ws4d.coap.messages.CoapPacketType;
  */
 public class Mapper {
 	
-	static final int DEFAULT_MAX_AGE = 60000; //Max Age Default in ms 
+	static final int DEFAULT_MAX_AGE_MS = 60000; //Max Age Default in ms 
 
 	private static ArrayBlockingQueue<ProxyMessageContext> httpInQueue = new ArrayBlockingQueue<ProxyMessageContext>(100);		
 	private static ArrayBlockingQueue<ProxyMessageContext> httpOutQueue = new ArrayBlockingQueue<ProxyMessageContext>(100);
@@ -201,7 +201,7 @@ public class Mapper {
 							if (response != null){
 								/* answer from cache */
 								context.setHttpResponse(response);
-								context.setFromCache(true); //avoid "rechaching"
+								context.setFromCache(true); //avoid "recaching"
 								putHttpResponse(context);
 								System.out.println("served from cache");
 							} else {	                		
@@ -215,7 +215,7 @@ public class Mapper {
 							if (response != null){
 								/* answer from cache */
 								context.setCoapResponse(response);
-								context.setFromCache(true); //avoid "rechaching"
+								context.setFromCache(true); //avoid "recaching"
 								putCoapResponse(context);
 								System.out.println("served from cache");
 							} else {
@@ -796,7 +796,7 @@ public class Mapper {
 		
 		long maxAge = coapResponse.getMaxAge();
 		if (maxAge < 0){
-			maxAge = DEFAULT_MAX_AGE;
+			maxAge = DEFAULT_MAX_AGE_MS;
 		}
 		long maxAgeMs = maxAge * 1000; 
 		if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_SERVICE_UNAVAILABLE){

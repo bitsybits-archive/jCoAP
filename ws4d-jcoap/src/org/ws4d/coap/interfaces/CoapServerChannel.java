@@ -2,7 +2,7 @@
 package org.ws4d.coap.interfaces;
 
 import org.ws4d.coap.messages.CoapMediaType;
-import org.ws4d.coap.messages.BasicCoapResponse.CoapResponseCode;
+import org.ws4d.coap.messages.CoapResponseCode;
 
 
 public interface CoapServerChannel extends CoapChannel {

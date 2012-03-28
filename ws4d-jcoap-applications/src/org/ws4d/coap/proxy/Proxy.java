@@ -37,7 +37,6 @@ public class Proxy {
 			Mapper.getInstance().setCacheTime(cacheTime);
 		}
 	
-	//TODO use coapserver instead of coapclient, then coapclient can be deleted, coapserver then is coapinterface
 		HttpServerNIO httpserver = new HttpServerNIO();
 		HttpClientNIO httpclient = new HttpClientNIO();
 		CoapClientProxy coapclient = new CoapClientProxy();

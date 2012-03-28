@@ -3,7 +3,7 @@ package org.ws4d.coap.interfaces;
 import java.util.Vector;
 
 import org.ws4d.coap.messages.CoapMediaType;
-import org.ws4d.coap.messages.BasicCoapRequest.CoapRequestCode;
+import org.ws4d.coap.messages.CoapRequestCode;
 
 public interface CoapRequest extends CoapMessage{
 
