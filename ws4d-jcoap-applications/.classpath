@@ -13,5 +13,6 @@
 	<classpathentry kind="lib" path="Referenced Libraries/slf4j-api-1.6.1.jar"/>
 	<classpathentry kind="lib" path="Referenced Libraries/slf4j-jdk14-1.6.1.jar"/>
 	<classpathentry kind="lib" path="/ws4d-jcoap/lib/log4j-1.2.16.jar"/>
+	<classpathentry kind="lib" path="/ws4d-jcoap/lib/commons-cli-1.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

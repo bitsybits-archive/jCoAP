@@ -18,8 +18,12 @@
  */
 package org.ws4d.coap.proxy;
 
-
-
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -35,10 +39,33 @@ public class Proxy {
 	static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class);
 
 	public static void main(String[] args) {
-		if (args.length > 0){
-			int cacheTime = Integer.parseInt(args[0]);
-			Mapper.getInstance().setCacheTime(cacheTime);
+		CommandLineParser cmdParser = new GnuParser();
+		Options options = new Options();
+		/* Add command line options */
+		options.addOption("c", "default-cache-time", true, "Default caching time in seconds");
+		CommandLine cmd = null;
+		try {
+			cmd = cmdParser.parse(options, args);
+		} catch (ParseException e) {
+			System.out.println( "Unexpected exception:" + e.getMessage() );
+			HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp( "jCoAP-Proxy", options );
+			System.exit(-1);
 		}
+		
+		/* evaluate command line */
+		if(cmd.hasOption("c")) {
+			try {
+				Mapper.getInstance().setCacheTime(Integer.parseInt(cmd.getOptionValue("c")));
+				System.out.println("Set caching time to " + cmd.getOptionValue("c") + " seconds");
+			} catch (NumberFormatException e) {
+				System.out.println( "Unexpected exception:" + e.getMessage() );
+				HelpFormatter formatter = new HelpFormatter();
+				formatter.printHelp( "jCoAP-Proxy", options );
+				System.exit(-1);
+			}
+		}
+		
 		
         logger.addAppender(new ConsoleAppender(new SimpleLayout()));
         // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
