@@ -22,9 +22,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.connection.BasicCoapSocketHandler;
 import org.ws4d.coap.interfaces.CoapChannel;
@@ -42,7 +44,7 @@ import org.ws4d.coap.messages.CoapEmptyMessage;
  * @author Andy Seidel <andy.seidel@uni-rostock.de>
  */
 public class CoapClientProxy {
-	private static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class.getName());
+	private static Logger logger = Logger.getLogger(CoapClientProxy.class);
 
 	// queue is used to receive coap-requests from mapper
 	private ArrayBlockingQueue<ProxyMessageContext> coapClientRequestQueue = new ArrayBlockingQueue<ProxyMessageContext>(100);
@@ -52,6 +54,10 @@ public class CoapClientProxy {
 
 	public CoapClientProxy() {
 		super();
+        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
+        // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
+        logger.setLevel(Level.WARN);
+		
 		CoapRequestListenerThread coaprequestlistenerthread = new CoapRequestListenerThread();
 		this.coapRequestListener = coaprequestlistenerthread;
 		coaprequestlistenerthread.start();
@@ -88,7 +94,7 @@ public class CoapClientProxy {
 
 			/* check if Host could be found */
 			if (remoteAddress == null) {
-				logger.log(Level.INFO,"Invalid Uri Host, request will be dropped!");
+				logger.warn("Invalid Uri Host, request will be dropped!");
 				return false;
 			}
 			

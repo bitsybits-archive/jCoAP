@@ -25,10 +25,11 @@ import java.nio.channels.Selector;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import org.ws4d.coap.Constants;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapClient;
@@ -44,7 +45,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
      * @author Christian Lerche <christian.lerche@uni-rostock.de>
      * @author Nico Laum <nico.laum@uni-rostock.de>
      */
-    private static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class.getName());
+	private final static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class); 
     protected WorkerThread workerThread = null;
     protected HashMap<ChannelKey, CoapChannel> channels = new HashMap<ChannelKey, CoapChannel>();
     
@@ -58,7 +59,12 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
     private int localPort;
 
     public BasicCoapSocketHandler(CoapChannelManager channelManager, int port) throws IOException {
-        this.channelManager = channelManager;
+        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
+        // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
+        logger.setLevel(Level.WARN);
+    	
+    	
+    	this.channelManager = channelManager;
         dgramChannel = DatagramChannel.open();
        	dgramChannel.socket().bind(new InetSocketAddress(port)); //port can be 0, then a free port is chosen 
         this.localPort = dgramChannel.socket().getLocalPort();
@@ -182,7 +188,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 				/* TODO drop invalid messages (invalid version, type etc.) */
 				 msg = AbstractCoapMessage.parseMessage(buffer.array(), buffer.position());
 			} catch (Exception e) {
-				logger.log(Level.WARNING, "Received Invalid Message: Message dropped!");
+				logger.warn("Received Invalid Message: Message dropped!");
 				return;
 			}
 			
@@ -212,7 +218,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 						addChannel(channel);
 					} catch (Exception e) {
 						/* not a valid request */
-						logger.log(Level.WARNING, "Create Channel failed (invalid request)");
+						logger.warn("Create Channel failed (invalid request)");
 						return;
 					}
 					

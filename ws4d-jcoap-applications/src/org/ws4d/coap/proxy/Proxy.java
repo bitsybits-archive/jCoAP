@@ -18,9 +18,12 @@
  */
 package org.ws4d.coap.proxy;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 import org.ws4d.coap.connection.BasicCoapSocketHandler;
 
 /**
@@ -29,13 +32,17 @@ import org.ws4d.coap.connection.BasicCoapSocketHandler;
  */
 
 public class Proxy {
-	static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class.getName());
+	static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class);
 
 	public static void main(String[] args) {
 		if (args.length > 0){
 			int cacheTime = Integer.parseInt(args[0]);
 			Mapper.getInstance().setCacheTime(cacheTime);
 		}
+		
+        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
+        // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
+        logger.setLevel(Level.INFO);
 	
 		HttpServerNIO httpserver = new HttpServerNIO();
 		HttpClientNIO httpclient = new HttpClientNIO();
@@ -50,8 +57,5 @@ public class Proxy {
 	
 		httpserver.start();
 		httpclient.start();
-		
-		logger.setLevel(Level.ALL);
-	    
 	}
 }

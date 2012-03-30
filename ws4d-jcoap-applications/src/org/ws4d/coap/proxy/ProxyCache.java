@@ -24,8 +24,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
@@ -36,8 +34,11 @@ import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 import org.ws4d.coap.connection.BasicCoapSocketHandler;
-import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapResponse;
 
 /**
@@ -51,9 +52,13 @@ public class ProxyCache {
 	/*0 disables the cache*/
 	private static int defaultTimeToLive = org.ws4d.coap.Constants.COAP_DEFAULT_MAX_AGE_S;	//max-age of an element by default in seconds
 	
-	private static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class.getName());
+	private static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class);
 	
 	public ProxyCache() {
+        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
+        // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
+        logger.setLevel(Level.INFO);
+        
 		cacheManager = CacheManager.create();
 		cache = new Cache(new CacheConfiguration("proxy", 100)
 		.memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LFU)
@@ -87,7 +92,7 @@ public class ProxyCache {
 		if (response == null){
 			return;
 		}
-		logger.log(Level.INFO, "Cache HTTP Resource (" + uri.toString() + ")");
+		logger.info( "Cache HTTP Resource (" + uri.toString() + ")");
 		//first determine what to do
 		int code = response.getStatusLine().getStatusCode();
 		
@@ -145,7 +150,7 @@ public class ProxyCache {
 		if (response == null){
 			return;
 		}
-		logger.log(Level.INFO, "Cache CoAP Resource (" + uri.toString() + ")");
+		logger.debug( "Cache CoAP Resource (" + uri.toString() + ")");
 		
 		long timeToLive = response.getMaxAge();
 		if (timeToLive < 0){
@@ -158,10 +163,10 @@ public class ProxyCache {
 		if (defaultTimeToLive == 0) return null;
 		if (cache.getQuiet(uri) != null) {
 			Object o = cache.get(uri).getObjectValue();
-			logger.log(Level.INFO, "Found in cache (" + uri.toString() + ")");
+			logger.debug( "Found in cache (" + uri.toString() + ")");
 			return (HttpResponse) o;
 		} else {
-			logger.log(Level.INFO, "Not in cache (" + uri.toString() + ")");
+			logger.debug( "Not in cache (" + uri.toString() + ")");
 			return null;
 		}
 	}
@@ -171,10 +176,10 @@ public class ProxyCache {
 
 		if (cache.getQuiet(uri) != null) {
 			Object o = cache.get(uri).getObjectValue();
-			logger.log(Level.INFO, "Found in cache (" + uri.toString() + ")");
+			logger.debug( "Found in cache (" + uri.toString() + ")");
 			return (CoapResponse) o;
 		}else{
-			logger.log(Level.INFO, "Not in cache (" + uri.toString() + ")");
+			logger.debug( "Not in cache (" + uri.toString() + ")");
 			return null;
 		}
 	}
