@@ -235,7 +235,7 @@ public class ProxyCache {
 		cache.put(elem);
 	}
 
-	public void setCacheTime(int cacheTime) {
+	public void setDefaultCacheTime(int cacheTime) {
 		/*0 disables the cache*/
 		defaultTimeToLive = cacheTime;
 		

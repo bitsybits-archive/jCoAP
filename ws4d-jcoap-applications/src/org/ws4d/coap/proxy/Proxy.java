@@ -56,7 +56,7 @@ public class Proxy {
 		/* evaluate command line */
 		if(cmd.hasOption("c")) {
 			try {
-				Mapper.getInstance().setCacheTime(Integer.parseInt(cmd.getOptionValue("c")));
+				Mapper.getInstance().setDefaultCacheTime(Integer.parseInt(cmd.getOptionValue("c")));
 				System.out.println("Set caching time to " + cmd.getOptionValue("c") + " seconds");
 			} catch (NumberFormatException e) {
 				System.out.println( "Unexpected exception:" + e.getMessage() );

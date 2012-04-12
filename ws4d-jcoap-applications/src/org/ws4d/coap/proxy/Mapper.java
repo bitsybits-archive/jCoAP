@@ -112,8 +112,8 @@ public class Mapper {
 		cache = new ProxyCache();
     }
     
-    public void setCacheTime(int cacheTime){
-    	cache.setCacheTime(cacheTime);
+    public void setDefaultCacheTime(int cacheTime){
+    	cache.setDefaultCacheTime(cacheTime);
     }
 	
 	//this class handles incoming http-requests; used in cases http-coap, http-http
@@ -599,15 +599,8 @@ public class Mapper {
 			method = request.getRequestCode().toString();
 		}
 		
-		CoapResponse coapResponse = null;
-		if (context.getHttpResponse() == null){
-			/* error and no response was received */
-			coapResponse = new BasicCoapResponse(CoapPacketType.RST, CoapResponseCode.Not_Found_404, 0, null);
-		} else {
-			//set the response-code according to response-code-mapping-table
-			coapResponse = new BasicCoapResponse(CoapPacketType.ACK, getCoapResponseCode(method, context.getHttpResponse()), 0, null);
-		}
-		
+		//set the response-code according to response-code-mapping-table
+		CoapResponse coapResponse = new BasicCoapResponse(CoapPacketType.ACK, getCoapResponseCode(method, context.getHttpResponse()), 0, null);
 
 		//TODO: translate header-options
 		
