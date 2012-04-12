@@ -78,6 +78,12 @@ public class Mapper {
 	private static CoapResponseHandler coapResponseHandler;
 	
 	private static Mapper instance;
+	
+	/*for statistics*/
+	private int httpRequestCount = 0;
+	private int coapRequestCount = 0;
+	private int servedFromCacheCount = 0;
+	
 
     public synchronized static Mapper getInstance() {
         if (instance == null) {
@@ -131,6 +137,7 @@ public class Mapper {
 	                    }	                	
 	                	
 	                	ProxyMessageContext context = httpInQueue.take(); 				//blocking operation
+	                	httpRequestCount++;
 
 					// at this point response is not in cache and should be
 					// mapped to coap-request
@@ -146,7 +153,7 @@ public class Mapper {
 							context.setCoapResponse(response);
 							context.setFromCache(true); //avoid "rechaching"
 							putCoapResponse(context);
-							System.out.println("served from cache");
+							servedFromCacheCount++;
 						} else {
 							/* not cached */
 							CoapRequest request = httpRequestToCoapRequest(context.getHttpRequest());
@@ -194,6 +201,7 @@ public class Mapper {
 	                    }
 	                    
 	                	ProxyMessageContext context = coapInQueue.take(); 
+	                	coapRequestCount++;
 
 	                	if (context.isTranslate()){
 	                		/* coap to http */
@@ -674,12 +682,7 @@ public class Mapper {
 		URI uri = null;		
 		
 		//construct uri for later use
-		try {
-			uri = new URI(request.getRequestLine().getUri());
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-			return;
-		}
+		uri = getHttpRequestUri(request);
 		
 		//Content-Type is in response only
 		
@@ -1141,6 +1144,37 @@ public class Mapper {
         
     }
     
+    public static URI getHttpRequestUri(HttpRequest request){
+			URI uri = null;
+			
+			String uriString = request.getRequestLine().getUri();
+			/* make sure to have the scheme */
+			if (uriString.startsWith("coap://")){
+				/* do nothing */
+			} else if (uriString.startsWith("http://")){
+				uriString = "coap://" + uriString.substring(7);
+			} else {
+				/* not an absolute uri*/
+				Header[] host = request.getHeaders("Host");
+				/* only one is accepted */
+				if (host.length <= 0){
+					/* error, unknown host*/
+					return null;
+				}
+				uriString = "coap://"  + host[0].getValue() + uriString;
+			}
+			
+			try {
+				uri = new URI(uriString);
+			} catch (URISyntaxException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+			}				
+				
+			return uri;
+	}
+    
 	public static boolean isIPv4Address(InetAddress addr) {
 		try {
 			@SuppressWarnings("unused") //just to check if casting fails
@@ -1160,4 +1194,23 @@ public class Mapper {
 			return false;
 		}
 	}
+
+	public int getHttpRequestCount() {
+		return httpRequestCount;
+	}
+
+	public int getCoapRequestCount() {
+		return coapRequestCount;
+	}
+
+	public int getServedFromCacheCount() {
+		return servedFromCacheCount;
+	}
+	
+	public void resetCounter(){
+		httpRequestCount = 0;
+		coapRequestCount = 0;
+		servedFromCacheCount = 0;
+	}
+	
 }

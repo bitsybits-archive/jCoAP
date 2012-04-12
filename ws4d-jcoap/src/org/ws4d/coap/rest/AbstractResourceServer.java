@@ -16,7 +16,6 @@ public abstract class AbstractResourceServer implements ResourceServer {
 	if (!resources.containsKey(resource.getPath())) {
 	    resources.put(resource.getPath(), resource);
 	    coreResource.registerResource(resource);
-		System.out.println("Created Resource: " + resource.toString()); //Output for Plugtest
 	    return true;
 	} else
 	    return false;
@@ -27,7 +26,6 @@ public abstract class AbstractResourceServer implements ResourceServer {
 	
 	if (resources.containsKey(resource.getPath())) {
 	    resources.put(resource.getPath(), resource);
-		System.out.println("Updated Resource: " + resource.toString()); //Output for Plugtest
 	    return true;
 	} else
 	    return false;
@@ -45,13 +43,11 @@ public abstract class AbstractResourceServer implements ResourceServer {
     
     public final boolean deleteResource(String path) {
 	if (null!=resources.remove(path)){
-		System.out.println("Deleted Resource: " + path); //Output for Plugtest
 		return true;
 	}else return false;
     }
     
     public final Resource readResource(String path) {
-    	System.out.println("Read Resource: " + path); //Output for Plugtest
     	return resources.get(path);
     }
 

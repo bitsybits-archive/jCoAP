@@ -15,22 +15,27 @@ import org.ws4d.coap.messages.CoapRequestCode;
 import org.ws4d.coap.messages.CoapResponseCode;
 
 public class CoapResourceServer extends AbstractResourceServer implements CoapServer {
-    private static final int PORT = Constants.COAP_DEFAULT_PORT;
+    private  int port  = 0;
 
-    @Override
-    public void start() throws Exception {
-	super.start();
-	CoapChannelManager channelManager = BasicCoapChannelManager
-		.getInstance();
-	channelManager.createServerListener(this, PORT);
-    }
+	@Override
+	public void start() throws Exception {
+		start(Constants.COAP_DEFAULT_PORT);
+	}
+	
+	public void start(int port) throws Exception {
+		super.start();
+		CoapChannelManager channelManager = BasicCoapChannelManager
+				.getInstance();
+		this.port = port;
+		channelManager.createServerListener(this, port);
+	}
 
     @Override
     public void stop() {
     }
 
     public int getPort() {
-	return PORT;
+    	return port;
     }
 
     @Override

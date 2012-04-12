@@ -216,7 +216,10 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 	
 	@Override
 	public String getProxyUri(){
-		return new String(options.getOption(CoapHeaderOptionType.Proxy_Uri).getOptionData());
+		CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Proxy_Uri);
+		if (option == null)
+			return null;
+		return new String(option.getOptionData());
 	}
 
 	@Override

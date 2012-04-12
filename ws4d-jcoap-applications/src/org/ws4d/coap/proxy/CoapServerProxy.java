@@ -123,7 +123,7 @@ public class CoapServerProxy implements CoapServer{
 
 		try {
 			proxyUri = new URI(request.getProxyUri());
-		} catch (URISyntaxException e) {
+		} catch (Exception e) {
 			proxyUri = null;
 		}
 

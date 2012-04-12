@@ -84,7 +84,7 @@ public class Proxy {
 	
 		httpserver.start();
 		httpclient.start();
-		
+<<<<<<< .mine		
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 		    @Override
 		    public void run() {
@@ -95,5 +95,8 @@ public class Proxy {
 			}
 		    }
 		});
-	}
+=======		
+		ProxyRestInterface restInterface = new ProxyRestInterface();
+		restInterface.start();
+>>>>>>> .theirs	}
 }
