@@ -36,6 +36,7 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 
+import org.apache.http.Header;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -216,18 +217,22 @@ public class HttpServerNIO extends Thread{
 			
 //				HttpRequestProxy reqX = new HttpRequestProxy(request,generateMsgID());	//create httprequestx to carry message-id  
 			
-			URI uri = createHttpUri(request);
-			InetAddress remoteAddress = InetAddress.getByName(uri.getHost());
-			int port = uri.getPort();
-			if (port == -1){
-				port = org.ws4d.coap.Constants.COAP_DEFAULT_PORT;
-			}
-
-			if (uri != null && remoteAddress != null){
-				ProxyMessageContext context = new ProxyMessageContext(request, remoteAddress, 0, uri, trigger);
-				Mapper.getInstance().putHttpRequest(context);	//put request to mapper for processing/translating
-			} else {
+			URI uri = Mapper.getHttpRequestUri(request);
+			if (uri == null){
 				trigger.submitResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST, "Bad Header: Host"));
+			} else {
+
+				InetAddress remoteAddress = InetAddress.getByName(uri.getHost());
+				int port = uri.getPort();
+				if (port == -1) {
+					port = org.ws4d.coap.Constants.COAP_DEFAULT_PORT;
+				}
+
+				ProxyMessageContext context = new ProxyMessageContext(request, remoteAddress, 0, uri, trigger);
+				Mapper.getInstance().putHttpRequest(context); // put request
+																	// to mapper
+																	// for
+																	// processing/translating
 			}
 		}
     }
@@ -262,24 +267,5 @@ public class HttpServerNIO extends Thread{
             }
         }
     }
-	
-	private static URI createHttpUri(HttpRequest request){
-			URI uri = null;
-			
-			String uriString = request.getRequestLine().getUri();
-	
-			if (uriString.startsWith("http://")){
-				uriString = "coap://" + uriString.substring(7);
-			} 
-			
-			try {
-				uri = new URI(uriString);
-			} catch (URISyntaxException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}				
-				
-			return uri;
-	}
 	
 }

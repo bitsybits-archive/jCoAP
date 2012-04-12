@@ -57,5 +57,8 @@ public class Proxy {
 	
 		httpserver.start();
 		httpclient.start();
+		
+		ProxyRestInterface restInterface = new ProxyRestInterface();
+		restInterface.start();
 	}
 }
