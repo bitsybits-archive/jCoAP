@@ -116,20 +116,30 @@ public class HttpClientNIO extends Thread {
 	                    	ProxyMessageContext context = requestContextMap.remove(this);
 	                    	if (context != null){
 	                    		context.setHttpResponse(response);
-	                    		//HttpResponseProxy responseX = new HttpResponseProxy(response, msgid);
 	                    		Mapper.getInstance().putHttpResponse(context);
 	                    	}
 	                    }
 
 	                    public void failed(final Exception ex) {
-	                       System.out.println("HTTP Client Request failed, TODO: error handling");
+	                       System.out.println("HTTP Client Request failed");
+	                       ProxyMessageContext context = requestContextMap.remove(this);
 	                       requestContextMap.remove(this);
-	                       ex.printStackTrace();
+	                    	if (context != null){
+	                    		/* null indicates no response */
+	                    		context.setHttpResponse(null);
+	                    		Mapper.getInstance().putHttpResponse(context);
+	                    	}
 	                    }
 
 	                    public void cancelled() {
-		                    System.out.println("HTTP Client Request cancelled, TODO: error handling");
-		                    requestContextMap.remove(this);
+		                    System.out.println("HTTP Client Request cancelled");
+		                       ProxyMessageContext context = requestContextMap.remove(this);
+		                       requestContextMap.remove(this);
+		                    	if (context != null){
+		                    		/* null indicates no response */
+		                    		context.setHttpResponse(null);
+		                    		Mapper.getInstance().putHttpResponse(context);
+		                    	}
 	                    }
 
 	                };
