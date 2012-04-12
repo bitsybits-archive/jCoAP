@@ -84,19 +84,19 @@ public class Proxy {
 	
 		httpserver.start();
 		httpclient.start();
-<<<<<<< .mine		
+
 		Runtime.getRuntime().addShutdownHook(new Thread() {
-		    @Override
-		    public void run() {
-			System.out.println("===END===");
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
+			@Override
+			public void run() {
+				System.out.println("===END===");
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+				}
 			}
-		    }
 		});
-=======		
+
 		ProxyRestInterface restInterface = new ProxyRestInterface();
 		restInterface.start();
->>>>>>> .theirs	}
+	}
 }
