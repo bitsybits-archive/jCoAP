@@ -28,11 +28,6 @@ public abstract class BasicCoapChannel implements CoapChannel {
         this.localPort = socketHandler.getLocalPort(); //FIXME:can be 0 when socketHandler is not yet ready
     }
 
-    @Override
-    public void close() {
-        socketHandler.removeChannel(this);
-    }
-
 //    @Override
 //    public void sendMessage(CoapMessage msg, CoapMessage request) {
 //    	/* TODO: remove this method, packet type should be determined by the channel */

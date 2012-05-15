@@ -45,6 +45,11 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 		this.server = server;
 	}
 	
+    @Override
+    public void close() {
+        socketHandler.removeServerChannel(this);
+    }
+	
 	
 	@Override
 	public void newIncommingMessage(CoapMessage message) {

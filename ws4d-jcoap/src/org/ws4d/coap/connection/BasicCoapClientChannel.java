@@ -40,6 +40,11 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		super(socketHandler, remoteAddress, remotePort);
 		this.client = client;
 	}
+	
+    @Override
+    public void close() {
+        socketHandler.removeClientChannel(this);
+    }
 
 	@Override
 	public void newIncommingMessage(CoapMessage message) {

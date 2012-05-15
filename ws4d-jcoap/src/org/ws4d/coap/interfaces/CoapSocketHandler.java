@@ -33,11 +33,13 @@ public interface CoapSocketHandler {
 
     public void close();
 
-    public void removeChannel(CoapChannel channel);
-
     public void sendMessage(CoapMessage msg);
 
     public CoapChannelManager getChannelManager();
 
 	int getLocalPort();
+
+	void removeClientChannel(CoapClientChannel channel);
+
+	void removeServerChannel(CoapServerChannel channel);
 }
