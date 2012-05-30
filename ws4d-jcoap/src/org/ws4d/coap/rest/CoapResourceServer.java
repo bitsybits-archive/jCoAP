@@ -4,8 +4,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Vector;
 
+import org.apache.log4j.Logger;
 import org.ws4d.coap.Constants;
 import org.ws4d.coap.connection.BasicCoapChannelManager;
+import org.ws4d.coap.connection.BasicCoapSocketHandler;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapRequest;
@@ -16,6 +18,7 @@ import org.ws4d.coap.messages.CoapResponseCode;
 
 public class CoapResourceServer extends AbstractResourceServer implements CoapServer {
     private  int port  = 0;
+    private final static Logger logger = Logger.getLogger(CoapResourceServer.class); 
 
 	@Override
 	public void start() throws Exception {
@@ -56,13 +59,13 @@ public class CoapResourceServer extends AbstractResourceServer implements CoapSe
     }
     
     @Override
-	public void handleRequest(CoapServerChannel channel, CoapRequest request) {
+	public void onRequest(CoapServerChannel channel, CoapRequest request) {
 		CoapMessage response = null;
 		CoapRequestCode requestCode = request.getRequestCode();
+		String targetPath = request.getUriPath();
+
 		if (requestCode == CoapRequestCode.GET) {
-			// create response with value from responsible Resource object
-			String targetPath = request.getUriPath();
-			//TODO make this cast safe
+			//TODO make this cast safe (send internal server error if it is not a CoapResource)
 			final CoapResource resource = (CoapResource) readResource(targetPath);
 
 			if (resource != null) {
@@ -83,22 +86,29 @@ public class CoapResourceServer extends AbstractResourceServer implements CoapSe
 						CoapResponseCode.Not_Found_404);
 			}
 		} else if (requestCode == CoapRequestCode.DELETE) {
-			String targetPath = request.getUriPath();
-			deleteResource(targetPath);
-			response = channel.createResponse(request,
-					CoapResponseCode.Deleted_202);
-		} else if (requestCode == CoapRequestCode.POST
-				|| requestCode == CoapRequestCode.PUT) {
-			CoapResource resource = parseRequest(request);
-			if (createResource(resource)) {
+			if (delete(targetPath)){
+				response = channel.createResponse(request,
+						CoapResponseCode.Deleted_202);
+			} else {
+				response = channel.createResponse(request,
+						CoapResponseCode.Forbidden_403);
+			}
+		} else if (requestCode == CoapRequestCode.POST) {
+			//TODO make this cast safe (send internal server error if it is not a CoapResource)
+			final CoapResource resource = (CoapResource) readResource(targetPath);
+			resource.post(request.getPayload());
+			//TODO: How to pass through the Request and the Response
+	
+		} else if (requestCode == CoapRequestCode.PUT) {
+			CoapResource newResource = parseRequest(request);
+			if (put(newResource)) {
+				//TODO: distinguish between created and changed
 				response = channel.createResponse(request,
 						CoapResponseCode.Created_201);
-			} else if (updateResource(resource)) {
+			} else {
 				response = channel.createResponse(request,
-						CoapResponseCode.Changed_204);
-			} else
-				response = channel.createResponse(request,
-						CoapResponseCode.Bad_Request_400);
+						CoapResponseCode.Forbidden_403);
+			}
 		} else {
 			response = channel.createResponse(request,
 					CoapResponseCode.Bad_Request_400);
@@ -108,14 +118,14 @@ public class CoapResourceServer extends AbstractResourceServer implements CoapSe
 	}
 
     private CoapResource parseRequest(CoapRequest request) {
-	CoapResource resource = new BasicCoapResource(request.getUriPath(), request.getPayload(), request.getContentType());
-	// TODO add content type
+    	CoapResource resource = new BasicCoapResource(request.getUriPath(), request.getPayload(), request.getContentType());
+    	// TODO add content type
 	return resource;
     }
 
 	@Override
-	public void separateResponseFailed(CoapServerChannel channel) {
-		// TODO Auto-generated method stub
+	public void onSeparateResponseFailed(CoapServerChannel channel) {
+		logger.error("Separate response failed but server never used separate responses");
 		
 	}
 

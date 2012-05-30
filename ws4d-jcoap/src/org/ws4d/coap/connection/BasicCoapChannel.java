@@ -1,3 +1,17 @@
+/* Copyright [2011] [University of Rostock]
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *****************************************************************************/
 
 package org.ws4d.coap.connection;
 
@@ -7,6 +21,7 @@ import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapSocketHandler;
+import org.ws4d.coap.messages.CoapBlockOption.CoapBlockSize;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -19,6 +34,8 @@ public abstract class BasicCoapChannel implements CoapChannel {
     protected InetAddress remoteAddress;
     protected int remotePort;
     protected int localPort;
+	CoapBlockSize maxReceiveBlocksize = null; //null means no block option
+	CoapBlockSize maxSendBlocksize = null; //null means no block option
 
     public BasicCoapChannel(CoapSocketHandler socketHandler, InetAddress remoteAddress, int remotePort) {
         this.socketHandler = socketHandler;
@@ -48,6 +65,27 @@ public abstract class BasicCoapChannel implements CoapChannel {
         msg.setChannel(this);
         socketHandler.sendMessage(msg);
     }
+    
+	
+    @Override
+	public CoapBlockSize getMaxReceiveBlocksize() {
+		return maxReceiveBlocksize;
+	}
+
+    @Override
+	public void setMaxReceiveBlocksize(CoapBlockSize maxReceiveBlocksize) {
+		this.maxReceiveBlocksize = maxReceiveBlocksize;
+	}
+
+    @Override
+	public CoapBlockSize getMaxSendBlocksize() {
+		return maxSendBlocksize;
+	}
+
+    @Override
+	public void setMaxSendBlocksize(CoapBlockSize maxSendBlocksize) {
+		this.maxSendBlocksize = maxSendBlocksize;
+	}
 
     @Override
     public InetAddress getRemoteAddress() {

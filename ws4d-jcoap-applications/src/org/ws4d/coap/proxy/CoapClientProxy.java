@@ -197,18 +197,5 @@ public class CoapClientProxy {
 			}
 		}
 
-		@Override
-		public void onSeparateResponseAck(CoapClientChannel channel,
-				CoapEmptyMessage message) {
-			System.out.println("Error: Separate Response not implemented!");
-			
-		}
-
-		@Override
-		public void onSeparateResponse(CoapClientChannel channel,
-				CoapResponse message) {
-			System.out.println("Error: Separate Response not implemented!");
-			
-		}
 	}
 }

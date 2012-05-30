@@ -54,16 +54,4 @@ public class BasicCoapClient implements CoapClient {
 	public void onResponse(CoapClientChannel channel, CoapResponse response) {
 		System.out.println("Received response");
 	}
-
-	@Override
-	public void onSeparateResponseAck(CoapClientChannel channel,
-			CoapEmptyMessage message) {
-		System.out.println("Received Ack of Separate Response");
-	}
-
-	@Override
-	public void onSeparateResponse(CoapClientChannel channel,
-			CoapResponse message) {
-		System.out.println("Received Separate Response");
-	}
 }

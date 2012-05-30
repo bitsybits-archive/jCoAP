@@ -28,4 +28,9 @@ public interface Resource {
     
     public byte[] getValue(Vector<String> query);
     
+    //TODO: bad api: no return value
+    public void post(byte[] data);
+    
+    public String getResourceType();
+    
 }

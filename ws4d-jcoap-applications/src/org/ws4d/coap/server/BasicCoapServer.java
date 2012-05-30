@@ -43,7 +43,7 @@ public class BasicCoapServer implements CoapServer {
 	}
 
 	@Override
-	public void handleRequest(CoapServerChannel channel, CoapRequest request) {
+	public void onRequest(CoapServerChannel channel, CoapRequest request) {
 		System.out.println("Received message: " + request.toString());
 		
 		CoapMessage response = channel.createResponse(request,
@@ -55,7 +55,7 @@ public class BasicCoapServer implements CoapServer {
 	}
 
 	@Override
-	public void separateResponseFailed(CoapServerChannel channel) {
+	public void onSeparateResponseFailed(CoapServerChannel channel) {
 		// TODO Auto-generated method stub
 		
 	}

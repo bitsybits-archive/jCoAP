@@ -52,7 +52,7 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 	
 	
 	@Override
-	public void newIncommingMessage(CoapMessage message) {
+	public void handleMessage(CoapMessage message) {
 		/* message MUST be a request */
 		if (message.isEmpty()){
 			return; /*TODO: is this the right strategy?*/
@@ -64,12 +64,12 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 		BasicCoapRequest request = (BasicCoapRequest) message;
 		CoapChannel channel = request.getChannel();
 		/* TODO make this cast safe */
-		server.handleRequest((CoapServerChannel) channel, request);
+		server.onRequest((CoapServerChannel) channel, request);
 	}
 	
     /*TODO: implement */
 	public void lostConnection(boolean notReachable, boolean resetByServer){
-		server.separateResponseFailed(this);
+		server.onSeparateResponseFailed(this);
 	}
 	
     @Override
@@ -120,7 +120,6 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 	@Override
 	public void sendSeparateResponse(CoapResponse response) {
 		sendMessage(response);
-		
 	}
 
 }

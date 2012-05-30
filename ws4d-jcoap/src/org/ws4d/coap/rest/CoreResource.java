@@ -35,7 +35,7 @@ public class CoreResource implements CoapResource {
         return buildCoreString(null).getBytes();
     }
 
-    public void registerResource(CoapResource resource) {
+    public void registerResource(Resource resource) {
         if (resource != null) {
             StringBuilder coreLine = new StringBuilder();
             coreLine.append("<");
@@ -77,5 +77,11 @@ public class CoreResource implements CoapResource {
 	@Override
 	public CoapMediaType getCoapMediaType() {
 		return CoapMediaType.link_format;
+	}
+
+	@Override
+	public void post(byte[] data) {
+		/* nothing happens in case of a post */
+		return;		
 	}
 }

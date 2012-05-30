@@ -3,11 +3,11 @@ package org.ws4d.coap.interfaces;
 
 import java.net.InetAddress;
 
+import org.ws4d.coap.messages.CoapBlockOption.CoapBlockSize;
+
 public interface CoapChannel {
 
 	public void sendMessage(CoapMessage msg);
-
-//	public void sendMessage(CoapMessage msg, CoapMessage request);
 
 	/*TODO: close when finished, & abort()*/
     public void close();
@@ -16,8 +16,18 @@ public interface CoapChannel {
 
     public int getRemotePort();
     
-    public void newIncommingMessage(CoapMessage message);
+    /* handles an incomming message */
+    public void handleMessage(CoapMessage message);
+    
     /*TODO: implement Error Type*/
 	public void lostConnection(boolean notReachable, boolean resetByServer);
+	
+	
+	public CoapBlockSize getMaxReceiveBlocksize();
 
+	public void setMaxReceiveBlocksize(CoapBlockSize maxReceiveBlocksize);
+
+	public CoapBlockSize getMaxSendBlocksize();
+
+	public void setMaxSendBlocksize(CoapBlockSize maxSendBlocksize);
 }

@@ -65,4 +65,10 @@ public class BasicCoapResource implements CoapResource {
 		return getPath(); //TODO implement 
 	}
 
+	@Override
+	public void post(byte[] data) {
+		//TODO: implement the possibility to register a handler
+		return;
+	}
+
 }

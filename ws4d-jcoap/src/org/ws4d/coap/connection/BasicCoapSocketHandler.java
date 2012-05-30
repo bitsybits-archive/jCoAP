@@ -197,6 +197,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 				 msg = AbstractCoapMessage.parseMessage(buffer.array(), buffer.position());
 			} catch (Exception e) {
 				logger.warn("Received invalid message: message dropped!");
+				e.printStackTrace();
 				return;
 			}
 			
@@ -236,7 +237,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 					return;
 				}
 				msg.setChannel(channel);
-				channel.newIncommingMessage(msg);
+				channel.handleMessage(msg);
 				return;
 				
 			} else if (msg.isResponse()){
@@ -262,7 +263,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 						return;
 					}
 					msg.setChannel(channel);
-					channel.newIncommingMessage(msg);
+					channel.handleMessage(msg);
 					return;
 				}
 				
@@ -283,7 +284,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 					return;
 				}
 				msg.setChannel(channel);
-				channel.newIncommingMessage(msg);
+				channel.handleMessage(msg);
 				return;
 				
 			} else if (msg.isEmpty()){
@@ -312,13 +313,13 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 				msg.setChannel(channel);
 				if (packetType == CoapPacketType.ACK ){
 					/* separate response ACK */
-					channel.newIncommingMessage(msg);
+					channel.handleMessage(msg);
 					return;
 				} 
 				
 				if (packetType == CoapPacketType.RST ){
 					/* connection closed by remote */
-					channel.newIncommingMessage(msg);
+					channel.handleMessage(msg);
 					return;
 				} 
 				

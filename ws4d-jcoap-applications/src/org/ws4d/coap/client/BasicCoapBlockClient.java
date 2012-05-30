@@ -12,10 +12,11 @@ import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.messages.CoapEmptyMessage;
 import org.ws4d.coap.messages.CoapRequestCode;
+import org.ws4d.coap.messages.CoapBlockOption.CoapBlockSize;
 
 
 public class BasicCoapBlockClient implements CoapClient {
-    private static final String SERVER_ADDRESS = "129.132.252.221";
+    private static final String SERVER_ADDRESS = "129.132.15.80";
     private static final int PORT = Constants.COAP_DEFAULT_PORT;
     static int counter = 0;
     CoapChannelManager channelManager = null;
@@ -35,6 +36,7 @@ public class BasicCoapBlockClient implements CoapClient {
 			clientChannel = channelManager.connect(this, InetAddress.getByName(SERVER_ADDRESS), PORT);
 			CoapRequest coapRequest = clientChannel.createRequest(true, CoapRequestCode.GET);
 			coapRequest.setUriPath("/large");
+			clientChannel.setMaxReceiveBlocksize(CoapBlockSize.BLOCK_64);
 			clientChannel.sendMessage(coapRequest);
 			System.out.println("Sent Request");
 		} catch (UnknownHostException e) {
@@ -51,17 +53,6 @@ public class BasicCoapBlockClient implements CoapClient {
 	public void onResponse(CoapClientChannel channel, CoapResponse response) {
 		System.out.println("Received response");
 		System.out.println(response.toString());
-	}
-
-	@Override
-	public void onSeparateResponseAck(CoapClientChannel channel,
-			CoapEmptyMessage message) {
-		System.out.println("Received Ack of Separate Response");
-	}
-
-	@Override
-	public void onSeparateResponse(CoapClientChannel channel,
-			CoapResponse message) {
-		System.out.println("Received Separate Response");
+		System.out.println(new String(response.getPayload()));
 	}
 }

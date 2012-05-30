@@ -99,6 +99,4 @@ public class BasicCoapResponse extends AbstractCoapMessage implements CoapRespon
 	public String toString() {
     	return packetType.toString() + ", " + responseCode.toString() + ", MsgId: " + getMessageID() +", #Options: " + options.getOptionCount(); 
 	}
-
-
 }

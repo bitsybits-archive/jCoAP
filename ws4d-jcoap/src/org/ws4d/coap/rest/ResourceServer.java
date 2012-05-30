@@ -9,19 +9,20 @@ import java.net.URI;
  */
 public interface ResourceServer {
     /**
-     * Register a resource to be handled by this ResourceServer.
      * 
      * @param resource The resource to be handled.
      */
-    public boolean createResource(CoapResource resource);
+    public boolean createResource(Resource resource);
     public Resource readResource(String path);
-    public boolean updateResource(CoapResource resource);
+    public boolean updateResource(Resource resource);
     public boolean deleteResource(String path);
-
-//    /*creates a resource, if resource exits the resource will be updated*/
-//    public void createUpdateResource(CoapResource resource);
-
     
+    
+    public Resource get(String path);
+    public void post(String path, byte[] data);
+    public boolean put(Resource resource);
+    public boolean delete(String path);
+
     /**
      * Start the ResourceServer. This usually opens network ports and makes the
      * resources available through a certain network protocol.

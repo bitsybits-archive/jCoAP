@@ -194,28 +194,6 @@ public class PlugtestClient implements CoapClient{
 		}
 	}
 
-
-	@Override
-	public void onSeparateResponseAck(CoapClientChannel channel,
-			CoapEmptyMessage message) {
-		System.out.println("Received Ack of Separate Response");
-	}
-
-	@Override
-	public void onSeparateResponse(CoapClientChannel channel, CoapResponse response) {
-		System.out.println("Received Separate Response");
-		if (response.getPayload() != null){
-			System.out.println("Response: " + response.toString() + " (" + new String(response.getPayload()) +")");
-		} else {
-			System.out.println("Response: " + response.toString());
-		}
-		if (exitAfterResponse){
-			/* FIXME: This is a hack to give the Worker Thread time to send the ACK.
-			 * Implement shutdown method*/
-			(new Thread( new WaitAndExit())).start();
-		}
-	}
-	
 	public class WaitAndExit implements Runnable
 	  {
 	    public void run()

@@ -100,7 +100,7 @@ public class CoapServerProxy implements CoapServer{
     }
 
     @Override
-	public void handleRequest(CoapServerChannel channel, CoapRequest request) {
+	public void onRequest(CoapServerChannel channel, CoapRequest request) {
     	/* draft-08:
     	 *  CoAP distinguishes between requests to an origin server and a request
    			made through a proxy.  A proxy is a CoAP end-point that can be tasked
@@ -172,7 +172,7 @@ public class CoapServerProxy implements CoapServer{
     }
 
 	@Override
-	public void separateResponseFailed(CoapServerChannel channel) {
+	public void onSeparateResponseFailed(CoapServerChannel channel) {
 		// TODO Auto-generated method stub
 		
 	}

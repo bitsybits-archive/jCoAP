@@ -45,7 +45,7 @@ public class SeparateResponseCoapServer implements CoapServer {
 	}
 
 	@Override
-	public void handleRequest(CoapServerChannel channel, CoapRequest request) {
+	public void onRequest(CoapServerChannel channel, CoapRequest request) {
 		System.out.println("Received message: " + request.toString());
 		
 		
@@ -72,7 +72,7 @@ public class SeparateResponseCoapServer implements CoapServer {
 	}
 
 	@Override
-	public void separateResponseFailed(CoapServerChannel channel) {
+	public void onSeparateResponseFailed(CoapServerChannel channel) {
 		System.out.println("Separate Response failed");
 		
 	}

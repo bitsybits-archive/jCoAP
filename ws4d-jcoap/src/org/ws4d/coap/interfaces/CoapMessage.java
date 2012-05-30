@@ -16,6 +16,7 @@
 package org.ws4d.coap.interfaces;
 
 import org.ws4d.coap.messages.AbstractCoapMessage.CoapHeaderOptionType;
+import org.ws4d.coap.messages.CoapBlockOption;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapPacketType;
 
@@ -60,6 +61,14 @@ public interface CoapMessage {
 //
 //    public void setRequestUri(URI uri); //TODO:allow this method only for Clients, Define Token Type
     
+    CoapBlockOption getBlock1();
+    
+    void setBlock1(CoapBlockOption blockOption);
+    
+    CoapBlockOption getBlock2();
+    
+    void setBlock2(CoapBlockOption blockOption);
+
     public void removeOption(CoapHeaderOptionType optionType); //TODO: could this compromise the internal state?
     
     public String toString();
@@ -83,5 +92,6 @@ public interface CoapMessage {
     /* unique by remote address, remote port, local port and message id */
     public int hashCode();
     public boolean equals(Object obj);
+
 
 }
