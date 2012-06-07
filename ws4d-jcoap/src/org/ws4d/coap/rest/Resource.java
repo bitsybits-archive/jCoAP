@@ -8,6 +8,8 @@ import java.util.Vector;
  * name and data associated with it.
  * 
  * @author Nico Laum <nico.laum@uni-rostock.de>
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ * 
  */
 public interface Resource {
     /**
@@ -32,5 +34,9 @@ public interface Resource {
     public void post(byte[] data);
     
     public String getResourceType();
+    
+	public void registerServerListener(ResourceServer server);
+	
+	public void unregisterServerListener(ResourceServer server);
     
 }

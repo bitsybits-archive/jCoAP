@@ -5,6 +5,10 @@ import java.util.Vector;
 
 import org.ws4d.coap.interfaces.CoapRequest;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
+
 public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest {
 	CoapRequestCode requestCode;
 
@@ -271,5 +275,4 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 	public String toString() {
     	return packetType.toString() + ", " + requestCode.toString() + ", MsgId: " + getMessageID() +", #Options: " + options.getOptionCount(); 
 	}
-
 }

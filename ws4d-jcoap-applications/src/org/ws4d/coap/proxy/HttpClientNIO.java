@@ -116,7 +116,7 @@ public class HttpClientNIO extends Thread {
 	                    	ProxyMessageContext context = requestContextMap.remove(this);
 	                    	if (context != null){
 	                    		context.setHttpResponse(response);
-	                    		Mapper.getInstance().putHttpResponse(context);
+	                    		ProxyMapper.getInstance().putHttpResponse(context);
 	                    	}
 	                    }
 
@@ -127,7 +127,7 @@ public class HttpClientNIO extends Thread {
 	                    	if (context != null){
 	                    		/* null indicates no response */
 	                    		context.setHttpResponse(null);
-	                    		Mapper.getInstance().putHttpResponse(context);
+	                    		ProxyMapper.getInstance().putHttpResponse(context);
 	                    	}
 	                    }
 
@@ -138,7 +138,7 @@ public class HttpClientNIO extends Thread {
 		                    	if (context != null){
 		                    		/* null indicates no response */
 		                    		context.setHttpResponse(null);
-		                    		Mapper.getInstance().putHttpResponse(context);
+		                    		ProxyMapper.getInstance().putHttpResponse(context);
 		                    	}
 	                    }
 

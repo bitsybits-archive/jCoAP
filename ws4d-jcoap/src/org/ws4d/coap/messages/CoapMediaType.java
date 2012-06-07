@@ -1,5 +1,9 @@
 package org.ws4d.coap.messages;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
+
 public enum CoapMediaType {
     text_plain (0),		//text/plain; charset=utf-8
     link_format (40),	//application/link-format

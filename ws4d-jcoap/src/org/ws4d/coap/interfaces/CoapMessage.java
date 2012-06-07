@@ -19,6 +19,9 @@ import org.ws4d.coap.messages.AbstractCoapMessage.CoapHeaderOptionType;
 import org.ws4d.coap.messages.CoapBlockOption;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapPacketType;
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
 
 public interface CoapMessage {
     public static final int RESPONSE_TIMEOUT_MS = 2000;
@@ -69,6 +72,10 @@ public interface CoapMessage {
     
     void setBlock2(CoapBlockOption blockOption);
 
+    public Integer getObserveOption();
+
+    public void setObserveOption(int sequenceNumber);
+
     public void removeOption(CoapHeaderOptionType optionType); //TODO: could this compromise the internal state?
     
     public String toString();
@@ -92,6 +99,7 @@ public interface CoapMessage {
     /* unique by remote address, remote port, local port and message id */
     public int hashCode();
     public boolean equals(Object obj);
+
 
 
 }

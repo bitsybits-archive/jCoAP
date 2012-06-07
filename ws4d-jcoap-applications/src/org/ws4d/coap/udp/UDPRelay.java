@@ -10,6 +10,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
 
 public class UDPRelay {
 	public static final int SERVER_PORT = 6000;

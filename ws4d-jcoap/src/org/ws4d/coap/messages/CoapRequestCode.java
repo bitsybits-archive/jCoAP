@@ -1,5 +1,9 @@
 package org.ws4d.coap.messages;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
+
 public enum CoapRequestCode {
 	GET(1), POST(2), PUT(3), DELETE(4);
 

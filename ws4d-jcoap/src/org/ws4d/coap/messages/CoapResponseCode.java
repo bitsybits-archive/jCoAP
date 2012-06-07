@@ -1,5 +1,9 @@
 package org.ws4d.coap.messages;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
+
 public enum CoapResponseCode {
 	Created_201(65), 
 	Deleted_202(66), 

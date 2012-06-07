@@ -14,6 +14,9 @@
  *****************************************************************************/
 
 package org.ws4d.coap.interfaces;
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
 
 import java.net.InetAddress;
 
@@ -37,5 +40,5 @@ public interface CoapChannelManager {
     /* This function is for testing purposes only, to have a determined message id*/
     public void setMessageId(int globalMessageId);
     
-    public void reset();
+    public void initRandom();
 }

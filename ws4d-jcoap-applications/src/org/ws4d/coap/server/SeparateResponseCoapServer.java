@@ -24,6 +24,10 @@ import org.ws4d.coap.interfaces.CoapServerChannel;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapResponseCode;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
+
 public class SeparateResponseCoapServer implements CoapServer {
     private static final int PORT = 5683;
     static int counter = 0;

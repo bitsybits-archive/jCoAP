@@ -35,7 +35,6 @@ import org.ws4d.coap.messages.CoapResponseCode;
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 
-
 public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServerChannel{
 	CoapServer server = null;
 	public BasicCoapServerChannel(CoapSocketHandler socketHandler,
@@ -55,12 +54,14 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 	public void handleMessage(CoapMessage message) {
 		/* message MUST be a request */
 		if (message.isEmpty()){
-			return; /*TODO: is this the right strategy?*/
+			return; 
 		}
 		
 		if (!message.isRequest()){
-			throw new IllegalStateException("Incomming server message is not a request");
+			return;
+			//throw new IllegalStateException("Incomming server message is not a request");
 		}
+		
 		BasicCoapRequest request = (BasicCoapRequest) message;
 		CoapChannel channel = request.getChannel();
 		/* TODO make this cast safe */
@@ -119,6 +120,38 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 
 	@Override
 	public void sendSeparateResponse(CoapResponse response) {
+		sendMessage(response);
+	}
+
+	@Override
+	public CoapResponse createNotification(CoapRequest request, CoapResponseCode responseCode, int sequenceNumber){
+		/*use the packet type of the request: if con than con otherwise non*/
+		if (request.getPacketType() == CoapPacketType.CON){
+			return createNotification(request, responseCode, sequenceNumber, true);
+		} else {
+			return createNotification(request, responseCode, sequenceNumber, false);
+		}
+	}
+	
+	@Override
+	public CoapResponse createNotification(CoapRequest request, CoapResponseCode responseCode, int sequenceNumber, boolean reliable){
+		BasicCoapResponse response = null;
+		CoapPacketType packetType;
+		if (reliable){
+			packetType = CoapPacketType.CON;
+		} else {
+			packetType = CoapPacketType.NON;
+		}
+		
+		response = new BasicCoapResponse(packetType, responseCode, channelManager.getNewMessageID(), request.getToken());
+		response.setChannel(this);
+		response.setObserveOption(sequenceNumber);
+		return response;
+	}
+
+
+	@Override
+	public void sendNotification(CoapResponse response) {
 		sendMessage(response);
 	}
 

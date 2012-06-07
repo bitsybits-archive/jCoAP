@@ -34,10 +34,10 @@ public class ProxyRestInterface {
 		@Override
 		public byte[] getValue(Vector<String> query) {
 			StringBuilder val = new StringBuilder();
-			Mapper.getInstance().getCoapRequestCount();
-			val.append("Number of HTTP Requests: " + Mapper.getInstance().getHttpRequestCount() + "\n");
-			val.append("Number of CoAP Requests: " + Mapper.getInstance().getCoapRequestCount()  + "\n");
-			val.append("Number of Reqeusts served from cache: " + Mapper.getInstance().getServedFromCacheCount() + "\n");
+			ProxyMapper.getInstance().getCoapRequestCount();
+			val.append("Number of HTTP Requests: " + ProxyMapper.getInstance().getHttpRequestCount() + "\n");
+			val.append("Number of CoAP Requests: " + ProxyMapper.getInstance().getCoapRequestCount()  + "\n");
+			val.append("Number of Reqeusts served from cache: " + ProxyMapper.getInstance().getServedFromCacheCount() + "\n");
 			return val.toString().getBytes();
 		}
 	}

@@ -28,7 +28,7 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
-import org.ws4d.coap.connection.BasicCoapSocketHandler;
+import org.ws4d.coap.Constants;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -36,7 +36,8 @@ import org.ws4d.coap.connection.BasicCoapSocketHandler;
  */
 
 public class Proxy {
-	static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class);
+	static Logger logger = Logger.getLogger(Proxy.class);
+	static int defaultCachingTime = Constants.COAP_DEFAULT_MAX_AGE_S;
 
 	public static void main(String[] args) {
 		CommandLineParser cmdParser = new GnuParser();
@@ -56,8 +57,11 @@ public class Proxy {
 		/* evaluate command line */
 		if(cmd.hasOption("c")) {
 			try {
-				Mapper.getInstance().setDefaultCacheTime(Integer.parseInt(cmd.getOptionValue("c")));
-				System.out.println("Set caching time to " + cmd.getOptionValue("c") + " seconds");
+				defaultCachingTime = Integer.parseInt(cmd.getOptionValue("c"));
+				if (defaultCachingTime == 0){
+					ProxyMapper.getInstance().setCacheEnabled(false);
+				}
+				System.out.println("Set caching time to " + cmd.getOptionValue("c") + " seconds (0 disables the cache)");
 			} catch (NumberFormatException e) {
 				System.out.println( "Unexpected exception:" + e.getMessage() );
 				HelpFormatter formatter = new HelpFormatter();
@@ -77,10 +81,10 @@ public class Proxy {
 		CoapServerProxy coapserver = new CoapServerProxy();	
 
 		
-		Mapper.getInstance().setHttpServer(httpserver);
-		Mapper.getInstance().setHttpClient(httpclient);
-		Mapper.getInstance().setCoapClient(coapclient);
-		Mapper.getInstance().setCoapServer(coapserver);
+		ProxyMapper.getInstance().setHttpServer(httpserver);
+		ProxyMapper.getInstance().setHttpClient(httpclient);
+		ProxyMapper.getInstance().setCoapClient(coapclient);
+		ProxyMapper.getInstance().setCoapServer(coapserver);
 	
 		httpserver.start();
 		httpclient.start();

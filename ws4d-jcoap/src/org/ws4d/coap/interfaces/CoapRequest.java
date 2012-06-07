@@ -4,6 +4,9 @@ import java.util.Vector;
 
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapRequestCode;
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
 
 public interface CoapRequest extends CoapMessage{
 

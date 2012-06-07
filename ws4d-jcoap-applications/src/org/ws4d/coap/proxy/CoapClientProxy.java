@@ -181,7 +181,7 @@ public class CoapClientProxy {
 			channel.close();
 			if (context != null){
 				context.setCoapResponse(response);
-				Mapper.getInstance().putCoapResponse(context);
+				ProxyMapper.getInstance().putCoapResponse(context);
 			}
 		}
 
@@ -193,7 +193,7 @@ public class CoapClientProxy {
 			if (context != null){
 				System.out.println("Error: Coap Client Connection failed!");
 				context.setCoapResponse(null); //null indicates no response
-				Mapper.getInstance().putCoapResponse(context);
+				ProxyMapper.getInstance().putCoapResponse(context);
 			}
 		}
 

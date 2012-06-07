@@ -1,5 +1,9 @@
 package org.ws4d.coap.messages;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
+
 public class CoapEmptyMessage extends AbstractCoapMessage {
 
 	public CoapEmptyMessage(byte[] bytes, int length){

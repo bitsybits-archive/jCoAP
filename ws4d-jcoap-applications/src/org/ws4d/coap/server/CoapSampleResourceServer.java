@@ -7,6 +7,7 @@ import org.apache.log4j.SimpleLayout;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.rest.BasicCoapResource;
 import org.ws4d.coap.rest.CoapResourceServer;
+import org.ws4d.coap.rest.ResourceHandler;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -35,15 +36,39 @@ public class CoapSampleResourceServer {
 			resourceServer.stop();
 		resourceServer = new CoapResourceServer();
 		
+		/* Show detailed logging of Resource Server*/
+		Logger resourceLogger = Logger.getLogger(CoapResourceServer.class.getName());
+		resourceLogger.setLevel(Level.ALL);
+		
 		/* add resources */
-		resourceServer.createResource(new BasicCoapResource("/test/light", "Content".getBytes(), CoapMediaType.text_plain));
+		BasicCoapResource light = new BasicCoapResource("/test/light", "Content".getBytes(), CoapMediaType.text_plain);
+		light.registerResourceHandler(new ResourceHandler() {
+			@Override
+			public void onPost(byte[] data) {
+				System.out.println("Post to /test/light");
+			}
+		});
+		light.setResourceType("light");
+		light.setObservable(true);
 		
-		
+		resourceServer.createResource(light);
 		
 		try {
 			resourceServer.start();
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+		int counter = 0;
+		while(true){
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			counter++;
+			light.setValue(((String)"Message #" + counter).getBytes());
+			light.changed();
 		}
 	}
 }

@@ -17,6 +17,7 @@ package org.ws4d.coap.connection;
 
 import java.net.InetAddress;
 
+import org.apache.log4j.Logger;
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
@@ -27,8 +28,9 @@ import org.ws4d.coap.messages.CoapBlockOption.CoapBlockSize;
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 
-
 public abstract class BasicCoapChannel implements CoapChannel {
+	/* use the logger of the channel manager */
+	private final static Logger logger = Logger.getLogger(BasicCoapChannelManager.class); 
 	protected CoapSocketHandler socketHandler = null;
     protected CoapChannelManager channelManager = null;
     protected InetAddress remoteAddress;
@@ -45,21 +47,6 @@ public abstract class BasicCoapChannel implements CoapChannel {
         this.localPort = socketHandler.getLocalPort(); //FIXME:can be 0 when socketHandler is not yet ready
     }
 
-//    @Override
-//    public void sendMessage(CoapMessage msg, CoapMessage request) {
-//    	/* TODO: remove this method, packet type should be determined by the channel */
-//        if (request.getPacketType() == CoapPacketType.CON) {
-//            msg.setPacketType(CoapPacketType.ACK);
-//        }
-//
-//        if (request.getPacketType() == CoapPacketType.NON) {
-//            msg.setPacketType(CoapPacketType.NON);
-//        }
-//        msg.setChannel(this);
-//        msg.setMessageID(request.getMessageID());
-//        socketHandler.sendMessage(msg);
-//    }
-    
     @Override
     public void sendMessage(CoapMessage msg) {
         msg.setChannel(this);
@@ -97,7 +84,8 @@ public abstract class BasicCoapChannel implements CoapChannel {
         return remotePort;
     }
 
-    /*A channel is identified (and therefore unique) by its remote address, remote port and the local port */
+    /*A channel is identified (and therefore unique) by its remote address, remote port and the local port 
+     * TODO: identify channel also by a token */
 	@Override
 	public int hashCode() {
 		final int prime = 31;

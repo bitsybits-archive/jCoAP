@@ -42,11 +42,14 @@ import org.ws4d.coap.messages.CoapEmptyMessage;
 import org.ws4d.coap.messages.CoapPacketType;
 import org.ws4d.coap.tools.TimeoutHashMap;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ * @author Nico Laum <nico.laum@uni-rostock.de>
+ */
+
 public class BasicCoapSocketHandler implements CoapSocketHandler {
-    /**
-     * @author Christian Lerche <christian.lerche@uni-rostock.de>
-     * @author Nico Laum <nico.laum@uni-rostock.de>
-     */
+	/* the socket handler has its own logger
+	 * TODO: implement different socket handler for client and server channels */
 	private final static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class); 
     protected WorkerThread workerThread = null;
     protected HashMap<ChannelKey, CoapClientChannel> clientChannels = new HashMap<ChannelKey, CoapClientChannel>();
@@ -65,7 +68,6 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
         logger.addAppender(new ConsoleAppender(new SimpleLayout()));
         // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
         logger.setLevel(Level.WARN);
-    	
     	
     	this.channelManager = channelManager;
         dgramChannel = DatagramChannel.open();
@@ -226,16 +228,20 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 				if (channel == null){
 					/*no server channel found -> create*/
 					channel = channelManager.createServerChannel(BasicCoapSocketHandler.this, msg, addr.getAddress(), addr.getPort());
+					if (channel != null){
+						/* add the new channel to the channel map */
+						addServerChannel(channel);
+						logger.info("Created new server channel.");
+					} else {
+						/* create failed -> server doesn't accept the connection --> send RST*/
+						CoapChannel fakeChannel = new BasicCoapServerChannel(BasicCoapSocketHandler.this, null, addr.getAddress(), addr.getPort());
+						CoapEmptyMessage rstMsg = new CoapEmptyMessage(CoapPacketType.RST, msgId);
+						rstMsg.setChannel(fakeChannel);
+						sendMessage(rstMsg);
+						return;
+						
+					}
 				} 
-				if (channel == null){
-					/* server doesn't accept the connection -->
-					 * TODO implement Reset Connection (Send RST) */
-					CoapChannel fakeChannel = new BasicCoapServerChannel(BasicCoapSocketHandler.this, null, addr.getAddress(), addr.getPort());
-					CoapEmptyMessage rstMsg = new CoapEmptyMessage(CoapPacketType.RST, msgId);
-					rstMsg.setChannel(fakeChannel);
-					sendMessage(rstMsg);
-					return;
-				}
 				msg.setChannel(channel);
 				channel.handleMessage(msg);
 				return;
@@ -304,7 +310,12 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 				timeoutConMsgMap.remove(msgId);
 				
 				/* get channel */
-				CoapClientChannel channel = clientChannels.get(new ChannelKey(addr.getAddress(), addr.getPort()));
+				/* This can be an ACK/RST for a client or a server channel */
+				CoapChannel channel = clientChannels.get(new ChannelKey(addr.getAddress(), addr.getPort()));
+				if (channel == null){
+					channel = serverChannels.get(new ChannelKey(addr.getAddress(), addr.getPort()));
+				}
+				
 				if (channel == null){
 					logger.warn("Could not find channel of incomming response: message dropped");
 					return;
@@ -479,50 +490,6 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 		}
     }
     
-    private class ChannelKey{
-		public InetAddress inetAddr;
-		public int port;
-		
-		public ChannelKey(InetAddress inetAddr, int port) {
-			this.inetAddr = inetAddr;
-			this.port = port;
-		}
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + getOuterType().hashCode();
-			result = prime * result
-					+ ((inetAddr == null) ? 0 : inetAddr.hashCode());
-			result = prime * result + port;
-			return result;
-		}
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			ChannelKey other = (ChannelKey) obj;
-			if (!getOuterType().equals(other.getOuterType()))
-				return false;
-			if (inetAddr == null) {
-				if (other.inetAddr != null)
-					return false;
-			} else if (!inetAddr.equals(other.inetAddr))
-				return false;
-			if (port != other.port)
-				return false;
-			return true;
-		}
-		private BasicCoapSocketHandler getOuterType() {
-			return BasicCoapSocketHandler.this;
-		}
-		
-    }
-    
     private class TimeoutObject<T> implements Comparable<TimeoutObject>{
     	private long expires;
     	private T object;
@@ -541,15 +508,14 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
     	}
     }
     
-
 	private void addClientChannel(CoapClientChannel channel) {
         clientChannels.put(new ChannelKey(channel.getRemoteAddress(), channel.getRemotePort()), channel);
     }
+	
 	private void addServerChannel(CoapServerChannel channel) {
         serverChannels.put(new ChannelKey(channel.getRemoteAddress(), channel.getRemotePort()), channel);
     }
 	
-
 	@Override
     public int getLocalPort() {
 		return localPort;
@@ -571,47 +537,12 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
     	workerThread.close();
     }
 
-    // @Override
-    // public boolean isOpen() {
-    // if (socket!=null && socket.isBound() && socket.isConnected())
-    // return true;
-    // else
-    // return false;
-    // }
-
-    /**
-     * @param message The message to be sent. This method will give the message
-     *            a new message id!
-     */
     @Override
     public void sendMessage(CoapMessage message) {
         if (workerThread != null) {
             workerThread.addMessageToSendBuffer(message);
         }
     }
-
-    //
-    // @Override
-    // public int sendRequest(CoapMessage request) {
-    // sendMessage(request);
-    // return request.getMessageID();
-    // }
-    //
-    // @Override
-    // public void sendResponse(CoapResponse response) {
-    // sendMessage(response);
-    // }
-    //
-    // @Override
-    // public void establish(DatagramSocket socket) {
-    //
-    // }
-    //
-    // @Override
-    // public void unregisterResponseListener(CoapResponseListener
-    // responseListener) {
-    // coapResponseListeners.remove(responseListener);
-    // }
 
     @Override
     public CoapClientChannel connect(CoapClient client, InetAddress remoteAddress,

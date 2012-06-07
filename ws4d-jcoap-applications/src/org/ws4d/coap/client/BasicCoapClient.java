@@ -13,6 +13,10 @@ import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.messages.CoapEmptyMessage;
 import org.ws4d.coap.messages.CoapRequestCode;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
+
 public class BasicCoapClient implements CoapClient {
     private static final String SERVER_ADDRESS = "localhost";
     private static final int PORT = Constants.COAP_DEFAULT_PORT;

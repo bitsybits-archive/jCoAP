@@ -20,6 +20,10 @@ import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Random;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 import org.ws4d.coap.Constants;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapClient;
@@ -34,16 +38,19 @@ import org.ws4d.coap.messages.BasicCoapRequest;
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 
-
 public class BasicCoapChannelManager implements CoapChannelManager {
     // global message id
+	private final static Logger logger = Logger.getLogger(BasicCoapChannelManager.class); 
     private int globalMessageId;
     private static BasicCoapChannelManager instance;
     private HashMap<Integer, SocketInformation> socketMap = new HashMap<Integer, SocketInformation>();
     CoapServer serverListener = null;
 
     private BasicCoapChannelManager() {
-        reset();
+        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
+        // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
+        logger.setLevel(Level.WARN);
+    	initRandom();
     }
 
     public synchronized static CoapChannelManager getInstance() {
@@ -91,7 +98,7 @@ public class BasicCoapChannelManager implements CoapChannelManager {
     }
 
     @Override
-    public synchronized void reset() {
+    public synchronized void initRandom() {
         // generate random 16 bit messageId
         Random random = new Random();
         globalMessageId = random.nextInt(Constants.MESSAGE_ID_MAX + 1);

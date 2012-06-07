@@ -1,6 +1,9 @@
 package org.ws4d.coap.interfaces;
 
 import java.net.InetAddress;
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
 
 public interface CoapSocketHandler {
     // public void registerResponseListener(CoapResponseListener

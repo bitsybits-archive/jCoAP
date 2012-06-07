@@ -20,6 +20,7 @@ package org.ws4d.coap.proxy;
 
 import java.net.InetAddress;
 import java.net.URI;
+import java.text.SimpleDateFormat;
 
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -49,13 +50,15 @@ public class ProxyMessageContext {
 
 	/* in case of a http response */
 	private HttpResponse httpResponse; //the http response of the final server
+	
+	private ProxyResource resource; 
 
 	private URI uri;
 	
 	private InetAddress remoteAddress;
 	private int remotePort;
 	
-	private boolean fromCache = false;
+	private boolean cached = false;
 	
 	public ProxyMessageContext(CoapRequest request, boolean translate,
 			InetAddress remoteAddress, int remotePort, URI uri) {
@@ -149,12 +152,20 @@ public class ProxyMessageContext {
 		return trigger;
 	}
 
-	public boolean isFromCache() {
-		return fromCache;
+	public boolean isCached() {
+		return cached;
 	}
 
-	public void setFromCache(boolean isFromCache) {
-		this.fromCache = isFromCache;
+	public void setCached(boolean cached) {
+		this.cached = cached;
+	}
+
+	public ProxyResource getResource() {
+		return null;
+	}
+
+	public void setResource(ProxyResource resource) {
+		this.resource = resource;
 	}
 
 }

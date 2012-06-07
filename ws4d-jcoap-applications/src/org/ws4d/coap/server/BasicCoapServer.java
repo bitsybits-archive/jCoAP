@@ -24,6 +24,10 @@ import org.ws4d.coap.interfaces.CoapServerChannel;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapResponseCode;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
+
 public class BasicCoapServer implements CoapServer {
     private static final int PORT = 5683;
     static int counter = 0;
@@ -44,19 +48,26 @@ public class BasicCoapServer implements CoapServer {
 
 	@Override
 	public void onRequest(CoapServerChannel channel, CoapRequest request) {
-		System.out.println("Received message: " + request.toString());
+		System.out.println("Received message: " + request.toString()+ " URI: " + request.getUriPath());
 		
 		CoapMessage response = channel.createResponse(request,
 				CoapResponseCode.Content_205);
 		response.setContentType(CoapMediaType.text_plain);
 		
 		response.setPayload("payload...".getBytes());
+		
+		if (request.getObserveOption() != null){
+			System.out.println("Client wants to observe this resource.");
+		}
+		
+		response.setObserveOption(1);
+		
 		channel.sendMessage(response);
 	}
 
 	@Override
 	public void onSeparateResponseFailed(CoapServerChannel channel) {
-		// TODO Auto-generated method stub
+		System.out.println("Separate response transmission failed.");
 		
 	}
 }

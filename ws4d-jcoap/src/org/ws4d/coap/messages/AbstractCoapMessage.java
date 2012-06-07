@@ -27,10 +27,18 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.Vector;
 
+import org.apache.log4j.Logger;
+import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
+
 public abstract class AbstractCoapMessage implements CoapMessage {
+	/* use the logger of the channel manager */
+	private final static Logger logger = Logger.getLogger(BasicCoapChannelManager.class); 
 	protected static final int HEADER_LENGTH = 4;
 	
 	/* Header */
@@ -284,9 +292,39 @@ public abstract class AbstractCoapMessage implements CoapMessage {
     }
 
 
+	@Override
+	public Integer getObserveOption() {
+		CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Observe);
+    	if (option == null){
+    		return null;
+    	}
+    	byte[] data = option.getOptionData();
+		
+    	if (data.length < 0 || data.length > 2){
+    		logger.warn("invalid observe option length, return null");
+    		return null;
+		}
+		return (int) AbstractCoapMessage.coapUint2Long(data);
+	}
+
+	@Override
+	public void setObserveOption(int sequenceNumber) {
+		CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Observe);
+    	if (option != null){
+    		options.removeOption(CoapHeaderOptionType.Observe);
+    	}
+    	
+    	byte[] data = long2CoapUint(sequenceNumber);
+    	
+		if (data.length < 0 || data.length > 2){
+			throw new IllegalArgumentException("invalid observe option length");
+		}
+    	
+    	options.addOption(CoapHeaderOptionType.Observe, data);
+	}
+
     
     public void copyHeaderOptions(AbstractCoapMessage origin){
-    	/**/
     	options.removeAll();
     	options.copyFrom(origin.options);
     }
@@ -295,16 +333,6 @@ public abstract class AbstractCoapMessage implements CoapMessage {
     	options.removeOption(optionType);
     }
 	
-//    @Override
-//    public URI getRequestUri(){
-//    	return null;
-//    }
-//    
-//    @Override
-//    public void setRequestUri(URI uri){
-//    }
-    
-
 	@Override
 	public CoapChannel getChannel() {
 	    return channel;
@@ -440,6 +468,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    Uri_Port (7),
 	    Location_Query (8),
 	    Uri_Path (9),
+	    Observe (10),
 	    Token (11),
 	    Accept (12),
 	    If_Match (13),
@@ -466,6 +495,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    	case 7: return Uri_Port;
 	    	case 8: return Location_Query;
 	    	case 9: return Uri_Path;
+	    	case 10: return Observe;
 	    	case 11:return Token;
 	    	case 12:return Accept;
 	    	case 13:return If_Match;

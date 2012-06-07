@@ -1,6 +1,9 @@
 package org.ws4d.coap.interfaces;
 
 import org.ws4d.coap.messages.CoapResponseCode;
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
 
 public interface CoapResponse extends CoapMessage{
 	

@@ -46,6 +46,7 @@ import org.apache.http.nio.entity.NStringEntity;
 import org.apache.http.util.EntityUtils;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
+import org.ws4d.coap.interfaces.CoapServerChannel;
 import org.ws4d.coap.messages.BasicCoapRequest;
 import org.ws4d.coap.messages.BasicCoapResponse;
 import org.ws4d.coap.messages.CoapMediaType;
@@ -57,7 +58,7 @@ import org.ws4d.coap.messages.CoapResponseCode;
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Andy Seidel <andy.seidel@uni-rostock.de>
  */
-public class Mapper {
+public class ProxyMapper {
 	
 	static final int DEFAULT_MAX_AGE_MS = 60000; //Max Age Default in ms 
 
@@ -77,7 +78,7 @@ public class Mapper {
 	private static HttpResponseHandler httpResponseHandler;
 	private static CoapResponseHandler coapResponseHandler;
 	
-	private static Mapper instance;
+	private static ProxyMapper instance;
 	
 	/*for statistics*/
 	private int httpRequestCount = 0;
@@ -85,14 +86,14 @@ public class Mapper {
 	private int servedFromCacheCount = 0;
 	
 
-    public synchronized static Mapper getInstance() {
+    public synchronized static ProxyMapper getInstance() {
         if (instance == null) {
-            instance = new Mapper();
+            instance = new ProxyMapper();
         }
         return instance;
     }
 
-    private Mapper() {
+    private ProxyMapper() {
 		HttpRequestHandler httprequesthandler = new HttpRequestHandler();
 		httpRequestHandler = httprequesthandler;
 		httprequesthandler.start();
@@ -112,10 +113,6 @@ public class Mapper {
 		cache = new ProxyCache();
     }
     
-    public void setDefaultCacheTime(int cacheTime){
-    	cache.setDefaultCacheTime(cacheTime);
-    }
-	
 	//this class handles incoming http-requests; used in cases http-coap, http-http
 	class HttpRequestHandler extends Thread {
 			
@@ -139,23 +136,21 @@ public class Mapper {
 	                	ProxyMessageContext context = httpInQueue.take(); 				//blocking operation
 	                	httpRequestCount++;
 
-					// at this point response is not in cache and should be
-					// mapped to coap-request
-					// do not translate methods: OPTIONS,TRACE,CONNECT
-					// in that case answer "Not Implemented"
-					if (HttpRequestMethodSupported(context.getHttpRequest())) {
+					// do not translate methods: OPTIONS,TRACE,CONNECT -> error "Not Implemented"
+					if (isHttpRequestMethodSupported(context.getHttpRequest())) {
 						// perform request-transformation
 						/* try to get from cache */
 						
-						CoapResponse response = cache.getCoapRes(context.getUri());
-						if (response != null){
+						ProxyResource resource = cache.getFromHttpRequest(context);
+						if (resource != null){
 							/* answer from cache */
-							context.setCoapResponse(response);
-							context.setFromCache(true); //avoid "rechaching"
+							context.setCoapResponse(resource.getCoapResponse());
+							context.setCached(true); //avoid "recaching"
 							putCoapResponse(context);
+							System.out.println("served from cache");
 							servedFromCacheCount++;
 						} else {
-							/* not cached */
+							/* not cached -> forward request*/
 							CoapRequest request = httpRequestToCoapRequest(context.getHttpRequest());
 							
 							if (request != null) {
@@ -170,7 +165,7 @@ public class Mapper {
 						}
 
 					} else {
-						// if method is unsupported answer with error-code
+						/* method not supported */
 						HttpResponse httpResponse = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_IMPLEMENTED, "Not Implemented");
 						context.setHttpResponse(httpResponse);
 						httpServerNIO.receivedHttpResponse(context);
@@ -203,29 +198,40 @@ public class Mapper {
 	                	ProxyMessageContext context = coapInQueue.take(); 
 	                	coapRequestCount++;
 
+	                	ProxyResource resource = cache.getFromCoapRequest(context);
+
 	                	if (context.isTranslate()){
 	                		/* coap to http */
-		                	HttpResponse response = cache.getHttpRes(context.getUri());
-							if (response != null){
+							if (resource != null){
 								/* answer from cache */
-								context.setHttpResponse(response);
-								context.setFromCache(true); //avoid "recaching"
+								context.setHttpResponse(resource.getHttpResponse());
+								context.setCached(true); //avoid "recaching"
 								putHttpResponse(context);
 								System.out.println("served from cache");
-							} else {	                		
+								servedFromCacheCount++;
+							} else {	
+								/* translate CoAP Request -> HTTP Request*/
 								HttpRequest httpRequest = coapRequestToHttpRequest(context);
-		                		context.setTranslatedHttpRequest(httpRequest);
-		                		httpClientNIO.makeHttpRequest(context);       //send to http-client
+								if (httpRequest != null){
+									context.setTranslatedHttpRequest(httpRequest);
+									httpClientNIO.makeHttpRequest(context);       //send to http-client
+								} else {
+									/* translation failed -> send error */
+									CoapServerChannel channel = (CoapServerChannel) context.getCoapRequest().getChannel();
+									CoapResponse response = channel.createResponse(context.getCoapRequest(), CoapResponseCode.Not_Found_404); //TODO: right error?
+									context.setCoapResponse(response);
+									putCoapResponse(context);
+								}
 							}
 	                	} else {
 	                		/* coap to coap */
-		                	CoapResponse response = cache.getCoapRes(context.getUri());
-							if (response != null){
+							if (resource != null){
 								/* answer from cache */
-								context.setCoapResponse(response);
-								context.setFromCache(true); //avoid "recaching"
+								context.setCoapResponse(resource.getCoapResponse());
+								context.setCached(true); //avoid "recaching"
 								putCoapResponse(context);
 								System.out.println("served from cache");
+								servedFromCacheCount++;
 							} else {
 								coapClient.makeRequest(context);				//send to coap-client
 							}	                		
@@ -257,16 +263,14 @@ public class Mapper {
                     }
                     
                 	ProxyMessageContext context = coapOutQueue.take(); 						//blocking	operation 
-                	if(!context.isFromCache()){
-                		/* don't cache already cached elements (loop)*/
-                		cache.put(context);
+                	if(!context.isCached()){ //avoid recaching
+                		cache.cacheCoapResponse(context); 
                 	}
                 	
                 	if (context.isTranslate()){
                 		/* translate to HTTP*/
                 		HttpResponse response;
                 		if (context.getCoapResponse() != null){
-                			/* received no response TODO: implement a better error handling*/
                 			response = coapResponseToHttpResponse(context);	    //translate
                 			if (response == null){                				//error in translation-process, send back error-message
                 				response = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
@@ -278,7 +282,8 @@ public class Mapper {
                 		context.setHttpResponse(response);
                 		httpServerNIO.receivedHttpResponse(context);
                 	} else {
-                		/* just coap to coap */
+                		/* coap to coap */
+                		
                 		coapServer.receivedResponse(context);
                 	}
                 } catch (InterruptedException ex) {
@@ -310,23 +315,15 @@ public class Mapper {
                    
                 	ProxyMessageContext context = httpOutQueue.take(); 		//blocking operation
 					CoapResponse coapResponse = httpResponseToCoapResponse(context); // translate
-                	
-					if (coapResponse != null) {
-//						if (cacheEnabled) {
-//							String msgID = new String("" + context.getMsgID());
-//							LinkedList<String> uri = requestToStringlist(req);
-//							if (uri != null) {
-//								cache.put(uri, context);
-//							} else
-//								System.out
-//										.println("Error: uri is null --> nothing cached");
-//						}
+					
+					if (coapResponse != null){
+						if (!context.isCached()){
+							cache.cacheHttpResponse(context);
+						}
+						context.setCoapResponse(coapResponse);
+						
 					}
-
-
-					context.setCoapResponse(coapResponse);
 					coapServer.receivedResponse(context);
-                	
                 } catch (InterruptedException ex) {
                     break;
                 }
@@ -1111,7 +1108,7 @@ public class Mapper {
 	}
 	
 	//exclude methods from processing:OPTIONS/TRACE/CONNECT
-	public static boolean HttpRequestMethodSupported(HttpRequest request) {
+	public static boolean isHttpRequestMethodSupported(HttpRequest request) {
 		
 		String method = request.getRequestLine().getMethod().toLowerCase();
 		
@@ -1205,5 +1202,8 @@ public class Mapper {
 		coapRequestCount = 0;
 		servedFromCacheCount = 0;
 	}
-	
+
+	public void setCacheEnabled(boolean enabled) {
+			cache.setEnabled(enabled);
+	}
 }

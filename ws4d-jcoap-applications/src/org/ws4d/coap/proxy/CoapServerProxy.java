@@ -84,9 +84,7 @@ public class CoapServerProxy implements CoapServer{
     //interface-function for the message-queue
     public void receivedResponse(ProxyMessageContext context) {
     	try {
-    		
 			coapOutQueue.put(context);
-         
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -159,7 +157,7 @@ public class CoapServerProxy implements CoapServer{
     			remotePort = org.ws4d.coap.Constants.COAP_DEFAULT_PORT;
     		}
     		ProxyMessageContext context = new ProxyMessageContext(request, translate, remoteAddress, remotePort, proxyUri);
-    		Mapper.getInstance().putCoapRequest(context);
+    		ProxyMapper.getInstance().putCoapRequest(context);
 		} catch (UnknownHostException e) {
 			/*bad proxy URI*/
     		System.out.println("Invalid Proxy Uri Scheme, send error");

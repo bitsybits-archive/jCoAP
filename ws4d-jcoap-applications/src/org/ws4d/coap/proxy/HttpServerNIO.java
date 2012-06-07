@@ -217,7 +217,7 @@ public class HttpServerNIO extends Thread{
 			
 //				HttpRequestProxy reqX = new HttpRequestProxy(request,generateMsgID());	//create httprequestx to carry message-id  
 			
-			URI uri = Mapper.getHttpRequestUri(request);
+			URI uri = ProxyMapper.getHttpRequestUri(request);
 			if (uri == null){
 				trigger.submitResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST, "Bad Header: Host"));
 			} else {
@@ -229,7 +229,7 @@ public class HttpServerNIO extends Thread{
 				}
 
 				ProxyMessageContext context = new ProxyMessageContext(request, remoteAddress, 0, uri, trigger);
-				Mapper.getInstance().putHttpRequest(context); // put request
+				ProxyMapper.getInstance().putHttpRequest(context); // put request
 																	// to mapper
 																	// for
 																	// processing/translating

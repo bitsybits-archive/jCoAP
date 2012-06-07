@@ -14,6 +14,9 @@ import org.ws4d.coap.messages.CoapEmptyMessage;
 import org.ws4d.coap.messages.CoapRequestCode;
 import org.ws4d.coap.messages.CoapBlockOption.CoapBlockSize;
 
+/**
+ * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ */
 
 public class BasicCoapBlockClient implements CoapClient {
     private static final String SERVER_ADDRESS = "129.132.15.80";
