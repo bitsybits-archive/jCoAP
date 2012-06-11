@@ -18,22 +18,15 @@
  */
 package org.ws4d.coap.proxy;
 
-import java.io.IOException;
-import java.util.Hashtable;
-import java.util.concurrent.ArrayBlockingQueue;
-
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpOptions;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.methods.HttpTrace;
+import org.apache.http.HttpStatus;
+import org.apache.http.HttpVersion;
 import org.apache.http.impl.nio.client.DefaultHttpAsyncClient;
+import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.nio.client.HttpAsyncClient;
 import org.apache.http.nio.concurrent.FutureCallback;
+import org.apache.http.nio.reactor.IOReactorException;
+import org.apache.log4j.Logger;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -41,125 +34,63 @@ import org.apache.http.nio.concurrent.FutureCallback;
  */
 
 public class HttpClientNIO extends Thread {
+	static Logger logger = Logger.getLogger(Proxy.class);
+	ProxyMapper mapper = ProxyMapper.getInstance();
+	HttpAsyncClient httpClient;
+
+	public HttpClientNIO() {
+		try {
+			httpClient = new DefaultHttpAsyncClient();
+		} catch (IOReactorException e) {
+			System.exit(-1);
+			e.printStackTrace();
+		}
+		httpClient.start();
+		logger.info("HTTP client started");
+	}
+		
+	public void sendRequest(ProxyMessageContext context) {
+
+		// future is used to receive response asynchronous, without blocking
+		//ProxyHttpFutureCallback allows to associate a ProxyMessageContext
+		logger.info("send HTTP request");
+		ProxyHttpFutureCallback fc = new ProxyHttpFutureCallback();
+		fc.setContext(context);
+		httpClient.execute(context.getOutHttpRequest(), fc);
+	}
 	
-		//the queue receives the requests to send to an origin-server
-		static ArrayBlockingQueue<ProxyMessageContext> httpInQueue = new ArrayBlockingQueue<ProxyMessageContext>(100);
-		
-		//hashtable is used to keep message-id, there is no way to include message-id in request
-		//message-id of request is used for message-id of corresponding response, important for proxy to work!
-		static private Hashtable<FutureCallback<HttpResponse>, ProxyMessageContext> requestContextMap = new Hashtable<FutureCallback<HttpResponse>, ProxyMessageContext>(100);
-		
-		//interface-function to let other classes/modules access the queue
-		public void makeHttpRequest(ProxyMessageContext context) {
-			try {
-				httpInQueue.put(context);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+	private class ProxyHttpFutureCallback implements FutureCallback<HttpResponse>{
+		private ProxyMessageContext context = null;
+
+		public void setContext(ProxyMessageContext context) {
+			this.context = context;
+		}
+
+		// this is called when response is received
+		public void completed(final HttpResponse response) {
+			if (context != null) {
+				context.setInHttpResponse(response);
+				mapper.handleHttpClientResponse(context);
 			}
 		}
 
-		public void run() {			
-			
-			this.setName("Http_Client");
-			
-	        try {
-	        	
-	        	//create an instance of HttpAsyncClient and start it. Uses by default two worker-threads (dispatcher)!
-	        	HttpAsyncClient httpclient = new DefaultHttpAsyncClient();	        	
-	            httpclient.start();
-		        
-		        while (!Thread.interrupted()) {
-		        	
-		        	ProxyMessageContext context = httpInQueue.take();		//blocking operation, waits for requests
-		        			        	
-		        	//cast HttpRequest manually, framework don't work with class HttpRequest
-		        	//first get the request-method
-		        	HttpRequestBase request = null;		       	
-		        	String method = context.getHttpRequest().getRequestLine().getMethod().toLowerCase();
-		        	
-		        	if (method.equals("get")){
-		        		request = new HttpGet(context.getHttpRequest().getRequestLine().getUri());
-		        	}
-		        	else if (method.equals("put")) {
-		        		request = new HttpPut(context.getHttpRequest().getRequestLine().getUri());
-		        	}
-		        	else if (method.equals("post")) {
-		        		request = new HttpPost(context.getHttpRequest().getRequestLine().getUri());
-		        	}
-		        	else if (method.equals("delete")) {
-		        		request = new HttpDelete(context.getHttpRequest().getRequestLine().getUri());
-		        	}
-		        	else if (method.equals("options")) {
-		        		request = new HttpOptions(context.getHttpRequest().getRequestLine().getUri());
-		        	}
-		        	else if (method.equals("trace")) {
-		        		request = new HttpTrace(context.getHttpRequest().getRequestLine().getUri());
-		        	}
-		        	else if (method.equals("head")) {
-		        		request = new HttpHead(context.getHttpRequest().getRequestLine().getUri());
-		        	}
-		        	else {
-		        		System.out.println("Error in Http-ClientNIO, bad request-method!");
-		        	}
-		        	//TODO: add connect method
-		        	//TODO: convert to async classes -> HttpAsyncGet...
-		        	
-		        	request.setHeaders(context.getHttpRequest().getAllHeaders());
-		        	request.setParams(context.getHttpRequest().getParams());
-		        			        			        	
-		        	//future is used to receive response asynchronous, without blocking anything
-		        	FutureCallback<HttpResponse> fc = new FutureCallback<HttpResponse>() {
+		public void failed(final Exception ex) {
+			logger.warn("HTTP client request failed");
+			if (context != null) {
+				context.setInHttpResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, ex.getMessage()));
+				mapper.handleHttpClientResponse(context);
+			}
+		}
 
-		        		//this is called when response is received
-	                    public void completed(final HttpResponse response) {
-	                    	/* */
-	                    	ProxyMessageContext context = requestContextMap.remove(this);
-	                    	if (context != null){
-	                    		context.setHttpResponse(response);
-	                    		ProxyMapper.getInstance().putHttpResponse(context);
-	                    	}
-	                    }
+		public void cancelled() {
+			logger.warn("HTTP Client Request cancelled");
+			if (context != null) {
+				/* null indicates no response */
+				context.setInHttpResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_INTERNAL_SERVER_ERROR, "http connection canceled"));
+				mapper.handleHttpClientResponse(context);
+			}
+		}
+	}
+	
 
-	                    public void failed(final Exception ex) {
-	                       System.out.println("HTTP Client Request failed");
-	                       ProxyMessageContext context = requestContextMap.remove(this);
-	                       requestContextMap.remove(this);
-	                    	if (context != null){
-	                    		/* null indicates no response */
-	                    		context.setHttpResponse(null);
-	                    		ProxyMapper.getInstance().putHttpResponse(context);
-	                    	}
-	                    }
-
-	                    public void cancelled() {
-		                    System.out.println("HTTP Client Request cancelled");
-		                       ProxyMessageContext context = requestContextMap.remove(this);
-		                       requestContextMap.remove(this);
-		                    	if (context != null){
-		                    		/* null indicates no response */
-		                    		context.setHttpResponse(null);
-		                    		ProxyMapper.getInstance().putHttpResponse(context);
-		                    	}
-	                    }
-
-	                };
-	                
-	                requestContextMap.put(fc, context);
-		            httpclient.execute(request, fc);
-
-		        }
-		
-		        } 
-
-		        catch (IOException e) {
-					e.printStackTrace();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} finally {
-		            // When HttpClient instance is no longer needed,
-		            // shut down the connection manager to ensure
-		            // immediate deallocation of all system resources
-		            // httpclient.getConnectionManager().shutdown();
-		        }
-	        }
-	   }
+}

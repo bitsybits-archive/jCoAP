@@ -31,8 +31,8 @@ public class BasicCoapResponse extends AbstractCoapMessage implements CoapRespon
 		if (responseCode == CoapResponseCode.UNKNOWN){
 			throw new IllegalArgumentException("UNKNOWN Response Code not allowed");
 		}
-		
 		this.messageCodeValue = responseCode.getValue();
+		
 		this.messageId = messageId;		
 		
 		setToken(requestToken);
@@ -102,5 +102,13 @@ public class BasicCoapResponse extends AbstractCoapMessage implements CoapRespon
     @Override
 	public String toString() {
     	return packetType.toString() + ", " + responseCode.toString() + ", MsgId: " + getMessageID() +", #Options: " + options.getOptionCount(); 
+	}
+
+    @Override
+	public void setResponseCode(CoapResponseCode responseCode) {
+    	if (responseCode != CoapResponseCode.UNKNOWN){
+    		this.responseCode = responseCode;
+    		this.messageCodeValue = responseCode.getValue();
+		}
 	}
 }

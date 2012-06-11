@@ -275,4 +275,9 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 	public String toString() {
     	return packetType.toString() + ", " + requestCode.toString() + ", MsgId: " + getMessageID() +", #Options: " + options.getOptionCount(); 
 	}
+
+    @Override
+	public void setRequestCode(CoapRequestCode requestCode) {
+		this.requestCode = requestCode;
+	}
 }

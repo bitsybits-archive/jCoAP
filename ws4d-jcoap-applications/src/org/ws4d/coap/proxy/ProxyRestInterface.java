@@ -2,11 +2,13 @@ package org.ws4d.coap.proxy;
 
 import java.util.Vector;
 
+import org.apache.log4j.Logger;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.rest.BasicCoapResource;
 import org.ws4d.coap.rest.CoapResourceServer;
 
 public class ProxyRestInterface {
+	static Logger logger = Logger.getLogger(Proxy.class);
 	private CoapResourceServer resourceServer;
 	
 	public void start(){

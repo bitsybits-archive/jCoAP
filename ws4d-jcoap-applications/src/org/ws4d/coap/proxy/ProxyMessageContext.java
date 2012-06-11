@@ -20,11 +20,12 @@ package org.ws4d.coap.proxy;
 
 import java.net.InetAddress;
 import java.net.URI;
-import java.text.SimpleDateFormat;
 
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.nio.protocol.NHttpResponseTrigger;
+import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
 
@@ -35,101 +36,170 @@ import org.ws4d.coap.interfaces.CoapResponse;
 public class ProxyMessageContext {
 	/*unique for reqMessageID, remoteHost, remotePort*/
 
-	/* is true if a translation was done (always true for incoming http requests)*/
-	private boolean translate;  //translate from coap to http
+	/*
+	*                  Server                 Client
+	*     inRequest  +--------+  TRANSFORM  +--------+ outRequest
+	*  ------------->|        |-----|||---->|        |------------->
+	*                |        |             |        |
+	*    outResponse |        |  TRANSFORM  |        | inResponse
+	*  <-------------|        |<----|||-----|        |<-------------
+	*                +--------+             +--------+
+	*
+	*/	
 
-	/*in case of incoming coap request */
-	private CoapRequest coapRequest;  //the coapRequest of the origin client (maybe translated)
 	
-	/* in case of incoming http request */
-	private HttpRequest httpRequest;	//the httpRequest of the origin client (maybe translated)
-	NHttpResponseTrigger trigger;
+	/* incomming messages */
+	private CoapRequest inCoapRequest;  //the coapRequest of the origin client (maybe translated)
+	private HttpRequest inHttpRequest;	//the httpRequest of the origin client (maybe translated)
+	private CoapResponse inCoapResponse; //the coap response of the final server
+	private HttpResponse inHttpResponse; //the http response of the final server
 
-	/* in case of a coap response */
-	private CoapResponse coapResponse; //the coap response of the final server
+	/* generated outgoing messages */
+	private CoapResponse outCoapResponse; //the coap response send to the client
+	private CoapRequest outCoapRequest; 
+	private HttpResponse outHttpResponse; 
+	private HttpUriRequest outHttpRequest; 
 
-	/* in case of a http response */
-	private HttpResponse httpResponse; //the http response of the final server
-	
+	/* trigger and channels*/
+	private CoapClientChannel outCoapClientChannel; 
+	NHttpResponseTrigger trigger; //needed by http
+
+	/* corresponding cached resource*/
 	private ProxyResource resource; 
 
 	private URI uri;
-	
-	private InetAddress remoteAddress;
-	private int remotePort;
-	
+	private InetAddress clientAddress;
+	private int clientPort;
+	private InetAddress serverAddress;
+	private int serverPort;
+
+	/* is true if a translation was done (always true for incoming http requests)*/
+	private boolean translate;  //translate from coap to http
+
+	/* indicates that the response comes from the cache*/
 	private boolean cached = false;
+	/* in case of a HTTP Head this is true, GET and HEAD are both mapped to CoAP GET */
+	private boolean httpHeadMethod = false;
 	
-	public ProxyMessageContext(CoapRequest request, boolean translate,
-			InetAddress remoteAddress, int remotePort, URI uri) {
-
-		this.coapRequest = request;
+	public ProxyMessageContext(CoapRequest request, boolean translate, URI uri) {
+		this.inCoapRequest = request;
 		this.translate = translate;
-		this.remoteAddress = remoteAddress;
-		this.remotePort = remotePort;
 		this.uri = uri;
-
 	}
 	
-	public ProxyMessageContext(HttpRequest request,
-			InetAddress remoteAddress, int remotePort, URI uri, NHttpResponseTrigger trigger) {
-
-		this.httpRequest = request;
-		this.remoteAddress = remoteAddress;
-		this.remotePort = remotePort;
-		this.translate = true; //always translate http
+	public ProxyMessageContext(HttpRequest request, boolean translate, URI uri, NHttpResponseTrigger trigger) {
+		this.inHttpRequest = request;
+		this.translate = translate;
 		this.uri = uri;
 		this.trigger = trigger;
-		
-		System.out.println("DEBUG: created HTTP Context");
 	}
 	
 	public boolean isCoapRequest(){
-		return coapRequest != null;
+		return inCoapRequest != null;
 	}
 
 	public boolean isHttpRequest(){
-		return httpRequest != null;
+		return inHttpRequest != null;
+	}
+
+	
+	
+	public CoapRequest getInCoapRequest() {
+		return inCoapRequest;
+	}
+
+	public void setInCoapRequest(CoapRequest inCoapRequest) {
+		this.inCoapRequest = inCoapRequest;
+	}
+
+	public HttpRequest getInHttpRequest() {
+		return inHttpRequest;
+	}
+
+	public void setInHttpRequest(HttpRequest inHttpRequest) {
+		this.inHttpRequest = inHttpRequest;
+	}
+
+	public CoapResponse getInCoapResponse() {
+		return inCoapResponse;
+	}
+
+	public void setInCoapResponse(CoapResponse inCoapResponse) {
+		this.inCoapResponse = inCoapResponse;
+	}
+
+	public HttpResponse getInHttpResponse() {
+		return inHttpResponse;
+	}
+
+	public void setInHttpResponse(HttpResponse inHttpResponse) {
+		this.inHttpResponse = inHttpResponse;
+	}
+
+	public CoapResponse getOutCoapResponse() {
+		return outCoapResponse;
+	}
+
+	public void setOutCoapResponse(CoapResponse outCoapResponse) {
+		this.outCoapResponse = outCoapResponse;
+	}
+
+	public CoapRequest getOutCoapRequest() {
+		return outCoapRequest;
+	}
+
+	public void setOutCoapRequest(CoapRequest outCoapRequest) {
+		this.outCoapRequest = outCoapRequest;
+	}
+
+	public HttpResponse getOutHttpResponse() {
+		return outHttpResponse;
+	}
+
+	public void setOutHttpResponse(HttpResponse outHttpResponse) {
+		this.outHttpResponse = outHttpResponse;
+	}
+
+	public HttpUriRequest getOutHttpRequest() {
+		return outHttpRequest;
+	}
+
+	public void setOutHttpRequest(HttpUriRequest outHttpRequest) {
+		this.outHttpRequest = outHttpRequest;
 	}
 	
-	public CoapRequest getCoapRequest() {
-		return coapRequest;
-	}
-	
-	public HttpRequest getHttpRequest() {
-		return httpRequest;
-	}
-	
-	public CoapResponse getCoapResponse() {
-		return coapResponse;
+	public CoapClientChannel getOutCoapClientChannel() {
+		return outCoapClientChannel;
 	}
 
-	public void setCoapResponse(CoapResponse coapResponse) {
-		this.coapResponse = coapResponse;
+	public void setOutCoapClientChannel(CoapClientChannel outClientChannel) {
+		this.outCoapClientChannel = outClientChannel;
 	}
 
-	public HttpResponse getHttpResponse() {
-		return httpResponse;
+	public InetAddress getClientAddress() {
+		return clientAddress;
 	}
 
-	public void setHttpResponse(HttpResponse httpResponse) {
-		this.httpResponse = httpResponse;
+	public void setClientAddress(InetAddress clientAddress, int clientPort) {
+		this.clientAddress = clientAddress;
+		this.clientPort = clientPort;
 	}
 
-	public InetAddress getRemoteAddress() {
-		return remoteAddress;
+	public InetAddress getServerAddress() {
+		return serverAddress;
 	}
 
-	public int getRemotePort() {
-		return remotePort;
-	}
-	
-	public void setRemoteAddress(InetAddress remoteAddress) {
-		this.remoteAddress = remoteAddress;
+	public void setServerAddress(InetAddress serverAddress, int serverPort) {
+		this.serverAddress = serverAddress;
+		this.serverPort = serverPort;
 	}
 
-	public void setRemotePort(int remotePort) {
-		this.remotePort = remotePort;
+	public int getClientPort() {
+		return clientPort;
+	}
+
+	public int getServerPort() {
+		return serverPort;
 	}
 
 	public boolean isTranslate() {
@@ -137,11 +207,11 @@ public class ProxyMessageContext {
 	}
 
 	public void setTranslatedCoapRequest(CoapRequest request) {
-		this.coapRequest = request;
+		this.inCoapRequest = request;
 	}
 
 	public void setTranslatedHttpRequest(HttpRequest request) {
-		this.httpRequest = request;
+		this.inHttpRequest = request;
 	}
 
 	public URI getUri() {
@@ -161,11 +231,19 @@ public class ProxyMessageContext {
 	}
 
 	public ProxyResource getResource() {
-		return null;
+		return resource;
 	}
 
 	public void setResource(ProxyResource resource) {
 		this.resource = resource;
+	}
+
+	public void setHttpHeadMethod(boolean httpHeadMethod) {
+		this.httpHeadMethod = httpHeadMethod;
+	}
+
+	public boolean isHttpHeadMethod() {
+		return httpHeadMethod;
 	}
 
 }

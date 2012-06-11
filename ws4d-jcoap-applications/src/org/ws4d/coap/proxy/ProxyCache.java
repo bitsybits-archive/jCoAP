@@ -46,18 +46,14 @@ import org.ws4d.coap.interfaces.CoapResponse;
  */
 
 public class ProxyCache {
+	static Logger logger = Logger.getLogger(Proxy.class);
 	private static final int MAX_LIFETIME = Integer.MAX_VALUE;
 	private static Cache cache;				
 	private static CacheManager cacheManager;			
 	private boolean enabled = true;
 	
-	private static Logger logger = Logger.getLogger(ProxyCache.class);
 	
 	public ProxyCache() {
-        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-        // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
-        logger.setLevel(Level.INFO);
-        
 		cacheManager = CacheManager.create();
 		cache = new Cache(new CacheConfiguration("proxy", 100)
 		.memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LFU)

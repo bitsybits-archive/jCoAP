@@ -40,6 +40,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 	CoapClient client = null;
 	ClientBlockContext blockContext = null;
 	CoapRequest lastRequest = null;
+	Object trigger = null;
 	
 	public BasicCoapClientChannel(CoapSocketHandler socketHandler,
 			CoapClient client, InetAddress remoteAddress,
@@ -243,5 +244,16 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 			this.response = response;
 		}
     }
+
+	@Override
+	public void setTrigger(Object o) {
+		trigger = o;
+		
+	}
+
+	@Override
+	public Object getTrigger() {
+		return trigger;
+	}
 
 }

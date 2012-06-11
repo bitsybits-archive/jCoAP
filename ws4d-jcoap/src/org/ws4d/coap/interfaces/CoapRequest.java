@@ -30,4 +30,5 @@ public interface CoapRequest extends CoapMessage{
     public Vector<byte[]> getETag();
 
     public CoapRequestCode getRequestCode();
+    public void setRequestCode(CoapRequestCode requestCode);
 }

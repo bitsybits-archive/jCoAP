@@ -14,6 +14,7 @@ public interface CoapResponse extends CoapMessage{
     
     public void setETag(byte[] etag);
     public byte[] getETag();
+    public void setResponseCode(CoapResponseCode responseCode);
 
 		
 }

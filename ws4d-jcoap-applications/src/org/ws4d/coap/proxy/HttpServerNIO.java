@@ -22,21 +22,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.util.concurrent.ArrayBlockingQueue;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-
-import org.apache.http.Header;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -48,7 +34,6 @@ import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.nio.DefaultServerIOEventDispatch;
 import org.apache.http.impl.nio.reactor.DefaultListeningIOReactor;
-import org.apache.http.impl.nio.ssl.SSLServerIOEventDispatch;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.nio.entity.ConsumingNHttpEntity;
 import org.apache.http.nio.protocol.NHttpRequestHandler;
@@ -65,37 +50,27 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.ImmutableHttpProcessor;
 import org.apache.http.protocol.ResponseConnControl;
+import org.apache.log4j.Logger;
 
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Andy Seidel <andy.seidel@uni-rostock.de>
+ * 
+ * TODO: IMPROVE Async Server Implementation, avoid ModifiedAsyncNHttpServiceHandler and deprecated function calls
  */
 
 public class HttpServerNIO extends Thread{
-
-	//the queue receives the responses from mapper-module
-	static private ArrayBlockingQueue<ProxyMessageContext> httpOutQueue = new ArrayBlockingQueue<ProxyMessageContext>(100);
-	
-	static private HttpResponder httpResponder;
-	
+	static Logger logger = Logger.getLogger(Proxy.class);
 	static private int PORT = 8080;
 	
-	//if http-server should use ssl set it to true
-	public static boolean SSLSERVER = false;
+	ProxyMapper mapper = ProxyMapper.getInstance();
 	
 	//interface-function for other classes/modules
-	public void receivedHttpResponse(ProxyMessageContext context) {
-		try {
-			httpOutQueue.put(context);
-			
-            synchronized (httpResponder) {
-            	httpResponder.notify();
-            }
-            
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+	public void sendHttpResponse(ProxyMessageContext context) {
+    	HttpResponse httpResponse = context.getOutHttpResponse();
+    	NHttpResponseTrigger trigger = context.getTrigger();
+   		trigger.submitResponse(httpResponse);
 	}
 	
 	public void run() {
@@ -129,61 +104,14 @@ public class HttpServerNIO extends Thread{
         
 		try {
 			//create and start responder-thread
-			HttpResponder responder = new HttpResponder();
-			httpResponder = responder;
-			responder.start();
-			
 			//ioreactor is used by nio-framework to listen and react to http connections
 			//2 dispatcher-threads are used to do the work
 			ListeningIOReactor ioReactor = new DefaultListeningIOReactor(2, params);
-			
-			//two cases are differentiated: ssl(https) or http
-			if (SSLSERVER) {
-				
-				//ssl-server is experimental, but worked with cert "mySrvKeystore"
-				SSLContext sslcontext = null;
-				try {			
-					
-					ClassLoader cl = org.ws4d.coap.proxy.HttpServerNIO.class.getClassLoader();
-					URL url = cl.getResource("mySrvKeystore.keystore");			//has to be in /PROJECTNAME/bin
-					KeyStore keystore  = KeyStore.getInstance("jks");
-					keystore.load(url.openStream(), "anne1306".toCharArray());	//stream cert in keystore-object
-					KeyManagerFactory kmfactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm());
-					kmfactory.init(keystore, "anne1306".toCharArray());
-					KeyManager[] keymanagers = kmfactory.getKeyManagers(); 
-					sslcontext = SSLContext.getInstance("TLS");
-					sslcontext.init(keymanagers, null, null);
-					//sslcontext is ready and used in sslioeventdispatch
-	
-				} catch (KeyStoreException e2) {
-					e2.printStackTrace();
-				} catch (NoSuchAlgorithmException e) {
-					e.printStackTrace();
-				} catch (CertificateException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (UnrecoverableKeyException e) {
-					e.printStackTrace();
-				} catch (KeyManagementException e) {
-					e.printStackTrace();
-				}
-				
-				//ioeventdispatch is used to handle the events from ioreactor
-				SSLServerIOEventDispatch sslioeventdispatch = new SSLServerIOEventDispatch(handler,sslcontext ,params);
-				
-				ioReactor.listen(new InetSocketAddress(PORT));
-				ioReactor.execute(sslioeventdispatch);
-			}
-			else {
-				//this is the well-tested case, normal http-server without encryption
-				//encryption disables easy debugging of packets in wireshark
-				IOEventDispatch ioeventdispatch = new DefaultServerIOEventDispatch(handler, params);
-				
-				ioReactor.listen(new InetSocketAddress(PORT));
-				ioReactor.execute(ioeventdispatch);
-			}	
-			
+
+			IOEventDispatch ioeventdispatch = new DefaultServerIOEventDispatch(handler, params);
+
+			ioReactor.listen(new InetSocketAddress(PORT));
+			ioReactor.execute(ioeventdispatch);
 			
 		} catch (IOReactorException e) {
 			e.printStackTrace();
@@ -214,58 +142,21 @@ public class HttpServerNIO extends Thread{
 		public void handle(final HttpRequest request, final HttpResponse response,
 				final NHttpResponseTrigger trigger, HttpContext con)
 				throws HttpException, IOException {
-			
-//				HttpRequestProxy reqX = new HttpRequestProxy(request,generateMsgID());	//create httprequestx to carry message-id  
-			
-			URI uri = ProxyMapper.getHttpRequestUri(request);
-			if (uri == null){
-				trigger.submitResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST, "Bad Header: Host"));
-			} else {
-
-				InetAddress remoteAddress = InetAddress.getByName(uri.getHost());
-				int port = uri.getPort();
-				if (port == -1) {
-					port = org.ws4d.coap.Constants.COAP_DEFAULT_PORT;
+			logger.info("incomming HTTP request");
+			URI uri = ProxyMapper.resolveHttpRequestUri(request);
+			if (uri != null){
+				InetAddress serverAddress = InetAddress.getByName(uri.getHost()); //FIXME: blocking operation??? 
+				int serverPort = uri.getPort();
+				if (serverPort == -1) {
+					serverPort = org.ws4d.coap.Constants.COAP_DEFAULT_PORT;
 				}
-
-				ProxyMessageContext context = new ProxyMessageContext(request, remoteAddress, 0, uri, trigger);
-				ProxyMapper.getInstance().putHttpRequest(context); // put request
-																	// to mapper
-																	// for
-																	// processing/translating
+				/* translate always */
+				ProxyMessageContext context = new ProxyMessageContext(request, true, uri, trigger);
+				context.setServerAddress(serverAddress, serverPort);
+				ProxyMapper.getInstance().handleHttpServerRequest(context); 
+			} else {
+				trigger.submitResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST, "Bad Header: Host"));
 			}
 		}
     }
-	
-	//this class waits for a response and sends it when got one from mapper
-	public static class HttpResponder extends Thread {
-        	
-        public void run() {
-        	
-        	this.setName("HttpResponder");
-
-            while (!Thread.interrupted()) {
-                try {
-                	
-                	synchronized(this) {
-                        while (httpOutQueue.isEmpty())
-    						try {
-    							wait();
-    						} catch (InterruptedException e) {
-    							e.printStackTrace();
-    						}
-                    }
-                    
-                	ProxyMessageContext context = httpOutQueue.take(); 	
-                	HttpResponse httpResponse = context.getHttpResponse();
-                	NHttpResponseTrigger trigger = context.getTrigger();
-               		trigger.submitResponse(httpResponse);
-
-                } catch (InterruptedException ex) {
-                    break;
-                }
-            }
-        }
-    }
-	
 }
