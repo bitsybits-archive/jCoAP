@@ -73,7 +73,7 @@ public class Proxy {
 		
         logger.addAppender(new ConsoleAppender(new SimpleLayout()));
         // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
-        logger.setLevel(Level.INFO);
+        logger.setLevel(Level.ALL);
 	
 		HttpServerNIO httpserver = new HttpServerNIO();
 		HttpClientNIO httpclient = new HttpClientNIO();

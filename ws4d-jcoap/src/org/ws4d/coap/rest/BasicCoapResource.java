@@ -168,5 +168,23 @@ public class BasicCoapResource implements CoapResource {
 	public long expires() {
 		return expires;
 	}
+	
+	@Override
+	public boolean isExpired(){
+		if (expires == -1){
+			return false; //-1 == never expires
+		}
+		
+		if(expires < System.currentTimeMillis()){
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public void setExpires(long expires){
+		this.expires = expires;
+	}
+
 
 }

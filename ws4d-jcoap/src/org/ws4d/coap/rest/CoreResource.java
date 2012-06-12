@@ -154,4 +154,10 @@ public class CoreResource implements CoapResource {
 		/* expires never */
 		return -1;
 	}
+
+
+	@Override
+	public boolean isExpired() {
+		return false;
+	}
 }

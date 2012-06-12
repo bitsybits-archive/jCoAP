@@ -81,6 +81,11 @@ public class ProxyMessageContext {
 	/* in case of a HTTP Head this is true, GET and HEAD are both mapped to CoAP GET */
 	private boolean httpHeadMethod = false;
 	
+	/* times */
+	long requestTime;
+	long responseTime;
+	
+	
 	public ProxyMessageContext(CoapRequest request, boolean translate, URI uri) {
 		this.inCoapRequest = request;
 		this.translate = translate;
@@ -244,6 +249,22 @@ public class ProxyMessageContext {
 
 	public boolean isHttpHeadMethod() {
 		return httpHeadMethod;
+	}
+
+	public long getRequestTime() {
+		return requestTime;
+	}
+
+	public void setRequestTime(long requestTime) {
+		this.requestTime = requestTime;
+	}
+
+	public long getResponseTime() {
+		return responseTime;
+	}
+
+	public void setResponseTime(long responseTime) {
+		this.responseTime = responseTime;
 	}
 
 }

@@ -39,11 +39,20 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
+import org.ws4d.coap.messages.CoapRequestCode;
+import org.ws4d.coap.messages.CoapResponseCode;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Andy Seidel <andy.seidel@uni-rostock.de>
  */
+
+/*
+ * TODO's:
+ * - implement Date option as described in "Connecting the Web with the Web of Things: Lessons Learned From Implementing a CoAP-HTTP Proxy"
+ * - caching of HTTP resources not supported as HTTP servers may have enough resources (in terms of RAM/ROM/batery/computation)
+ * 
+ * */
 
 public class ProxyCache {
 	static Logger logger = Logger.getLogger(Proxy.class);
@@ -51,7 +60,8 @@ public class ProxyCache {
 	private static Cache cache;				
 	private static CacheManager cacheManager;			
 	private boolean enabled = true;
-	
+	private static final int defaultMaxAge = org.ws4d.coap.Constants.COAP_DEFAULT_MAX_AGE_S;
+	private static final ProxyCacheTimePolicy cacheTimePolicy = ProxyCacheTimePolicy.Halftime;
 	
 	public ProxyCache() {
 		cacheManager = CacheManager.create();
@@ -59,8 +69,6 @@ public class ProxyCache {
 		.memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.LFU)
 		.overflowToDisk(true)
 		.eternal(false)
-//		.timeToLiveSeconds(defaultTimeToLive)
-//		.timeToIdleSeconds(defaultTimeToLive)
 		.diskPersistent(false)
 		.diskExpiryThreadIntervalSeconds(0));
 		cacheManager.addCache(cache);	
@@ -214,13 +222,13 @@ public class ProxyCache {
 		return date;
 	}
 
-	//mark an element as expired
-	private void markExpired(ProxyResourceKey key) {
-		if (cache.getQuiet(key) != null) {
-			cache.get(key).setTimeToLive(0);
-		}
-	}
-
+//	//mark an element as expired
+//	private void markExpired(ProxyResourceKey key) {
+//		if (cache.getQuiet(key) != null) {
+//			cache.get(key).setTimeToLive(0);
+//		}
+//	}
+	
 	private boolean insertElement(ProxyResourceKey key, ProxyResource resource) {
 		Element elem = new Element(key, resource);
 		if (resource.expires() == -1) {
@@ -235,12 +243,30 @@ public class ProxyCache {
 				}
 				elem.setTimeToLive((int) ttl);
 				cache.put(elem);
+				logger.debug("cache insert: " + resource.getPath() );
+
 			} else {
 				/* resource is already expired */
 				return false;
 			}
 		}
 		return true;
+	}
+	
+	private void updateTtl(ProxyResourceKey key, long newExpires) {
+		/*getQuiet is used to not update statistics */
+		Element elem = cache.getQuiet(key);
+		
+		if (elem != null) {
+			long ttl = newExpires - System.currentTimeMillis();
+			if (ttl > 0 || newExpires == -1 ) {
+				/* limit the maximum lifetime */
+				if (ttl > MAX_LIFETIME) {
+					ttl = MAX_LIFETIME;
+				}
+				elem.setTimeToLive((int) ttl);
+			} 
+		}
 	}
 
 	public boolean isEnabled() {
@@ -251,26 +277,116 @@ public class ProxyCache {
 		this.enabled = enabled;
 	}
 
-	public ProxyResource getFromHttpRequest(ProxyMessageContext context) {
-		// TODO Auto-generated method stub
-		// TODO: check the HTTP header options and sever resource from cache in case of a GET operation
+	public ProxyResource get(ProxyMessageContext context) {
+		if (!isEnabled()){
+			return null;
+		}
+		
+		String path = context.getUri().getPath();
+		if(path == null){
+			/* no caching */
+			return null;
+		}
+		Element elem = cache.get(new ProxyResourceKey(context.getServerAddress(), context.getServerPort(), path));
+		logger.debug("cache get: " + context.getServerAddress().toString() + " " + context.getServerPort() + " " + path);
+		if (elem != null) {
+			/* found cached entry */
+			ProxyResource res = (ProxyResource) elem.getObjectValue();
+			if (!res.isExpired()) {
+				return res;
+			}
+		}
 		return null;
 	}
 
-	public ProxyResource getFromCoapRequest(ProxyMessageContext context) {
-		// TODO Auto-generated method stub
-		// TODO: check the Coap header options and sever resource from cache in case of a GET operation
-		return null;
-	}
-	
-	public boolean cacheHttpResponse(ProxyMessageContext context) {
-		//TODO: implement
-		return false;
+	public void cacheHttpResponse(ProxyMessageContext context) {
+		if (!isEnabled()){
+			return;
+		}
+		/* TODO caching of HTTP responses currently not supported (not use to unload HTTP servers) */
+		return;
 	}
 
-	public boolean cacheCoapResponse(ProxyMessageContext context) {
-		//TODO: implement
-		return false;
+	public void cacheCoapResponse(ProxyMessageContext context) {
+		if (!isEnabled()){
+			return;
+		}
+		
+		CoapResponse response = context.getInCoapResponse();
+		
+		String path = context.getUri().getPath();
+		if(path == null){
+			/* no caching */
+			return;
+		}
+		
+		ProxyResourceKey key = new ProxyResourceKey(context.getServerAddress(), context.getServerPort(), path);
+		
+		/* NOTE:
+		 * - currently caching is only implemented for success error codes (2.xx) 
+		 * - not fresh resources are removed (could be used for validation model)*/
+		
+		switch (context.getInCoapResponse().getResponseCode()) {
+		case Created_201:
+			/* A cache SHOULD mark any stored response for the
+			   created resource as not fresh. This response is not cacheable.*/
+			cache.remove(key); 
+			break;
+		case Deleted_202:
+			/*    This response is not cacheable.  However, a cache SHOULD mark any
+   				stored response for the deleted resource as not fresh.*/
+			cache.remove(key); 
+			break;
+		case Valid_203:
+			/* When a cache receives a 2.03 (Valid) response, it needs to update the
+   				stored response with the value of the Max-Age Option included in the
+   				response (see Section 5.6.2). */
+			//TODO
+			break;
+		case Changed_204:
+			/* This response is not cacheable.  However, a cache SHOULD mark any
+   				stored response for the changed resource as not fresh. */
+			cache.remove(key); 
+			break;
+		case Content_205:
+			/* This response is cacheable: Caches can use the Max-Age Option to
+   				determine freshness (see Section 5.6.1) and (if present) the ETag
+   				Option for validation (see Section 5.6.2).*/
+			/* CACHE RESOURCE */
+			ProxyResource resource = new ProxyResource(path, response.getPayload(), response.getContentType());
+			resource.setExpires(cacheTimePolicy.calcExpires(context.getRequestTime(), context.getResponseTime(), response.getMaxAge()));
+			insertElement(key, resource);
+			break;
+
+		default:
+			break;
+		}
 	}
 	
+	public enum ProxyCacheTimePolicy{
+		Request(0), 
+		Response(1), 
+		Halftime(2);
+		
+		int state;
+		
+		private ProxyCacheTimePolicy(int state){
+			this.state = state;
+		}
+		
+		public long calcExpires(long requestTime, long responseTime, long maxAge){
+			if (maxAge == -1){
+				maxAge = defaultMaxAge;
+			}
+			switch (this) {
+			case Request:
+				return requestTime + (maxAge * 1000) ;
+			case Response:
+				return responseTime + (maxAge * 1000);
+			case Halftime:
+				return requestTime + ((responseTime - requestTime) / 2) + (maxAge * 1000);
+			}
+			return 0;
+		}
+	}
 }

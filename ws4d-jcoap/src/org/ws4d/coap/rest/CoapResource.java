@@ -30,4 +30,5 @@ public interface CoapResource extends Resource {
 	
 	/* returns the unix time when resource expires, -1 for never */
 	public long expires();
+	public boolean isExpired();
 }

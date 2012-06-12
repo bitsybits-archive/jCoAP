@@ -67,7 +67,7 @@ public class HttpServerNIO extends Thread{
 	ProxyMapper mapper = ProxyMapper.getInstance();
 	
 	//interface-function for other classes/modules
-	public void sendHttpResponse(ProxyMessageContext context) {
+	public void sendResponse(ProxyMessageContext context) {
     	HttpResponse httpResponse = context.getOutHttpResponse();
     	NHttpResponseTrigger trigger = context.getTrigger();
    		trigger.submitResponse(httpResponse);

@@ -32,6 +32,8 @@ import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import net.sf.ehcache.Element;
+
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -96,14 +98,14 @@ public class ProxyMapper {
     
     /*
     *               Server                              Client
-    *              +------+                            +------+
+    *              +------+                            +------+ RequestTime
     *   InRequ --->|      |----+-->Requ.Trans.-------->|      |--->OutReq
     *              |      |    |                       |      |
     *              |      |    |                       |      |
     *              |      |  ERROR                     |      |
     *              |      |    |                       |      |
     *              |      |    +<---ERROR -----+       |      |
-    *              |      |    |               |       |      |
+    *              |      |    |               |       |      | ResponseTime
     *   OutResp<---|      +<---+<--Resp.Trans.-+-------+      |<---InResp
     *              +------+                            +------+
     *
@@ -123,14 +125,18 @@ public class ProxyMapper {
 		// "Not Implemented"
 		if (isHttpRequestMethodSupported(context.getInHttpRequest())) {
 			// perform request-transformation
+			
 			/* try to get from cache */
-
-			ProxyResource resource = cache.getFromHttpRequest(context);
+			ProxyResource resource = null;
+			if (context.getInHttpRequest().getRequestLine().getMethod().toLowerCase().equals("get")){
+				resource = cache.get(context);
+			}
+			
 			if (resource != null) {
 				/* answer from cache */
-				resource.generateCoapResponse(context.getInCoapResponse());
+				resourceToHttp(context, resource);
 				context.setCached(true); // avoid "recaching"
-				coapServer.sendResponse(context);
+				httpServer.sendResponse(context);
 				logger.info("served HTTP request from cache");
 				servedFromCacheCount++;
 			} else {
@@ -138,6 +144,7 @@ public class ProxyMapper {
 				try {
 					coapClient.createChannel(context); //channel must be created first 
 					transRequestHttpToCoap(context);
+					context.setRequestTime(System.currentTimeMillis());
 					coapClient.sendRequest(context);
 				} catch (Exception e) {
 					logger.warn("HTTP to CoAP Request failed: " + e.getMessage());
@@ -156,21 +163,24 @@ public class ProxyMapper {
 
 	public void handleCoapServerRequest(ProxyMessageContext context) {
 		coapRequestCount++;
-		ProxyResource resource = cache.getFromCoapRequest(context);
-
+		ProxyResource resource = null;
+		if (context.getInCoapRequest().getRequestCode() == CoapRequestCode.GET){
+			resource = cache.get(context);
+		}
 		if (context.isTranslate()) {
 			/* coap to http */
 			if (resource != null) {
 				/* answer from cache */
-				context.setInHttpResponse(resource.generateHttpResponse());
+				resourceToHttp(context, resource);
 				context.setCached(true); // avoid "recaching"
-				httpServer.sendHttpResponse(context);
+				httpServer.sendResponse(context);
 				logger.info("served CoAP request from cache");
 				servedFromCacheCount++;
 			} else {
 				/* translate CoAP Request -> HTTP Request */
 				try {
 					transRequestCoapToHttp(context);
+					context.setRequestTime(System.currentTimeMillis());
 					httpClient.sendRequest(context); 
 				} catch (Exception e) {
 					logger.warn("CoAP to HTTP Request translation failed: " + e.getMessage());
@@ -181,16 +191,17 @@ public class ProxyMapper {
 			/* coap to coap */
 			if (resource != null) {
 				/* answer from cache */
-				resource.generateCoapResponse(context.getInCoapResponse());
+				resourceToCoap(context, resource);
 				context.setCached(true); // avoid "recaching"
 				coapServer.sendResponse(context);
-				System.out.println("served from cache");
+				logger.info("served from cache");
 				servedFromCacheCount++;
 			} else {
 				/* translate CoAP Request -> CoAP Request */
 				try {
 					coapClient.createChannel(context); //channel must be created first 
 					transRequestCoapToCoap(context);
+					context.setRequestTime(System.currentTimeMillis());
 					coapClient.sendRequest(context);
 				} catch (Exception e) {
 					logger.warn("CoAP to CoAP Request forwarding failed: " + e.getMessage());
@@ -201,8 +212,9 @@ public class ProxyMapper {
 	}
 
 	public void handleCoapClientResponse(ProxyMessageContext context) {
-
-		if (!context.isCached()) { // avoid recaching
+		context.setResponseTime(System.currentTimeMillis());
+		
+		if (!context.isCached() && context.getInCoapResponse() !=null ) { // avoid recaching
 			cache.cacheCoapResponse(context);
 		}
 
@@ -214,7 +226,7 @@ public class ProxyMapper {
 				logger.warn("CoAP to HTTP Response translation failed: " + e.getMessage());
 				context.setOutHttpResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Internal Server Error"));
 			}
-			httpServer.sendHttpResponse(context);
+			httpServer.sendResponse(context);
 		} else {
 			/* coap to coap */
 			try {
@@ -229,6 +241,8 @@ public class ProxyMapper {
 
         
 	public void handleHttpClientResponse(ProxyMessageContext context) {
+		context.setResponseTime(System.currentTimeMillis());
+		
 		if (!context.isCached()) {
 			cache.cacheHttpResponse(context);
 		}
@@ -492,8 +506,8 @@ public class ProxyMapper {
 	/* these functions are called if the request translation fails and no message was forwarded */
 	public void sendDirectHttpError(ProxyMessageContext context,int code, String reason){
 		HttpResponse httpResponse = new BasicHttpResponse(HttpVersion.HTTP_1_1, code, reason);
-		context.setInHttpResponse(httpResponse);
-		httpServer.sendHttpResponse(context);
+		context.setOutHttpResponse(httpResponse);
+		httpServer.sendResponse(context);
 	}
 
 	/* these functions are called if the request translation fails and no message was forwarded */
@@ -504,6 +518,40 @@ public class ProxyMapper {
 		coapServer.sendResponse(context);
 	}
 	
+	public static void resourceToHttp(ProxyMessageContext context, ProxyResource resource){
+		/* TODO: very rudimentary implementation */
+		HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK"); 
+		try {
+			NStringEntity entity;
+			entity = new NStringEntity(new String(resource.getValue()), "UTF-8");
+			entity.setContentType("text/plain");
+			response.setEntity(entity);
+		} catch (UnsupportedEncodingException e) {
+			logger.error("HTTP entity creation failed");
+		}
+		context.setOutHttpResponse(response);
+	}
+	
+	public static void resourceToCoap(ProxyMessageContext context, ProxyResource resource){
+		CoapResponse response = context.getOutCoapResponse(); //already generated
+		/* response code */
+		response.setResponseCode(CoapResponseCode.Content_205);
+		/* payload */
+		response.setPayload(resource.getValue());
+		/* mediatype */
+		if (resource.getCoapMediaType() != null) {
+			response.setContentType(resource.getCoapMediaType());
+		}
+		/* Max-Age */
+		int maxAge = (int)(resource.expires() -  System.currentTimeMillis()) / 1000;
+		if (maxAge < 0){
+			/* should never happen because the function is only called if the resource is valid. 
+			 * However, processing time can be an issue */
+			logger.warn("return expired resource (Max-Age = 0)");
+			maxAge = 0;
+		}
+		response.setMaxAge(maxAge);
+	}
 	
 	
 	public static void setHttpMsgCode(CoapResponse coapResponse, String requestMethod, HttpResponse httpResponse) {

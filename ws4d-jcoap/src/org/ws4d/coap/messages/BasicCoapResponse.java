@@ -59,9 +59,9 @@ public class BasicCoapResponse extends AbstractCoapMessage implements CoapRespon
     public long getMaxAge(){
     	CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Max_Age);
     	if (option == null){
-    		return -1; //TODO: return default Coap Max Age
+    		return -1;
     	}
-      	return coapUint2Long((options.getOption(CoapHeaderOptionType.Uri_Port).getOptionData()));
+      	return coapUint2Long((options.getOption(CoapHeaderOptionType.Max_Age).getOptionData()));
     }
 	
     @Override
