@@ -29,7 +29,7 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 		this.version = 1;
 
 		this.packetType = packetType;
-		this.requestCode = requestCode;
+		this.requestCode = requestCode; //TODO
 		this.messageCodeValue = requestCode.getValue();
 		this.messageId = messageId;
 	}
