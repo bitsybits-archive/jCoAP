@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.ws4d.coap.Constants;
 import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.connection.BasicCoapSocketHandler;
 import org.ws4d.coap.interfaces.CoapChannelManager;
@@ -37,14 +38,16 @@ public class PlugtestClient implements CoapClient{
     String filter = null;
 
 	public static void main(String[] args) {
-		if (args.length > 4 || args.length < 4) {
-			System.err.println("illegal number of arguments");
-			System.exit(1);
-		}
+//		if (args.length > 4 || args.length < 4) {
+//			System.err.println("illegal number of arguments");
+//			System.exit(1);
+//		}
 		
 		logger.setLevel(Level.WARNING);
 		PlugtestClient client = new PlugtestClient();
-		client.start(args[0], Integer.parseInt(args[1]), args[2], args[3]);
+		//client.start(args[0], Integer.parseInt(args[1]), args[2], args[3]);
+		client.start("127.0.0.255", Constants.COAP_DEFAULT_PORT, "TD_COAP_LINK_02", "");
+		
 	}
 	
 	
