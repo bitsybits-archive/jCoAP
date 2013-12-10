@@ -472,25 +472,25 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	
 	public enum CoapHeaderOptionType {
 	    UNKNOWN(-1),
-	    Content_Type (1),
-	    Max_Age (2),
-	    Proxy_Uri(3),
+	    If_Match (1),
+	    Uri_Host (3),
 	    Etag (4),
-	    Uri_Host (5),
-	    Location_Path (6),
+	    If_None_Match (5),
+	    Observe (6),
 	    Uri_Port (7),
-	    Location_Query (8),
-	    Uri_Path (9),
-	    Observe (10),
-	    Token (11),
-	    Accept (12),
-	    If_Match (13),
+	    Location_Path (8),
+	    Uri_Path (11),
+	    Content_Format (12),
+	    Max_Age (14),
 	    Uri_Query (15),
-	    If_None_Match (21),
-	    Block1 (19),
-	    Block2 (17);
-	    
-	    
+	    Accept (17),
+	    Location_Query (20),
+	    Block2 (23),
+	    Block1 (27),
+	    Size (28),
+	    Proxy_Uri(35),
+	    Proxy_Scheme(39),
+	    Size1 (60);
 	    int value; 
 	    
 	    CoapHeaderOptionType(int optionValue){
@@ -499,23 +499,25 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    
 	    public static CoapHeaderOptionType parse(int optionTypeValue){
 	    	switch(optionTypeValue){
-	    	case 1: return Content_Type;
-	    	case 2: return Max_Age;
-	    	case 3: return Proxy_Uri;
+	    	case 1: return If_Match;
+	    	case 3: return Uri_Host;
 	    	case 4: return Etag;
-	    	case 5: return Uri_Host;
-	    	case 6: return Location_Path;
+	    	case 5: return If_None_Match;
+	    	case 6: return Observe;
 	    	case 7: return Uri_Port;
-	    	case 8: return Location_Query;
-	    	case 9: return Uri_Path;
-	    	case 10: return Observe;
-	    	case 11:return Token;
-	    	case 12:return Accept;
-	    	case 13:return If_Match;
+	    	case 8: return Location_Path;
+	    	case 11:return Uri_Path;
+	    	case 12:return Content_Format;
+	    	case 14:return Max_Age;
 	    	case 15:return Uri_Query;
-	    	case 21:return If_None_Match;
-	    	case 19:return Block1;
-	    	case 17:return Block2;
+	    	case 17:return Accept;
+	    	case 20:return Location_Query;
+	    	case 23:return Block2;
+	    	case 27:return Block1;
+	    	case 28:return Size;
+	    	case 35:return Proxy_Uri;
+	    	case 39:return Proxy_Scheme;
+	    	case 60:return Size1;
 	    		default: return UNKNOWN;
 	    	}
 	    }
