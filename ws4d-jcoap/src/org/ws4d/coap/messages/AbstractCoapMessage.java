@@ -181,7 +181,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         }
         
         /* insert payload marker */
-        offset = HEADER_LENGTH + tokenLength + optionsLength;
+        offset = HEADER_LENGTH + tokenLength + optionsLength - 1;
         serializedPacket[offset] = (byte)0xFF;
         offset += 8;
         
