@@ -16,10 +16,13 @@
 package org.ws4d.coap.connection;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.MulticastSocket;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
+import java.nio.channels.MulticastChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.HashMap;
@@ -69,7 +72,8 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
         // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
         logger.setLevel(Level.WARN);
     	
-    	this.channelManager = channelManager;
+    	this.channelManager = channelManager;    	    	
+    	
         dgramChannel = DatagramChannel.open();
        	dgramChannel.socket().bind(new InetSocketAddress(port)); //port can be 0, then a free port is chosen 
         this.localPort = dgramChannel.socket().getLocalPort();

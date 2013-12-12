@@ -58,6 +58,8 @@ public interface CoapMessage {
     
     public CoapMediaType getContentType();
     
+    public void setToken(byte[] token);
+    
     public byte[] getToken();
     
 //    public URI getRequestUri();

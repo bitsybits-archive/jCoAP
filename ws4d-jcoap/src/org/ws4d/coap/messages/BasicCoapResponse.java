@@ -38,6 +38,11 @@ public class BasicCoapResponse extends AbstractCoapMessage implements CoapRespon
 		setToken(requestToken);
 	}
 	
+    @Override
+    public void setToken(byte[] token){
+    	/* this function is only public for a request*/
+    	super.setToken(token);
+    }
 	
 	@Override
 	public CoapResponseCode getResponseCode() {

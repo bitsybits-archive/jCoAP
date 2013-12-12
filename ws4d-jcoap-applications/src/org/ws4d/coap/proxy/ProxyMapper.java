@@ -276,7 +276,8 @@ public class ProxyMapper {
 			out.setUriQuery(context.getUri().getQuery());
 		}
 
-		out.removeOption(CoapHeaderOptionType.Token);
+		//out.removeOption(CoapHeaderOptionType.Token);
+		out.setToken(null);
 		out.setPayload(in.getPayload());
 	}
 	
@@ -449,7 +450,8 @@ public class ProxyMapper {
 		((BasicCoapResponse) out).copyHeaderOptions((BasicCoapResponse)in);
 		
 		out.setResponseCode(in.getResponseCode());
-		out.removeOption(CoapHeaderOptionType.Token);
+		//out.removeOption(CoapHeaderOptionType.Token);
+		out.setToken(null);
 		out.setPayload(in.getPayload());
 	}
 

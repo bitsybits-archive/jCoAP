@@ -216,7 +216,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
    
     @Override
     public void setContentType(CoapMediaType mediaType){
-    	CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Content_Type);
+    	CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Content_Format);
     	if (option != null){
     		/* content Type MUST only exists once */
     		throw new IllegalStateException("added content option twice");
@@ -229,38 +229,36 @@ public abstract class AbstractCoapMessage implements CoapMessage {
     	byte[] data = long2CoapUint(mediaType.getValue());
     	/* no need to check result, mediaType is safe */
     	/* add option to Coap Header*/
-    	options.addOption(new CoapHeaderOption(CoapHeaderOptionType.Content_Type, data));
+    	options.addOption(new CoapHeaderOption(CoapHeaderOptionType.Content_Format, data));
     }
     
     @Override    
     public CoapMediaType getContentType(){
-    	CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Content_Type);
+    	CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Content_Format);
     	if (option == null){
     		/* not content type TODO: return UNKNOWN ?*/
     		return null;
     	}
     	/* no need to check length, CoapMediaType parse function will do*/
-    	int mediaTypeCode = (int) coapUint2Long(options.getOption(CoapHeaderOptionType.Content_Type).getOptionData());
+    	int mediaTypeCode = (int) coapUint2Long(options.getOption(CoapHeaderOptionType.Content_Format).getOptionData());
     	return CoapMediaType.parse(mediaTypeCode);
     }
    
     @Override
     public byte[] getToken(){
-    	CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Token);
-    	if (option == null){
-    		return null;
-    	}
-   		return option.getOptionData();
+    	return this.token;
     }
     
-    protected void setToken(byte[] token){
+    public void setToken(byte[] token){
     	if (token == null){
+    		this.tokenLength = 0;
     		return;
     	}
     	if (token.length < 1 || token.length > 8){
     		throw new IllegalArgumentException("Invalid Token Length");
     	}
-    	options.addOption(CoapHeaderOptionType.Token, token);
+    	this.token = token;
+    	this.tokenLength = token.length;
     }
     
     @Override
