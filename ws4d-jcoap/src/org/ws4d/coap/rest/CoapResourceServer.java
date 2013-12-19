@@ -153,6 +153,8 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 		CoapRequestCode requestCode = request.getRequestCode();
 		String targetPath = request.getUriPath();
 		
+		System.out.println(targetPath);
+		
 		//TODO make this cast safe (send internal server error if it is not a CoapResource)
 		CoapResource resource = (CoapResource) readResource(targetPath);
 		

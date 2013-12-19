@@ -16,16 +16,17 @@
 package org.ws4d.coap.connection;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.MulticastSocket;
+import java.net.NetworkInterface;
+import java.net.StandardProtocolFamily;
+import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.nio.channels.MulticastChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -74,10 +75,14 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
     	
     	this.channelManager = channelManager;    	    	
     	
-        dgramChannel = DatagramChannel.open();
+        dgramChannel = DatagramChannel.open(StandardProtocolFamily.INET);
+        dgramChannel.setOption(StandardSocketOptions.IP_MULTICAST_IF, NetworkInterface.getByName("eth0"));
+        //dgramChannel.socket().connect(InetAddress.getByName("0.0.0.0"), port);
        	dgramChannel.socket().bind(new InetSocketAddress(port)); //port can be 0, then a free port is chosen 
         this.localPort = dgramChannel.socket().getLocalPort();
         dgramChannel.configureBlocking(false);
+        
+        dgramChannel.join( InetAddress.getByName("224.0.0.1"), NetworkInterface.getByName("eth0") );
        
         workerThread = new WorkerThread();
         workerThread.start();
@@ -110,6 +115,8 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 		static final int POLLING_INTERVALL = 10000;
 		
 		ByteBuffer dgramBuffer;
+
+		private InetAddress remoteAddress;
 
 		public WorkerThread() {
 			dgramBuffer = ByteBuffer.allocate(UDP_BUFFER_SIZE); 
@@ -291,7 +298,23 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 				CoapClientChannel channel = clientChannels.get(new ChannelKey(addr.getAddress(), addr.getPort()));
 				if (channel == null){
 					logger.warn("Could not find channel of incomming response: message dropped");
-					return;
+					// TODO: Notify Client!!
+					boolean mcResp = false;
+					for( Iterator<ChannelKey> it = clientChannels.keySet().iterator(); it.hasNext(); ) {
+						channel = clientChannels.get(it.next());
+						try {
+							if( channel.getRemoteAddress().equals( InetAddress.getByName("127.0.0.255") ) ) {
+								mcResp = true;
+								break;
+							}
+						}
+						catch( Exception e) {
+							System.out.println(e.getMessage());
+						}
+					}
+					
+					if( !mcResp )
+						return;
 				}
 				msg.setChannel(channel);
 				channel.handleMessage(msg);

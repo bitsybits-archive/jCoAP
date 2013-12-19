@@ -10,7 +10,9 @@ import java.util.logging.Logger;
 
 import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.connection.BasicCoapSocketHandler;
+import org.ws4d.coap.rest.BasicCoapResource;
 import org.ws4d.coap.rest.CoapResourceServer;
+import org.ws4d.coap.rest.CoreResource;
 import org.ws4d.coap.test.resources.LongPathResource;
 import org.ws4d.coap.test.resources.QueryResource;
 import org.ws4d.coap.test.resources.TestResource;
@@ -47,6 +49,11 @@ public class CompletePlugtestServer {
     public void start() {
 		System.out.println("===Run Test Server ===");
 		init();
+		CoreResource WellKnown = new CoreResource(resourceServer);
+		System.out.println("Path: " + WellKnown.getPath() );
+		//WellKnown.registerServerListener(resourceServer);
+		
+		resourceServer.createResource(WellKnown);
 	    resourceServer.createResource(new TestResource());
 	    resourceServer.createResource(new LongPathResource());
 	    resourceServer.createResource(new QueryResource());

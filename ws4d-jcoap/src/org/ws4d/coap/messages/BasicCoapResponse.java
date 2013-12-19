@@ -14,7 +14,7 @@ public class BasicCoapResponse extends AbstractCoapMessage implements CoapRespon
 	}
 	
 	public BasicCoapResponse(byte[] bytes, int length, int offset){
-		serialize(bytes, length, offset);
+		deserialize(bytes, length, offset);
 		/* check if response code is valid, this function throws an error in case of an invalid argument */
 		responseCode = CoapResponseCode.parseResponseCode(this.messageCodeValue);
 		

@@ -11,7 +11,7 @@ public class CoapEmptyMessage extends AbstractCoapMessage {
 	}
 	
 	public CoapEmptyMessage(byte[] bytes, int length, int offset){
-		serialize(bytes, length, offset);
+		deserialize(bytes, length, offset);
 		/* check if response code is valid, this function throws an error in case of an invalid argument */
 		if (this.messageCodeValue != 0){
 			throw new IllegalArgumentException("Not an empty CoAP message.");

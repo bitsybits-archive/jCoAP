@@ -9,6 +9,8 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,6 +34,8 @@ import org.ws4d.coap.messages.CoapRequestCode;
 public class PlugtestClient implements CoapClient{
     CoapChannelManager channelManager = null;
     CoapClientChannel clientChannel = null;
+    
+    HashMap<String, List<String> > serverList;
 
     CoapRequest request = null; 
     private static Logger logger = Logger.getLogger(BasicCoapSocketHandler.class.getName());
@@ -49,7 +53,7 @@ public class PlugtestClient implements CoapClient{
 		logger.setLevel(Level.WARNING);
 		PlugtestClient client = new PlugtestClient();
 		//client.start(args[0], Integer.parseInt(args[1]), args[2], args[3]);
-		client.start("127.0.0.1", Constants.COAP_DEFAULT_PORT, "TD_COAP_LINK_02", "");
+		client.start("127.0.0.255", Constants.COAP_DEFAULT_PORT, "TD_COAP_LINK_02", "");
 		
 	}
 	
@@ -60,8 +64,12 @@ public class PlugtestClient implements CoapClient{
 		this.serverAddress = serverAddress;
 		this.serverPort = serverPort;
 		this.filter = filter;
+		this.serverList = new HashMap<String, List<String>>();
 		
-		if (testId.equals("TD_COAP_CORE_01")) {
+		init(false, CoapRequestCode.GET);
+		request.setUriPath("/.well-known/core");
+		
+/*		if (testId.equals("TD_COAP_CORE_01")) {
 			init(true, CoapRequestCode.GET);
 			request.setUriPath("/test");
 		} 
@@ -147,7 +155,7 @@ public class PlugtestClient implements CoapClient{
 		else {
 			System.out.println("===Failure=== (unknown test case)");
 			System.exit(-1);
-		}		
+		}		*/
 		run();
 	}
     
@@ -158,7 +166,6 @@ public class PlugtestClient implements CoapClient{
 		
 		try {
 			clientChannel = channelManager.connect(this, InetAddress.getByName(this.serverAddress), this.serverPort);
-			
 			if (clientChannel == null){
 				System.out.println("Connect failed.");
 				System.exit(-1);

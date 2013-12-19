@@ -18,7 +18,7 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 	}
 
 	public BasicCoapRequest(byte[] bytes, int length, int offset) {
-		serialize(bytes, length, offset);
+		deserialize(bytes, length, offset);
 		/* check if request code is valid, this function throws an error in case of an invalid argument */
 		requestCode = CoapRequestCode.parseRequestCode(this.messageCodeValue);
 		
