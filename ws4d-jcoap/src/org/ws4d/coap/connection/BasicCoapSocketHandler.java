@@ -303,7 +303,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 					for( Iterator<ChannelKey> it = clientChannels.keySet().iterator(); it.hasNext(); ) {
 						channel = clientChannels.get(it.next());
 						try {
-							if( channel.getRemoteAddress().equals( InetAddress.getByName("127.0.0.255") ) ) {
+							if( channel.getRemoteAddress().equals( InetAddress.getByName("192.168.1.255") ) ) {
 								mcResp = true;
 								break;
 							}

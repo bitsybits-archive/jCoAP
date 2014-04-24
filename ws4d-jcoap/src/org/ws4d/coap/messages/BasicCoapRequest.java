@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Vector;
 
 import org.ws4d.coap.interfaces.CoapRequest;
+import org.ws4d.coap.messages.AbstractCoapMessage.CoapHeaderOptionType;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -83,7 +84,7 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 		options.removeOption(CoapHeaderOptionType.Uri_Path);
 		
 		/*create substrings */
-		String[] pathElements = path.split("/"); 
+		String[] pathElements = path.split("/");
 		/* add a Uri Path option for each part */
 		for (String element : pathElements) {
 			/* check length */
@@ -253,6 +254,39 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 			}
 		}
 		return etagList;
+	}
+	
+	public void setIfNoneMatchOption( boolean value ) {
+		if( value ) {
+			options.addOption( CoapHeaderOptionType.If_None_Match, null );
+		} else {
+			options.removeOption( CoapHeaderOptionType.If_None_Match );
+		}
+	}
+	
+	public boolean getIfNoneMatchOption() {
+		return options.optionExists( CoapHeaderOptionType.If_None_Match );
+	}
+	
+	public Vector<byte[]> getIfMatchOption() {
+		if (options.getOption(CoapHeaderOptionType.If_Match) == null){
+			return null;
+		}
+		
+		Vector<byte[]> ifMatchList = new Vector<byte[]>();
+		for (CoapHeaderOption option : options) {
+			if (option.getOptionType() == CoapHeaderOptionType.If_Match) {
+				byte[] data = option.getOptionData();
+				if (data.length >= 1 && data.length <= 8){
+					ifMatchList.add(option.getOptionData());
+				}
+			}
+		}
+		return ifMatchList;
+	}
+	
+	public void addIfMatchOption( byte[] etag ){
+		options.addOption( CoapHeaderOptionType.If_Match, etag);
 	}
 
 	

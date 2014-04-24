@@ -15,6 +15,8 @@
 
 package org.ws4d.coap.interfaces;
 
+import java.util.Vector;
+
 import org.ws4d.coap.messages.AbstractCoapMessage.CoapHeaderOptionType;
 import org.ws4d.coap.messages.CoapBlockOption;
 import org.ws4d.coap.messages.CoapMediaType;

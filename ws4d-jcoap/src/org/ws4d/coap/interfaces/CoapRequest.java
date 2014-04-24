@@ -28,6 +28,10 @@ public interface CoapRequest extends CoapMessage{
     
     public void addETag(byte[] etag);
     public Vector<byte[]> getETag();
+    public boolean getIfNoneMatchOption();
+    public void setIfNoneMatchOption( boolean value );
+    public Vector<byte[]> getIfMatchOption();
+    public void addIfMatchOption( byte[] etag );
 
     public CoapRequestCode getRequestCode();
     public void setRequestCode(CoapRequestCode requestCode);

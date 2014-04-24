@@ -49,11 +49,7 @@ public class CompletePlugtestServer {
     public void start() {
 		System.out.println("===Run Test Server ===");
 		init();
-		CoreResource WellKnown = new CoreResource(resourceServer);
-		System.out.println("Path: " + WellKnown.getPath() );
-		//WellKnown.registerServerListener(resourceServer);
 		
-		resourceServer.createResource(WellKnown);
 	    resourceServer.createResource(new TestResource());
 	    resourceServer.createResource(new LongPathResource());
 	    resourceServer.createResource(new QueryResource());
@@ -69,10 +65,10 @@ public class CompletePlugtestServer {
     }
 
     private void run() {
-	try {
-	    resourceServer.start();
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
+		try {
+		    resourceServer.start();
+		} catch (Exception e) {
+		    e.printStackTrace();
+		}
     }
 }

@@ -53,7 +53,7 @@ public class PlugtestClient implements CoapClient{
 		logger.setLevel(Level.WARNING);
 		PlugtestClient client = new PlugtestClient();
 		//client.start(args[0], Integer.parseInt(args[1]), args[2], args[3]);
-		client.start("127.0.0.255", Constants.COAP_DEFAULT_PORT, "TD_COAP_LINK_02", "");
+		client.start("127.0.0.1", Constants.COAP_DEFAULT_PORT, "TD_COAP_LINK_02", "");
 		
 	}
 	
@@ -68,6 +68,9 @@ public class PlugtestClient implements CoapClient{
 		
 		init(false, CoapRequestCode.GET);
 		request.setUriPath("/.well-known/core");
+//		request.setUriPath("/test");
+		
+		System.out.println("QueryPath: " + request.getUriPath() );
 		
 /*		if (testId.equals("TD_COAP_CORE_01")) {
 			init(true, CoapRequestCode.GET);
@@ -139,7 +142,7 @@ public class PlugtestClient implements CoapClient{
 			init(true, CoapRequestCode.GET);
 			request.setUriPath("/separate");
 		} 
-		else if (testId.equals("TD_COAP_CORE_16")) {
+		else if (testId.equals("TD_COAP_CORE_16")) {jcoap-draft18/ws4d-jcoap-plugtest/src/org/ws4d/coap/test
 			init(false, CoapRequestCode.GET);
 			request.setUriPath("/separate");
 		} 

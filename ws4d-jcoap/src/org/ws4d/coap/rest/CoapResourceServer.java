@@ -19,8 +19,10 @@ import org.ws4d.coap.connection.BasicCoapSocketHandler;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapRequest;
+import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.interfaces.CoapServerChannel;
+import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapRequestCode;
 import org.ws4d.coap.messages.CoapResponseCode;
 
@@ -33,6 +35,9 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
     private final static Logger logger = Logger.getLogger(CoapResourceServer.class); 
     
     protected HashMap<String, Resource> resources = new HashMap<String, Resource>();
+    
+    protected HashMap<String, byte[]> etags = new HashMap<String, byte[]>();
+    
     private CoreResource coreResource = new CoreResource(this);
 
     public CoapResourceServer(){
@@ -56,6 +61,7 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 	if (resource==null) return false;
 	if (!resources.containsKey(resource.getPath())) {
 		addResource(resource);
+		generateEtag(resource);
 	    logger.info("created ressource: " + resource.getPath());
 	    return true;
 	} else
@@ -67,6 +73,7 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 	if (resource==null) return false;
 	if (resources.containsKey(resource.getPath())) {
 		addResource(resource);
+		generateEtag(resource);
 		logger.info("updated ressource: " + resource.getPath());
 	    return true;
 	} else
@@ -76,6 +83,7 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
     @Override
     public boolean deleteResource(String path) {
 		if (null != resources.remove(path)) {
+			etags.remove(path);
 			logger.info("deleted ressource: " + path);
 			return true;
 		} else
@@ -97,6 +105,8 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 		if (res == null){
 			createResource(resource);
 			return CoapResponseCode.Created_201;
+		} else if( res == coreResource ){
+			return CoapResponseCode.Forbidden_403;
 		} else {
 			updateResource(resource);
 			return CoapResponseCode.Changed_204;
@@ -149,42 +159,46 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
     
     @Override
 	public void onRequest(CoapServerChannel channel, CoapRequest request) {
-		CoapMessage response = null;
+		CoapResponse response = null;
 		CoapRequestCode requestCode = request.getRequestCode();
 		String targetPath = request.getUriPath();
+		int eTagMatch = -1;
 		
-		System.out.println(targetPath);
+		System.out.println("[REQUEST] " + "Type: " + requestCode + " | " + "Resource: " + targetPath);
 		
 		//TODO make this cast safe (send internal server error if it is not a CoapResource)
 		CoapResource resource = (CoapResource) readResource(targetPath);
 		
-		/* TODO: check return values of create, read, update and delete
-		 * TODO: implement forbidden
-		 * TODO: implement ETag
-		 * TODO: implement If-Match... 
-		 * TODO: check for well known addresses (do not override well known core)
-		 * TODO: check that path begins with "/" */
+		/* TODO: check return values of create, read, update and delete --> no changes!
+		 * TODO: implement forbidden --> maybe also done!*/
 
 		switch (requestCode) {
 		
 		case GET:
-			if (resource != null) {
-				// URI queries
-				Vector<String> uriQueries = request.getUriQuery();
-				final byte[] responseValue;
-				if (uriQueries != null) {
-					responseValue = resource.getValue(uriQueries);
+			if (resource != null ) {
+				eTagMatch = checkEtagMatch(request.getETag(), etags.get(targetPath) );
+				if( eTagMatch != -1 )  {
+					response = channel.createResponse( request, CoapResponseCode.Valid_203, CoapMediaType.text_plain );
+					response.setETag( request.getETag().get(eTagMatch) );
 				} else {
-					responseValue = resource.getValue();
-				}
-				response = channel.createResponse(request, CoapResponseCode.Content_205, resource.getCoapMediaType());
-				response.setPayload(responseValue);
-				
-				if (request.getObserveOption() != null){
-					/*client wants to observe this resource*/
-					if (resource.addObserver(request)){
-						/* successfully added observer */
-						response.setObserveOption(resource.getObserveSequenceNumber());
+					// URI queries
+					Vector<String> uriQueries = request.getUriQuery();
+					final byte[] responseValue;
+					if (uriQueries != null) {
+						responseValue = resource.getValue(uriQueries);
+					} else {
+						responseValue = resource.getValue();
+					}
+					
+					response = channel.createResponse(request, CoapResponseCode.Content_205, resource.getCoapMediaType());
+					response.setPayload(responseValue);
+					
+					if (request.getObserveOption() != null){
+						/*client wants to observe this resource*/
+						if (resource.addObserver(request)){
+							/* successfully added observer */
+							response.setObserveOption(resource.getObserveSequenceNumber());
+						}
 					}
 				}
 				
@@ -198,33 +212,53 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 		case DELETE:
 			/* CoAP: "A 2.02 (Deleted) response SHOULD be sent on
             success or in case the resource did not exist before the request.*/
-			deleteResource(targetPath);
-			response = channel.createResponse(request, CoapResponseCode.Deleted_202);
+			if( resource != coreResource ) {
+				deleteResource(targetPath);
+				response = channel.createResponse(request, CoapResponseCode.Deleted_202);
+			} else {
+				response = channel.createResponse(request, CoapResponseCode.Forbidden_403 );
+			}
 			break;
 			
 			
 		case POST:
-			if (resource != null){
-				resource.post(request.getPayload());
-				response = channel.createResponse(request, CoapResponseCode.Changed_204);
+			if( resource != coreResource ) {
+				if (resource != null){
+					resource.post(request.getPayload());
+					response = channel.createResponse(request, CoapResponseCode.Changed_204);
+				} else {
+					/* if the resource does not exist, a new resource will be created */
+					createResource(parseRequest(request));
+					response = channel.createResponse(request, CoapResponseCode.Created_201);
+				}
 			} else {
-				/* if the resource does not exist, a new resource will be created */
-				createResource(parseRequest(request));
-				response = channel.createResponse(request, CoapResponseCode.Created_201);
+				response = channel.createResponse(request, CoapResponseCode.Forbidden_403);
 			}
 			
 			break;
 			
 			
 		case PUT:
-			if (resource == null){
-				/* create*/
-				createResource(parseRequest(request));
-				response = channel.createResponse(request,CoapResponseCode.Created_201);
+			if( resource != coreResource ) {
+				if (resource == null){
+					/* create*/
+					if( request.getIfMatchOption() == null ) {
+						createResource(parseRequest(request));
+						response = channel.createResponse(request,CoapResponseCode.Created_201);
+					} else {
+						response = channel.createResponse(request, CoapResponseCode.Precondition_Failed_412 );
+					}
+				} else {
+					/*update*/
+					if( request.getIfMatchOption() == null || checkEtagMatch( request.getIfMatchOption(), etags.get(targetPath) ) != -1 ) {
+						updateResource(parseRequest(request));
+						response = channel.createResponse(request, CoapResponseCode.Changed_204);
+					} else if( request.getIfNoneMatchOption() || checkEtagMatch( request.getIfMatchOption(), etags.get(targetPath) ) == -1 ) {
+						response = channel.createResponse( request, CoapResponseCode.Precondition_Failed_412 );
+					}
+				}
 			} else {
-				/*update*/
-				updateResource(parseRequest(request));
-				response = channel.createResponse(request, CoapResponseCode.Changed_204);
+				response = channel.createResponse( request, CoapResponseCode.Forbidden_403 );
 			}
 			break;
 
@@ -265,6 +299,21 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 		} catch (SocketException ex) {
 		}
 		return null;
+	}
+	
+	protected void generateEtag( Resource resource ) {
+		etags.put( resource.getPath(), ("" + resource.hashCode()).getBytes() );
+	}
+	
+	protected int checkEtagMatch( Vector<byte[]> reqEtags, byte[] resEtag ) {
+		if( reqEtags != null ) {
+			int index = 0;
+			for(; index < reqEtags.size(); index++ ){
+				if( reqEtags.get(index).equals( resEtag ) )
+					return index;
+			}
+		}
+		return -1;
 	}
 
 }
