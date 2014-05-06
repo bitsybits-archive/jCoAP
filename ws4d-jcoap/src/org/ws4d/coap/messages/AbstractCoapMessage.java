@@ -78,12 +78,12 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         /* serialize options */
         this.options = new CoapHeaderOptions(bytes, offset + HEADER_LENGTH + tokenLength, length );
         /* get and check payload length */
-        this.payloadLength = length - HEADER_LENGTH - options.getDeserializedLength() - tokenLength;
+        this.payloadLength = length - HEADER_LENGTH - options.getDeserializedLength() - tokenLength - 1;
 		if (payloadLength < 0){
 			throw new IllegalStateException("Invaldid CoAP Message (payload length negative)");
 		} else if( this.payloadLength > 0 ) {
 			/* copy payload */
-			int payloadOffset = offset + HEADER_LENGTH + options.getDeserializedLength() + tokenLength - 1;
+			int payloadOffset = offset + HEADER_LENGTH + options.getDeserializedLength() + tokenLength + 1;
 			payload = new byte[payloadLength];
 			for (int i = 0; i < payloadLength; i++){
 				payload[i] = bytes[i + payloadOffset];

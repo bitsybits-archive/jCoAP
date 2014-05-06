@@ -74,7 +74,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
         logger.setLevel(Level.WARN);
     	
     	this.channelManager = channelManager;    	    	
-    	
+    	//StandardProtocolFamily test = StandardProtocolFamily.INET;
         dgramChannel = DatagramChannel.open(StandardProtocolFamily.INET);
         dgramChannel.setOption(StandardSocketOptions.IP_MULTICAST_IF, NetworkInterface.getByName("eth0"));
         //dgramChannel.socket().connect(InetAddress.getByName("0.0.0.0"), port);

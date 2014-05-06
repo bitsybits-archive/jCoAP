@@ -189,7 +189,6 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 					} else {
 						responseValue = resource.getValue();
 					}
-					
 					response = channel.createResponse(request, CoapResponseCode.Content_205, resource.getCoapMediaType());
 					response.setPayload(responseValue);
 					
