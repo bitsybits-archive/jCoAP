@@ -565,10 +565,28 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    }
 	    
 	    public CoapHeaderOption(byte[] bytes, int offset, int lastOptionNumber){
-	    	int headerLength;
+	    	int headerLength = 1;
+	    	int internalOffset = offset;
 	    	/* parse option type */
-	    	optionTypeValue = ((bytes[offset] & 0xF0) >> 4) + lastOptionNumber;
+	    	optionTypeValue = ((bytes[offset] & 0xF0) >> 4);
+	    	
+	    	if( optionTypeValue == 13 ) {
+	    		optionTypeValue += bytes[offset + 1] + lastOptionNumber;
+	    		internalOffset++;
+	    		headerLength++;
+	    		System.out.println("Option: " + optionTypeValue );
+	    	} else if( optionTypeValue == 14 ) {
+	    		int part1 = ((bytes[offset + 1] & 0xFF) << 8);
+	    		int part2 = bytes[offset + 2];
+	    		optionTypeValue += part1 + part2 + lastOptionNumber;
+	    		internalOffset += 2;
+	    		headerLength += 2;
+	    	} else {
+	    		optionTypeValue += lastOptionNumber;
+	    	}
+	    	
 	    	optionType = CoapHeaderOptionType.parse(optionTypeValue);
+	    	System.out.println("Option: " + optionTypeValue );
 	    	if (optionType == CoapHeaderOptionType.UNKNOWN){
 	    		if (optionTypeValue % 14 == 0){
 	    			/* no-op: no operation for deltas > 14 */
@@ -578,14 +596,15 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    		}
 	    	}
 	    	/* parse length */
-			if ((bytes[offset] & 0x0F) < 15) {
+	    	shortLength = (bytes[offset] & 0x0F);
+			if ((bytes[offset] & 0x0F) == 13) {
+				headerLength++;
+			} else if( shortLength == 14 ) {
 				shortLength = bytes[offset] & 0x0F;
 				longLength = 0;
-				headerLength = 1;
+				headerLength += 2;
 			} else {
-				shortLength = 15;
-				longLength = bytes[offset + 1];
-				headerLength = 2; /* additional length byte */
+				longLength = 0;
 			}
 			
 			/* copy value */
