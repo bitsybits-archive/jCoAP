@@ -15,6 +15,7 @@
 
 package org.ws4d.coap.server;
 
+import org.ws4d.coap.Constants;
 import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapMessage;
@@ -23,51 +24,49 @@ import org.ws4d.coap.interfaces.CoapServer;
 import org.ws4d.coap.interfaces.CoapServerChannel;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapResponseCode;
+import org.ws4d.coap.rest.BasicCoapResource;
+import org.ws4d.coap.rest.CoapResource;
+import org.ws4d.coap.rest.CoapResourceServer;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 
-public class BasicCoapServer implements CoapServer {
-    private static final int PORT = 5683;
+public class BasicCoapServer {
+    private int port = Constants.COAP_DEFAULT_PORT;
+    private CoapResourceServer resourceServer = null;
     static int counter = 0;
-
-    public static void main(String[] args) {
-        System.out.println("Start CoAP Server on port " + PORT);
-        BasicCoapServer server = new BasicCoapServer();
-
-        CoapChannelManager channelManager = BasicCoapChannelManager.getInstance();
-        channelManager.createServerListener(server, PORT);
+    
+    public BasicCoapServer(int port){
+    	
     }
-
-	@Override
-	public CoapServer onAccept(CoapRequest request) {
-		System.out.println("Accept connection...");
-		return this;
-	}
-
-	@Override
-	public void onRequest(CoapServerChannel channel, CoapRequest request) {
-		System.out.println("Received message: " + request.toString()+ " URI: " + request.getUriPath());
-		
-		CoapMessage response = channel.createResponse(request,
-				CoapResponseCode.Content_205);
-		response.setContentType(CoapMediaType.text_plain);
-		
-		response.setPayload("payload...".getBytes());
-		
-		if (request.getObserveOption() != null){
-			System.out.println("Client wants to observe this resource.");
+    
+    public BasicCoapServer(){
+    	
+    }
+    
+    public void init() {
+	    BasicCoapChannelManager.getInstance().setMessageId(2000);
+		if (resourceServer != null)
+			resourceServer.stop();
+		resourceServer = new CoapResourceServer();
+    }
+    
+    public boolean addResource( CoapResource resource ){
+    	if( resourceServer != null ) {
+    		resourceServer.createResource( resource );
+    		return true;
+    	}
+    	
+    	return false;
+    }
+    
+    public void run() {
+		try {
+			System.out.println("=== Starting Server ===");
+		    resourceServer.start();
+		} catch (Exception e) {
+		    e.printStackTrace();
 		}
-		
-		response.setObserveOption(1);
-		
-		channel.sendMessage(response);
-	}
-
-	@Override
-	public void onSeparateResponseFailed(CoapServerChannel channel) {
-		System.out.println("Separate response transmission failed.");
-		
-	}
+    }
 }

@@ -69,15 +69,18 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
     }
 
     @Override
-    public boolean updateResource(Resource resource) {
-	if (resource==null) return false;
-	if (resources.containsKey(resource.getPath())) {
-		addResource(resource);
-		generateEtag(resource);
-		logger.info("updated ressource: " + resource.getPath());
-	    return true;
-	} else
-	    return false;
+    public boolean updateResource(Resource resource, CoapRequest request ) {    	
+    	
+		if (resource==null)
+			return false;
+		
+		if ( resources.containsKey(resource.getPath()) ) {
+			( (BasicCoapResource) resource ).setValue( request.getPayload() );
+			generateEtag(resource);
+			logger.info("updated ressource: " + resource.getPath());
+		    return true;
+		} else
+		    return false;
     }
     
     @Override
@@ -99,19 +102,19 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 
 
 	/*corresponding to the coap spec the put is an update or create (or error)*/
-	public CoapResponseCode CoapResponseCode(Resource resource) {
-		Resource res = readResource(resource.getPath());
-		//TODO: check results
-		if (res == null){
-			createResource(resource);
-			return CoapResponseCode.Created_201;
-		} else if( res == coreResource ){
-			return CoapResponseCode.Forbidden_403;
-		} else {
-			updateResource(resource);
-			return CoapResponseCode.Changed_204;
-		}
-	}
+//	public CoapResponseCode CoapResponseCode(Resource resource) {
+//		Resource res = readResource(resource.getPath());
+//		//TODO: check results
+//		if (res == null){
+//			createResource(resource);
+//			return CoapResponseCode.Created_201;
+//		} else if( res == coreResource ){
+//			return CoapResponseCode.Forbidden_403;
+//		} else {
+//			updateResource(resource );
+//			return CoapResponseCode.Changed_204;
+//		}
+//	}
 
     @Override
 	public void start() throws Exception {
@@ -190,8 +193,12 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 						responseValue = resource.getValue();
 					}
 					
-					response = channel.createResponse(request, CoapResponseCode.Content_205, resource.getCoapMediaType());
-					response.setPayload(responseValue);
+					if( request.getBlock2() != null || channel.getMaxSendBlocksize() != null ) {
+						response = channel.addBlockContext( request, responseValue );
+					} else {
+						response = channel.createResponse(request, CoapResponseCode.Content_205, resource.getCoapMediaType());
+						response.setPayload(responseValue);
+					}
 					
 					if (request.getObserveOption() != null){
 						/*client wants to observe this resource*/
@@ -251,7 +258,7 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 				} else {
 					/*update*/
 					if( request.getIfMatchOption() == null || checkEtagMatch( request.getIfMatchOption(), etags.get(targetPath) ) != -1 ) {
-						updateResource(parseRequest(request));
+						updateResource( resource, request);
 						response = channel.createResponse(request, CoapResponseCode.Changed_204);
 					} else if( request.getIfNoneMatchOption() || checkEtagMatch( request.getIfMatchOption(), etags.get(targetPath) ) == -1 ) {
 						response = channel.createResponse( request, CoapResponseCode.Precondition_Failed_412 );
@@ -281,6 +288,15 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 	public void onSeparateResponseFailed(CoapServerChannel channel) {
 		logger.error("Separate response failed but server never used separate responses");
 		
+	}
+	
+	@Override
+	public void onReset( CoapRequest lastRequest ) {
+		CoapResource resource = (CoapResource) readResource(lastRequest.getUriPath());
+		if( resource != null ) {
+			resource.removeObserver( lastRequest.getChannel() );
+		}
+		System.out.println("[INFO] Reset Message Received!");
 	}
 
 	protected String getLocalIpAddress() {

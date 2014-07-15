@@ -21,7 +21,7 @@ public class BasicCoapResource implements CoapResource {
 	
     private CoapMediaType mediaType;
     private String path;
-    private byte[] value;
+    protected byte[] value;
     ResourceHandler resourceHandler = null;
     ResourceServer serverListener = null; //could be a list of listener
     String resourceType = null;

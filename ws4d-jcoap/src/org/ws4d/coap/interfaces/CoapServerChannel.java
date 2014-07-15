@@ -32,6 +32,9 @@ public interface CoapServerChannel extends CoapChannel {
 	
 	/* used by a server to send a notification (observing resources) */
 	public void sendNotification(CoapResponse response);
+	
+	/* used by a server to add block context to the channel, when block wise GET request is received */
+	public CoapResponse addBlockContext( CoapRequest request, byte[] payload );
 
 
 }

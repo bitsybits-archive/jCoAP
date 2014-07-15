@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.PriorityQueue;
@@ -76,13 +77,29 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
     	this.channelManager = channelManager;    	    	
     	//StandardProtocolFamily test = StandardProtocolFamily.INET;
         dgramChannel = DatagramChannel.open(StandardProtocolFamily.INET);
-        dgramChannel.setOption(StandardSocketOptions.IP_MULTICAST_IF, NetworkInterface.getByName("eth0"));
+        boolean found = false;
+        Enumeration<NetworkInterface> Interfaces = NetworkInterface.getNetworkInterfaces();
+        NetworkInterface NetworkAdapter = null;
+        while( !found ){
+        	NetworkAdapter = Interfaces.nextElement();
+        	if( NetworkAdapter.isUp() && !NetworkAdapter.isLoopback() ) {
+        		found = true;
+        	}
+    	}
+       
+        if( NetworkAdapter != null)
+        	dgramChannel.setOption(StandardSocketOptions.IP_MULTICAST_IF, NetworkAdapter);
+        else {
+        	System.err.println("ERROR: No suitable Network Interface");
+        	System.exit(-1);
+        }
+        	
         //dgramChannel.socket().connect(InetAddress.getByName("0.0.0.0"), port);
        	dgramChannel.socket().bind(new InetSocketAddress(port)); //port can be 0, then a free port is chosen 
         this.localPort = dgramChannel.socket().getLocalPort();
         dgramChannel.configureBlocking(false);
         
-        dgramChannel.join( InetAddress.getByName("224.0.0.1"), NetworkInterface.getByName("eth0") );
+        dgramChannel.join( InetAddress.getByName("224.0.0.1"), NetworkAdapter );
        
         workerThread = new WorkerThread();
         workerThread.start();

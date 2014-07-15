@@ -35,7 +35,8 @@ public class BasicCoapResponse extends AbstractCoapMessage implements CoapRespon
 		
 		this.messageId = messageId;		
 		
-		setToken(requestToken);
+		if( requestToken.length > 0 )
+			setToken(requestToken);
 	}
 	
     @Override

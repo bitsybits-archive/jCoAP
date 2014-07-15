@@ -69,6 +69,12 @@ public class CoapBlockOption{
 		if (more){
 			value |= 0x8;
 		}
+		if( value == 0 ){
+			byte[] b = new byte[1];
+			b[0] = 0x00;
+			return b;
+		}
+		
 		return AbstractCoapMessage.long2CoapUint(value);
 	}
 	

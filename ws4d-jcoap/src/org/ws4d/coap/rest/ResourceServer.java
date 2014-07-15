@@ -3,6 +3,8 @@ package org.ws4d.coap.rest;
 
 import java.net.URI;
 
+import org.ws4d.coap.interfaces.CoapRequest;
+
 /**
  * A ResourceServer provides network access to resources via a network protocol such as HTTP or CoAP.
  * 
@@ -20,7 +22,7 @@ public interface ResourceServer {
     /* returns the resource at the given path, null if no resource exists*/ 
     public Resource readResource(String path);
     /* updates a resource. resource must exist. if does not resource exist, false is returned. Resource is NOT created. */
-    public boolean updateResource(Resource resource);
+    public boolean updateResource(Resource resource, CoapRequest request);
     /* deletes resource, returns false is resource does not exist */
     public boolean deleteResource(String path);
 

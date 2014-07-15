@@ -15,7 +15,7 @@
 
 package org.ws4d.coap.connection;
 
-import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.net.InetAddress;
 
 import org.ws4d.coap.interfaces.CoapClient;
@@ -34,6 +34,7 @@ import org.ws4d.coap.messages.CoapRequestCode;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ * @author Bjoern Konieczek <bjoern.konieczek@uni-rostock.de>
  */
 
 public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClientChannel {
@@ -54,7 +55,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
         socketHandler.removeClientChannel(this);
     }
 
-	@Override 
+	@Override
 	public void handleMessage(CoapMessage message) { 
 		if (message.isRequest()){
 			/* this is a client channel, no requests allowed */
@@ -76,18 +77,23 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		
 		/* check for blockwise transfer */
 		CoapBlockOption block2 = message.getBlock2();
+		CoapBlockOption block1 = message.getBlock1();
 		if (blockContext == null && block2 != null){
 			/* initiate blockwise transfer */
 			blockContext = new ClientBlockContext(block2, maxReceiveBlocksize);
 			blockContext.setFirstRequest(lastRequest);
 			blockContext.setFirstResponse((CoapResponse) message);
-		}
+		} 
 		
 		if (blockContext!= null){
 			/*blocking option*/
-			if (!blockContext.addBlock(message, block2)){
-				/*this was not a correct block*/
-				/* TODO: implement either a RST or ignore this packet */
+			if( blockContext.getFirstRequest() == null )
+				System.err.println("first Request is null");
+			if( blockContext.getFirstRequest().getRequestCode() == CoapRequestCode.GET) {
+				if (!blockContext.addBlock(message, block2)){
+					/*this was not a correct block*/
+					/* TODO: implement either a RST or ignore this packet */
+				}
 			}
 			
 			if (!blockContext.isFinished()){
@@ -97,12 +103,17 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 				CoapBlockOption newBlock = blockContext.getNextBlock();
 				if (lastRequest == null){
 					/*TODO: this should never happen*/
-					System.out.println("ERROR: client channel: lastRequest == null");
+					System.err.println("ERROR: client channel: lastRequest == null");
 				} else {
 					/* create a new request for the next block */
 					BasicCoapRequest request =  new BasicCoapRequest(lastRequest.getPacketType(), lastRequest.getRequestCode(), channelManager.getNewMessageID());
-					request.copyHeaderOptions((BasicCoapRequest) blockContext.getFirstRequest()); 
-					request.setBlock2(newBlock);
+					request.copyHeaderOptions((BasicCoapRequest) blockContext.getFirstRequest());
+					if( request.getRequestCode() == CoapRequestCode.GET ) {
+						request.setBlock2(newBlock);
+					} else {
+						request.setBlock1(newBlock);
+						request.setPayload( blockContext.getNextPayload(newBlock) );
+					}
 					sendMessage(request);
 				}
 				/* TODO: implement handler, inform the client that a block (but not the complete message) was received*/
@@ -135,45 +146,69 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
     @Override
     public void sendMessage(CoapMessage msg) {
         super.sendMessage(msg);
-        //TODO: check
-        lastRequest = (CoapRequest) msg;
+        
+        // Check whether msg is a CoapRequest --> otherwise do nothing
+        if( msg.isRequest() )
+        	lastRequest = (CoapRequest) msg;
     }
-
-    // public DefaultCoapClientChannel(CoapChannelManager channelManager) {
-    // super(channelManager);
-    // }
-    //
-    // @Override
-    // public void connect(String remoteHost, int remotePort) {
-    // socket = null;
-    // if (remoteHost!=null && remotePort!=-1) {
-    // try {
-    // socket = new DatagramSocket();
-    // } catch (SocketException e) {
-    // e.printStackTrace();
-    // }
-    // }
-    //
-    // try {
-    // InetAddress address = InetAddress.getByName(remoteHost);
-    // socket.connect(address, remotePort);
-    // super.establish(socket);
-    // } catch (UnknownHostException e) {
-    // e.printStackTrace();
-    // }
-    // }
     
-    
+    /** This function should be called to initiate any blockwise POST or PUT request. Adds the context for
+     * the blockwise transaction to the client channel.
+     * 
+     * @param	maxBlocksize	Maximal BlockSize for sending
+     * @param	request			The CoapRequest-Object, that was obtained through ClientChannel.createRequest() function. The request
+     * 							must already contain the payload!
+     * 
+     * @return	The first request that should be send via ClientChannel.sendMessage() function. The requests for the following 
+     * 			Blocks are handled automatically 
+     * 
+     */
+    public BasicCoapRequest addBlockContext( CoapRequest request){
+    	
+    	if( request.getRequestCode() == CoapRequestCode.POST || request.getRequestCode() == CoapRequestCode.PUT ) {
+    		CoapBlockOption block1 = request.getBlock1();
+    		CoapBlockSize bSize = maxSendBlocksize;
+    		
+    		if( block1 != null && block1.getBlockSize().getSize() < maxSendBlocksize.getSize() ) 
+    			bSize = block1.getBlockSize();
+  
+    		this.blockContext = new ClientBlockContext( bSize, request.getPayload() );
+	    	
+	    	BasicCoapRequest firstRequest = createRequest(request.isReliable(), request.getRequestCode());
+	    	firstRequest.copyHeaderOptions( (BasicCoapRequest)request );
+	    	
+	    	if( request.getPayloadLength() <= bSize.getSize() )
+	    		block1 = new CoapBlockOption(0, false, bSize);
+	    	else
+	    		block1 = new CoapBlockOption(0, true, bSize);
+	    	
+	    	firstRequest.setBlock1(block1);
+	    	firstRequest.setPayload( this.blockContext.getNextPayload(block1) );
+	    	this.blockContext.setFirstRequest(firstRequest);
+	    	return firstRequest;
+	    } else {
+	    	System.err.println("ERROR: Tried to manually add BlockContext to GET request!");
+	    	return (BasicCoapRequest)request;
+	    }
+    }
     
     private class ClientBlockContext{
 
-		ByteArrayOutputStream payload = new ByteArrayOutputStream();
+		private String payload = "";
     	boolean finished = false;
+    	boolean context = false; //false=receiving; true=sending
     	CoapBlockSize blockSize; //null means no block option
+    	int blockNumber;
+    	int maxBlockNumber;
     	CoapRequest request;
     	CoapResponse response;
     	
-    	
+    	/** Create BlockContext for GET requests. This is done automatically, if the sent GET request or the obtained response
+    	 *  contain a Block2-Option.
+    	 * 
+    	 * @param blockOption	The CoapBlockOption object, that contains the block size indicated by the server
+    	 * @param maxBlocksize	Indicates the maximum block size supported by the client
+    	 */
     	public ClientBlockContext(CoapBlockOption blockOption, CoapBlockSize maxBlocksize) {
     		
     		/* determine the right blocksize (min of remote and max)*/
@@ -188,42 +223,93 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
     				blockSize = maxBlocksize;
     			}
     		}
+    		this.blockNumber = blockOption.getNumber();
+    		context=false;
+    	}
+    	
+    	/** Create BlockContext for POST or PUT requests. Is only called by addBlockContext().
+    	 * 
+    	 * @param maxBlocksize	Indicates the block size for the transaction
+    	 * @param payload		The whole payload, that should be transferred
+    	 */
+    	public ClientBlockContext(CoapBlockSize maxBlocksize, byte[] payload ){
+    		this.blockSize = maxBlocksize;
+    		this.payload = new String(payload);
+    		this.blockNumber = 0;
+    		
+    		this.maxBlockNumber = this.payload.length() / this.blockSize.getSize() - 1;
+    		if( this.payload.length()%this.blockSize.getSize() > 0 )
+    			this.maxBlockNumber++;
+
+    		context = true;
     	}
 
 		public byte[] getPayload() {
-			return payload.toByteArray();
+			return payload.getBytes();
 		}
 
+		/** Adds the new obtained data block to the complete payload, in the case of blockwise GET requests.
+		 * 
+		 * @param msg		The received CoAP message
+		 * @param block		The block option of the CoAP message, indicating which block of data was received 
+		 * 					and whether there are more to follow.
+		 * @return			Indicates whether the operation was successful.
+		 */
 		public boolean addBlock(CoapMessage msg, CoapBlockOption block){
-    		int blockPos = block.getBytePosition();
-    		int blockLength =  msg.getPayloadLength();
-    		int bufSize = payload.size();
-    		
-    		/*TODO: check if payload length = blocksize (except for the last block)*/
-    		if (blockPos > bufSize){
-    			/* data is missing before this block */
-    			return false;
-    		} else if ((blockPos + blockLength) <= bufSize){
-				/* data already received */
-    			return false;
+			int number = block.getNumber();
+			int blockLength =  msg.getPayloadLength();
+			if( number * blockSize.getSize() > payload.length()) {
+				return false;
+			} else if( number*blockSize.getSize()+blockLength <= payload.length() ) {
+				return false;
 			}
-    		int offset = bufSize - blockPos;
-    		payload.write(msg.getPayload(), offset, blockLength - offset);
-    		
-    		if (block.isLast()){
-    			/* was this the last block */
-    			finished = true;
-    		}
-    		
+			
+			this.payload += new String(msg.getPayload());
+			if( block.isLast() ) {
+				finished = true;
+			}
     		return true;
     	}
     	
+		/** Retrieve the next block option, indicating the requested (GET) or send (POST or PUT) block
+		 * 
+		 * @return	BlockOption to indicate the next block, that should be send (POST or PUT) or received (GET)
+		 */
 		public CoapBlockOption getNextBlock() {
-			int num = payload.size() / blockSize.getSize(); //ignore the rest (no rest should be there)
-			return new CoapBlockOption(num, false, blockSize);
+			if( !context ) {
+				blockNumber = payload.length() / blockSize.getSize(); //ignore the rest (no rest should be there)
+				return new CoapBlockOption( blockNumber, false, blockSize);
+			}
+			else { 
+				blockNumber++;
+				if( blockNumber == maxBlockNumber) 
+					return new CoapBlockOption(blockNumber, false, blockSize);
+				else
+					return new CoapBlockOption(blockNumber, true, blockSize);
+			}
+		}
+		
+		/** Get the next block of payload, that should be send in a POST or PUT request
+		 * 
+		 * @param block		Indicates which block of data should be send next.
+		 * @return			The next part of the payload
+		 */
+		public byte[] getNextPayload(CoapBlockOption block){
+			int number = block.getNumber();
+			int size =  blockSize.getSize();
+			String payloadBlock;
+			if( number == maxBlockNumber ) {
+				payloadBlock = payload.substring(number * size, payload.length() );
+				finished = true;
+			} else {
+				System.out.println(payload);
+				payloadBlock = payload.substring(number * size, number * size + size);
+			}
+				
+			
+			return payloadBlock.getBytes();
 		}
     	
-
 		public boolean isFinished() {
 			return finished;
 		}
