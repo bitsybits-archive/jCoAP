@@ -15,6 +15,8 @@
 
 package org.ws4d.coap.connection;
 
+import javolution.util.FastTable;
+
 import java.util.ArrayList;
 import java.net.InetAddress;
 
@@ -54,6 +56,13 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
     public void close() {
         socketHandler.removeClientChannel(this);
     }
+	
+	public byte[] getLastToken() {
+		if( lastRequest != null ) {
+			return lastRequest.getToken();
+		}
+		return null;
+	}
 
 	@Override
 	public void handleMessage(CoapMessage message) { 
@@ -83,7 +92,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 			blockContext = new ClientBlockContext(block2, maxReceiveBlocksize);
 			blockContext.setFirstRequest(lastRequest);
 			blockContext.setFirstResponse((CoapResponse) message);
-		} 
+		}
 		
 		if (blockContext!= null){
 			/*blocking option*/
@@ -95,7 +104,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 					/* TODO: implement either a RST or ignore this packet */
 				}
 			}
-			
+    		
 			if (!blockContext.isFinished()){
 				/* TODO: implement a counter to avoid an infinity req/resp loop:
 				 *  		if the same block is received more than x times -> rst the connection 
@@ -108,6 +117,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 					/* create a new request for the next block */
 					BasicCoapRequest request =  new BasicCoapRequest(lastRequest.getPacketType(), lastRequest.getRequestCode(), channelManager.getNewMessageID());
 					request.copyHeaderOptions((BasicCoapRequest) blockContext.getFirstRequest());
+					request.setToken( blockContext.getFirstRequest().getToken() );
 					if( request.getRequestCode() == CoapRequestCode.GET ) {
 						request.setBlock2(newBlock);
 					} else {
@@ -120,7 +130,9 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 				return;
 			} 
 			/* blockwise transfer finished */
+			
 			message.setPayload(blockContext.getPayload());
+			blockContext = null;
 			/* TODO: give the payload separately and leave the original message as they is*/
 		} 		
 
@@ -176,6 +188,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 	    	
 	    	BasicCoapRequest firstRequest = createRequest(request.isReliable(), request.getRequestCode());
 	    	firstRequest.copyHeaderOptions( (BasicCoapRequest)request );
+	    	firstRequest.setToken( request.getToken() );
 	    	
 	    	if( request.getPayloadLength() <= bSize.getSize() )
 	    		block1 = new CoapBlockOption(0, false, bSize);
@@ -194,7 +207,8 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
     
     private class ClientBlockContext{
 
-		private String payload = "";
+		private ArrayList<Byte> payload;
+//    	private FastTable<Byte> payload;
     	boolean finished = false;
     	boolean context = false; //false=receiving; true=sending
     	CoapBlockSize blockSize; //null means no block option
@@ -202,6 +216,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
     	int maxBlockNumber;
     	CoapRequest request;
     	CoapResponse response;
+		private int number;
     	
     	/** Create BlockContext for GET requests. This is done automatically, if the sent GET request or the obtained response
     	 *  contain a Block2-Option.
@@ -212,6 +227,8 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
     	public ClientBlockContext(CoapBlockOption blockOption, CoapBlockSize maxBlocksize) {
     		
     		/* determine the right blocksize (min of remote and max)*/
+    		this.payload = new ArrayList<Byte>();
+//    		this.payload = new FastTable<Byte>();
     		if (maxBlocksize == null){
     			blockSize = blockOption.getBlockSize();
     		} else {
@@ -234,18 +251,25 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
     	 */
     	public ClientBlockContext(CoapBlockSize maxBlocksize, byte[] payload ){
     		this.blockSize = maxBlocksize;
-    		this.payload = new String(payload);
+    		this.payload = new ArrayList<Byte>();
+//    		this.payload = new FastTable<Byte>();
+    		for(int i = 0; i < payload.length; i++ ){
+    			this.payload.add( payload[i] );
+    		}
     		this.blockNumber = 0;
-    		
-    		this.maxBlockNumber = this.payload.length() / this.blockSize.getSize() - 1;
-    		if( this.payload.length()%this.blockSize.getSize() > 0 )
+    		this.maxBlockNumber = this.payload.size() / this.blockSize.getSize() - 1;
+    		if( this.payload.size()%this.blockSize.getSize() > 0 )
     			this.maxBlockNumber++;
 
     		context = true;
     	}
 
 		public byte[] getPayload() {
-			return payload.getBytes();
+			byte[] tmp = new byte[ this.payload.size() ];
+			for( int i = 0; i < this.payload.size(); i++) {
+				tmp[i] = this.payload.get(i);
+			}
+			return tmp;
 		}
 
 		/** Adds the new obtained data block to the complete payload, in the case of blockwise GET requests.
@@ -258,13 +282,16 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		public boolean addBlock(CoapMessage msg, CoapBlockOption block){
 			int number = block.getNumber();
 			int blockLength =  msg.getPayloadLength();
-			if( number * blockSize.getSize() > payload.length()) {
+			if( number * blockSize.getSize() > this.payload.size()) {
 				return false;
-			} else if( number*blockSize.getSize()+blockLength <= payload.length() ) {
+			} else if( number*blockSize.getSize()+blockLength <= this.payload.size() ) {
 				return false;
 			}
 			
-			this.payload += new String(msg.getPayload());
+			for(int i = 0; i < msg.getPayloadLength(); i++ ){
+    			this.payload.add( msg.getPayload()[i] );
+//    			this.payload.addLast( msg.getPayload()[i] );
+    		}
 			if( block.isLast() ) {
 				finished = true;
 			}
@@ -277,7 +304,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		 */
 		public CoapBlockOption getNextBlock() {
 			if( !context ) {
-				blockNumber = payload.length() / blockSize.getSize(); //ignore the rest (no rest should be there)
+				blockNumber = this.payload.size() / blockSize.getSize(); //ignore the rest (no rest should be there)
 				return new CoapBlockOption( blockNumber, false, blockSize);
 			}
 			else { 
@@ -297,17 +324,25 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		public byte[] getNextPayload(CoapBlockOption block){
 			int number = block.getNumber();
 			int size =  blockSize.getSize();
-			String payloadBlock;
+			Byte[] tmp;
+			byte[] payloadBlock;
 			if( number == maxBlockNumber ) {
-				payloadBlock = payload.substring(number * size, payload.length() );
+				//payloadBlock = payload.substring(number * size, payload.length() );
+				tmp = new Byte[ this.payload.size() - (number*size)];
+				this.payload.subList( number * size , this.payload.size() ).toArray(tmp);
 				finished = true;
 			} else {
-				System.out.println(payload);
-				payloadBlock = payload.substring(number * size, number * size + size);
+				tmp = new Byte[ block.getBlockSize().getSize() ];
+				this.payload.subList(number * size, number * size + size ).toArray( tmp );
+				//payloadBlock = payload.substring(number * size, number * size + size);
 			}
+			
+			payloadBlock = new byte[ tmp.length ];
+			for( int i = 0; i < payloadBlock.length; i++ )
+				payloadBlock[i] = tmp[i];
 				
 			
-			return payloadBlock.getBytes();
+			return payloadBlock;
 		}
     	
 		public boolean isFinished() {

@@ -74,7 +74,6 @@ public class BasicCoapClient implements CoapClient {
     		request.setBlock2( block2 );
     	}
     		
-    		
     	clientChannel.sendMessage(request);
     }
     

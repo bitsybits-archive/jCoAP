@@ -13,4 +13,5 @@ public interface CoapClientChannel extends CoapChannel {
     public CoapRequest addBlockContext( CoapRequest request);
     public void setTrigger(Object o);
     public Object getTrigger();
+    public byte[] getLastToken();
 }

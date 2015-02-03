@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/java-7-openjdk-i386"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/com.aicas.jamaica.eclipse.launcher.vm.JamaicaVMType/jamaica-6.3-1"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ws4d-jcoap"/>
 	<classpathentry kind="lib" path="Referenced Libraries/commons-codec-1.4.jar"/>
 	<classpathentry kind="lib" path="Referenced Libraries/commons-logging-1.1.1.jar"/>

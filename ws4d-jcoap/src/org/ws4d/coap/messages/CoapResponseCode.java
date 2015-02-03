@@ -10,7 +10,7 @@ public enum CoapResponseCode {
 	Valid_203(67), 
 	Changed_204(68), 
 	Content_205(69),
-	Continue_213(77),
+	Continue_231(95),
 	Bad_Request_400(128), 
 	Unauthorized_401(129), 
 	Bad_Option_402(130),

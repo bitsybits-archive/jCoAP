@@ -125,7 +125,7 @@ public class BasicCoapChannelManager implements CoapChannelManager {
     	CoapSocketHandler socketHandler = null;
 		try {
 			socketHandler = new BasicCoapSocketHandler(this);
-			SocketInformation sockInfo = new SocketInformation(socketHandler, null); 
+			SocketInformation sockInfo = new SocketInformation(socketHandler, null);
 			socketMap.put(socketHandler.getLocalPort(), sockInfo);
 			return socketHandler.connect(client, addr, port);
 		} catch (IOException e) {

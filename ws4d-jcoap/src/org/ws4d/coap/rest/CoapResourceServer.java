@@ -167,7 +167,7 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 		String targetPath = request.getUriPath();
 		int eTagMatch = -1;
 		
-		System.out.println("[REQUEST] " + "Type: " + requestCode + " | " + "Resource: " + targetPath);
+//		System.out.println("[REQUEST] " + "Type: " + requestCode + " | " + "Resource: " + targetPath);
 		
 		//TODO make this cast safe (send internal server error if it is not a CoapResource)
 		CoapResource resource = (CoapResource) readResource(targetPath);
@@ -274,6 +274,7 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 					CoapResponseCode.Bad_Request_400);
 			break;
 		}
+		
 		channel.sendMessage(response);
 	}
 
@@ -296,7 +297,7 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 		if( resource != null ) {
 			resource.removeObserver( lastRequest.getChannel() );
 		}
-		System.out.println("[INFO] Reset Message Received!");
+//		System.out.println("[INFO] Reset Message Received!");
 	}
 
 	protected String getLocalIpAddress() {
