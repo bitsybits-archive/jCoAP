@@ -1,4 +1,0 @@
-===START=== (Run Test Client: TD_COAP_CORE_02)
-Send Request: CON, POST, MsgId: 1001, #Options: 2 (Content of new resource /test)
-Response: ACK, Created_201, MsgId: 1001, #Options: 0 ()
-===END===
