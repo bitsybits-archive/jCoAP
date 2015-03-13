@@ -15,8 +15,6 @@
 
 package org.ws4d.coap.connection;
 
-import javolution.util.FastTable;
-
 import java.util.ArrayList;
 import java.net.InetAddress;
 

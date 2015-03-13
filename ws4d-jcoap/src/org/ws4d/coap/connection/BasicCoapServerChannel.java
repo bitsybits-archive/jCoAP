@@ -18,8 +18,6 @@ package org.ws4d.coap.connection;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
-import javolution.util.FastTable;
-
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
 import org.ws4d.coap.interfaces.CoapRequest;
