@@ -50,13 +50,13 @@ public interface CoapChannelManager {
 	public void createServerListener(CoapServer serverListener, int localPort);
 
 	/**
-	 * called by a client to create a connection TODO: allow client to bind to a
-	 * special port
+	 * called by a client to create a connection 
 	 * @param client
 	 * @param addr
 	 * @param port
 	 * @return
 	 */
+	// TODO: (solved?) allow client to bind to a special port
 	public CoapClientChannel connect(CoapClient client, InetAddress addr,
 			int port);
 
@@ -68,7 +68,7 @@ public interface CoapChannelManager {
 	public void setMessageId(int globalMessageId);
 
 	/**
-	 * 
+	 * Initializes the message ID with a random value.
 	 */
 	public void initRandom();
 }

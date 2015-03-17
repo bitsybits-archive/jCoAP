@@ -354,14 +354,8 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements
 		 */
 		public CoapBlockOption getNextBlock() {
 			if (!context) {
-				blockNumber = this.payload.size() / blockSize.getSize(); // ignore
-																			// the
-																			// rest
-																			// (no
-																			// rest
-																			// should
-																			// be
-																			// there)
+				// ignore the rest (no rest should be there)
+				blockNumber = this.payload.size() / blockSize.getSize(); 
 				return new CoapBlockOption(blockNumber, false, blockSize);
 			} else {
 				blockNumber++;

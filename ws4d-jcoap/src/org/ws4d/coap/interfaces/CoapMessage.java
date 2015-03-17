@@ -25,7 +25,7 @@ import org.ws4d.coap.messages.CoapPacketType;
  */
 public interface CoapMessage {
 	/**
-	 * 
+	 * The number of milliseconds before a timeout is indicated
 	 */
 	public static final int RESPONSE_TIMEOUT_MS = 2000;
 	
@@ -35,7 +35,7 @@ public interface CoapMessage {
 	public static final double RESPONSE_RANDOM_FACTOR = 1.5;
 	
 	/**
-	 * 
+	 * The maximum number of retransmits
 	 */
 	public static final int MAX_RETRANSMIT = 4;
 
@@ -46,20 +46,18 @@ public interface CoapMessage {
 	public static final int ACK_RST_RETRANS_TIMEOUT_MS = 120000;
 
 	/**
-	 * returns the value of the internal message code in case of an error this
-	 * function returns -1
+	 * @return Value of the internal message code.<br>-1, in case of an error.
 	 */
 	public int getMessageCodeValue();
 
 	/**
-	 * 
-	 * @return
+	 * @return The ID of the message.
 	 */
 	public int getMessageID();
 
 	/**
 	 * 
-	 * @param msgID
+	 * @param msgID - The ID of the Message to be set.
 	 */
 	public void setMessageID(int msgID);
 

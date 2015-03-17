@@ -21,15 +21,15 @@ package org.ws4d.coap.interfaces;
 public interface CoapClient extends CoapChannelListener {
 
 	/**
-	 * 
-	 * @param channel
-	 * @param response
+	 * This is a callback method which allows to handle a response at the application layer.
+	 * @param channel - The {@link CoapClientChannel} where the message arrived.
+	 * @param response - The {@link CoapResponse} that arrived.
 	 */
 	public void onResponse(CoapClientChannel channel, CoapResponse response);
 
 	/**
-	 * 
-	 * @param channel
+	 * This is a callback method which allows to handle a connection failure at the application layer.
+	 * @param channel - The {@link CoapClientChannel} where the connection failed.
 	 * @param notReachable
 	 * @param resetByServer
 	 */
