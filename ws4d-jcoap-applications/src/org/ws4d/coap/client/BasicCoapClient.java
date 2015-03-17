@@ -13,16 +13,13 @@ import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.messages.CoapBlockOption;
-import org.ws4d.coap.messages.CoapEmptyMessage;
-import org.ws4d.coap.messages.CoapMediaType;
-import org.ws4d.coap.messages.CoapRequestCode;
 import org.ws4d.coap.messages.CoapBlockOption.CoapBlockSize;
+import org.ws4d.coap.messages.CoapRequestCode;
 
 /**
  * @author	Christian Lerche <christian.lerche@uni-rostock.de>
  * 			Bjoern Konieczek <bjoern.konieczek@uni-rostock.de>
  */
-
 public class BasicCoapClient implements CoapClient {
     private String SERVER_ADDRESS;
     private int PORT;

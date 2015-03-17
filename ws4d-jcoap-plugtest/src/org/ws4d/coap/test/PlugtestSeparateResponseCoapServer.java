@@ -25,17 +25,18 @@ import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapResponseCode;
 
 public class PlugtestSeparateResponseCoapServer implements CoapServer {
-    private static final int PORT = 5683;
-    static int counter = 0;
-    CoapResponse response = null;
-    CoapServerChannel channel = null;
-    int separateResponseTimeMs = 4000;
-    
-    public void start(int separateResponseTimeMs){
-    	CoapChannelManager channelManager = BasicCoapChannelManager.getInstance();
-    	channelManager.createServerListener(this, PORT);
-    	this.separateResponseTimeMs = separateResponseTimeMs;
-    }
+	private static final int PORT = 5683;
+	static int counter = 0;
+	CoapResponse response = null;
+	CoapServerChannel channel = null;
+	int separateResponseTimeMs = 4000;
+
+	public void start(int separateResponseTimeMs) {
+		CoapChannelManager channelManager = BasicCoapChannelManager
+				.getInstance();
+		channelManager.createServerListener(this, PORT);
+		this.separateResponseTimeMs = separateResponseTimeMs;
+	}
 
 	@Override
 	public CoapServer onAccept(CoapRequest request) {
@@ -48,29 +49,35 @@ public class PlugtestSeparateResponseCoapServer implements CoapServer {
 		System.out.println("Received message: " + request.toString());
 
 		this.channel = channel;
-		response = channel.createSeparateResponse(request, CoapResponseCode.Content_205);
-		(new Thread( new SendDelayedResponse())).start();
+		response = channel.createSeparateResponse(request,
+				CoapResponseCode.Content_205);
+		(new Thread(new SendDelayedResponse())).start();
 	}
-	
-	public class SendDelayedResponse implements Runnable
-	  {
-	    public void run()
-	    {
-	    	response.setContentType(CoapMediaType.text_plain);
-	    	response.setPayload("payload...".getBytes());
-	    	try {
-	    		Thread.sleep(separateResponseTimeMs);
-	    	} catch (InterruptedException e) {
-	    		e.printStackTrace();
-	    	}
-	    	channel.sendSeparateResponse(response);
-			System.out.println("Send separate Response: " + response.toString());
-	    }
+
+	public class SendDelayedResponse implements Runnable {
+		public void run() {
+			response.setContentType(CoapMediaType.text_plain);
+			response.setPayload("payload...".getBytes());
+			try {
+				Thread.sleep(separateResponseTimeMs);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			channel.sendSeparateResponse(response);
+			System.out
+					.println("Send separate Response: " + response.toString());
+		}
 	}
 
 	@Override
 	public void onSeparateResponseFailed(CoapServerChannel channel) {
 		System.out.println("Separate Response failed");
 	}
-	
+
+	@Override
+	public void onReset(CoapRequest lastRequest) {
+		// TODO Auto-generated method stub
+
+	}
+
 }

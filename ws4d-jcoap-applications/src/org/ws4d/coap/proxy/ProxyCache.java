@@ -31,16 +31,8 @@ import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
-import org.ws4d.coap.messages.CoapRequestCode;
-import org.ws4d.coap.messages.CoapResponseCode;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>

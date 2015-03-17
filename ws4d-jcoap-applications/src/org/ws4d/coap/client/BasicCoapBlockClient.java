@@ -10,14 +10,12 @@ import org.ws4d.coap.interfaces.CoapClient;
 import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
-import org.ws4d.coap.messages.CoapEmptyMessage;
-import org.ws4d.coap.messages.CoapRequestCode;
 import org.ws4d.coap.messages.CoapBlockOption.CoapBlockSize;
+import org.ws4d.coap.messages.CoapRequestCode;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
-
 public class BasicCoapBlockClient implements CoapClient {
     private static final String SERVER_ADDRESS = "129.132.15.80";
     private static final int PORT = Constants.COAP_DEFAULT_PORT;

@@ -1,4 +1,4 @@
-/* Copyright [2011] [University of Rostock]
+/* Copyright 2011 University of Rostock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,67 +27,76 @@ import org.ws4d.coap.messages.CoapBlockOption.CoapBlockSize;
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
-
 public abstract class BasicCoapChannel implements CoapChannel {
 	/* use the logger of the channel manager */
-	private final static Logger logger = Logger.getLogger(BasicCoapChannelManager.class); 
+	private final static Logger logger = Logger
+			.getLogger(BasicCoapChannelManager.class);
 	protected CoapSocketHandler socketHandler = null;
-    protected CoapChannelManager channelManager = null;
-    protected InetAddress remoteAddress;
-    protected int remotePort;
-    protected int localPort;
-	CoapBlockSize maxReceiveBlocksize = null; //null means no block option
-	CoapBlockSize maxSendBlocksize = null; //null means no block option
+	protected CoapChannelManager channelManager = null;
+	protected InetAddress remoteAddress;
+	protected int remotePort;
+	protected int localPort;
+	/** null means no block option */
+	CoapBlockSize maxReceiveBlocksize = null;
+	/** null means no block option */
+	CoapBlockSize maxSendBlocksize = null;
 
-    public BasicCoapChannel(CoapSocketHandler socketHandler, InetAddress remoteAddress, int remotePort) {
-        this.socketHandler = socketHandler;
-        channelManager = socketHandler.getChannelManager();
-        this.remoteAddress = remoteAddress;
-        this.remotePort = remotePort;
-        this.localPort = socketHandler.getLocalPort(); //FIXME:can be 0 when socketHandler is not yet ready
-    }
+	public BasicCoapChannel(CoapSocketHandler socketHandler,
+			InetAddress remoteAddress, int remotePort) {
+		this.socketHandler = socketHandler;
+		channelManager = socketHandler.getChannelManager();
+		this.remoteAddress = remoteAddress;
+		this.remotePort = remotePort;
+		
+		// FIXME:can be 0 when socketHandler is not yet ready
+		this.localPort = socketHandler.getLocalPort(); 
+	}
 
-    @Override
-    public void sendMessage(CoapMessage msg) {
-        msg.setChannel(this);
-        socketHandler.sendMessage(msg);
-    }
-    
-	
-    @Override
+	@Override
+	public void sendMessage(CoapMessage msg) {
+		msg.setChannel(this);
+		socketHandler.sendMessage(msg);
+	}
+
+	@Override
 	public CoapBlockSize getMaxReceiveBlocksize() {
 		return maxReceiveBlocksize;
 	}
 
-    @Override
+	@Override
 	public void setMaxReceiveBlocksize(CoapBlockSize maxReceiveBlocksize) {
 		this.maxReceiveBlocksize = maxReceiveBlocksize;
 	}
 
-    @Override
+	@Override
 	public CoapBlockSize getMaxSendBlocksize() {
 		return maxSendBlocksize;
 	}
 
-    @Override
+	@Override
 	public void setMaxSendBlocksize(CoapBlockSize maxSendBlocksize) {
 		this.maxSendBlocksize = maxSendBlocksize;
 	}
 
-    @Override
-    public InetAddress getRemoteAddress() {
-        return remoteAddress;
-    }
+	@Override
+	public InetAddress getRemoteAddress() {
+		return remoteAddress;
+	}
 
-    @Override
-    public int getRemotePort() {
-        return remotePort;
-    }
+	@Override
+	public int getRemotePort() {
+		return remotePort;
+	}
 
-    /*A channel is identified (and therefore unique) by its remote address, remote port and the local port 
-     * TODO: identify channel also by a token */
+	
+	/*
+	 * A channel is identified (and therefore unique) by its remote address,
+	 * remote port and the local port
+	 */
+	//TODO: identify channel also by a token
 	@Override
 	public int hashCode() {
+		
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + localPort;
@@ -117,5 +126,5 @@ public abstract class BasicCoapChannel implements CoapChannel {
 			return false;
 		return true;
 	}
-    
+
 }

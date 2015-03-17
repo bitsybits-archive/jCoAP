@@ -1,3 +1,18 @@
+/* Copyright 2015 University of Rostock
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *****************************************************************************/
+
 package org.ws4d.coap.connection;
 
 import java.io.IOException;
@@ -14,34 +29,33 @@ public class BasicCoapMulticastChannel implements CoapChannel {
 	private MulticastSocket multicastSocket = null;
 	private int port = 0;
 	private InetAddress multicastAddress = null;
-	
-	
-	public BasicCoapMulticastChannel(String multicastAddress, int port) throws UnknownHostException {
+
+	public BasicCoapMulticastChannel(String multicastAddress, int port)
+			throws UnknownHostException {
 		this.multicastAddress = InetAddress.getByName(multicastAddress);
 		this.port = port;
 	}
-	
+
 	public void init() {
 		try {
 			this.multicastSocket = new MulticastSocket(this.port);
 			this.multicastSocket.setReuseAddress(true);
 			this.multicastSocket.setSoTimeout(15000);
 			this.multicastSocket.joinGroup(multicastAddress);
-		}
-		catch(Exception e) {
-			System.out.println("Error occured: " + e.getMessage() );
+		} catch (Exception e) {
+			System.out.println("Error occured: " + e.getMessage());
 			return;
 		}
 	}
-	
+
 	@Override
 	public void sendMessage(CoapMessage msg) {
 		try {
-			DatagramPacket p = new DatagramPacket(msg.serialize(), msg.serialize().length);
+			DatagramPacket p = new DatagramPacket(msg.serialize(),
+					msg.serialize().length);
 			this.multicastSocket.send(p);
-		}
-		catch( IOException e ) {
-			System.out.println("Error occured: " + e.getMessage() );
+		} catch (IOException e) {
+			System.out.println("Error occured: " + e.getMessage());
 			return;
 		}
 	}
@@ -64,13 +78,13 @@ public class BasicCoapMulticastChannel implements CoapChannel {
 	@Override
 	public void handleMessage(CoapMessage message) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void lostConnection(boolean notReachable, boolean resetByServer) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -82,7 +96,7 @@ public class BasicCoapMulticastChannel implements CoapChannel {
 	@Override
 	public void setMaxReceiveBlocksize(CoapBlockSize maxReceiveBlocksize) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -94,8 +108,7 @@ public class BasicCoapMulticastChannel implements CoapChannel {
 	@Override
 	public void setMaxSendBlocksize(CoapBlockSize maxSendBlocksize) {
 		// TODO Auto-generated method stub
-		
+
 	}
-	
 
 }

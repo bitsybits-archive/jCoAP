@@ -1,4 +1,4 @@
-/* Copyright [2011] [University of Rostock]
+/* Copyright 2011 University of Rostock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,18 +28,16 @@ import org.ws4d.coap.interfaces.CoapSocketHandler;
 import org.ws4d.coap.messages.BasicCoapRequest;
 import org.ws4d.coap.messages.BasicCoapResponse;
 import org.ws4d.coap.messages.CoapBlockOption;
+import org.ws4d.coap.messages.CoapBlockOption.CoapBlockSize;
 import org.ws4d.coap.messages.CoapEmptyMessage;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapPacketType;
 import org.ws4d.coap.messages.CoapRequestCode;
 import org.ws4d.coap.messages.CoapResponseCode;
-import org.ws4d.coap.messages.AbstractCoapMessage.CoapHeaderOptionType;
-import org.ws4d.coap.messages.CoapBlockOption.CoapBlockSize;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
-
 public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServerChannel{
 	CoapServer server = null;
 	CoapResponse lastResponse;

@@ -5,9 +5,7 @@
  */
 package org.ws4d.coap.test;
 
-import java.net.DatagramPacket;
 import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
@@ -22,14 +20,11 @@ import org.ws4d.coap.interfaces.CoapClient;
 import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
-import org.ws4d.coap.messages.CoapEmptyMessage;
-import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapRequestCode;
 
 /**
  * @author Nico Laum <nico.laum@uni-rostock.de>
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
- * 
  */
 public class PlugtestClient implements CoapClient{
     CoapChannelManager channelManager = null;
@@ -60,7 +55,7 @@ public class PlugtestClient implements CoapClient{
 	
 	public void start(String serverAddress, int serverPort, String testcase, String filter){
 		System.out.println("===START=== (Run Test Client: " + testcase + ")");
-		String testId = testcase;
+		//String testId = testcase;
 		this.serverAddress = serverAddress;
 		this.serverPort = serverPort;
 		this.filter = filter;

@@ -17,21 +17,12 @@ package org.ws4d.coap.server;
 
 import org.ws4d.coap.Constants;
 import org.ws4d.coap.connection.BasicCoapChannelManager;
-import org.ws4d.coap.interfaces.CoapChannelManager;
-import org.ws4d.coap.interfaces.CoapMessage;
-import org.ws4d.coap.interfaces.CoapRequest;
-import org.ws4d.coap.interfaces.CoapServer;
-import org.ws4d.coap.interfaces.CoapServerChannel;
-import org.ws4d.coap.messages.CoapMediaType;
-import org.ws4d.coap.messages.CoapResponseCode;
-import org.ws4d.coap.rest.BasicCoapResource;
 import org.ws4d.coap.rest.CoapResource;
 import org.ws4d.coap.rest.CoapResourceServer;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
-
 public class BasicCoapServer {
     private int port = Constants.COAP_DEFAULT_PORT;
     private CoapResourceServer resourceServer = null;

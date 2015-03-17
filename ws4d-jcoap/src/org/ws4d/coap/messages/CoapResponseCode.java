@@ -1,9 +1,23 @@
+/* Copyright 2015 University of Rostock
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *****************************************************************************/
+
 package org.ws4d.coap.messages;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
-
 public enum CoapResponseCode {
 	Created_201(65), 
 	Deleted_202(66), 
@@ -37,10 +51,7 @@ public enum CoapResponseCode {
 	public static CoapResponseCode parseResponseCode(int codeValue) {
 		switch (codeValue) {
 		/* 32..63: reserved */
-		/* 64 is not used anymore */
-		// case 64:
-		// this.code = ResponseCode.OK_200;
-		// break;
+		// case 64: return OK_200; //not used anymore
 		case 65:  return Created_201;
 		case 66:  return Deleted_202;
 		case 67:  return Valid_203;
@@ -122,4 +133,3 @@ public enum CoapResponseCode {
 		}
 	}
 }
-

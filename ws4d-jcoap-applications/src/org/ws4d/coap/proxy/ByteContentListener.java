@@ -38,7 +38,6 @@ import org.apache.http.nio.util.SimpleInputBuffer;
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Andy Seidel <andy.seidel@uni-rostock.de>
  */
-
 class ByteContentListener implements ContentListener {
     final SimpleInputBuffer input = new SimpleInputBuffer(2048, new HeapByteBufferAllocator());
 

@@ -1,4 +1,4 @@
-/* Copyright [2011] [University of Rostock]
+/* Copyright 2011 University of Rostock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,8 @@
  * limitations under the License.
  *****************************************************************************/
 
-/* WS4D Java CoAP Implementation
- * (c) 2011 WS4D.org
- * 
- * written by Sebastian Unger 
- */
-
 package org.ws4d.coap.messages;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Iterator;
@@ -35,8 +28,8 @@ import org.ws4d.coap.interfaces.CoapMessage;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ * @author Sebastian Unger <sebastian.unger@uni-rostock.de>
  */
-
 public abstract class AbstractCoapMessage implements CoapMessage {
 	/* use the logger of the channel manager */
 	private final static Logger logger = Logger.getLogger(BasicCoapChannelManager.class); 
