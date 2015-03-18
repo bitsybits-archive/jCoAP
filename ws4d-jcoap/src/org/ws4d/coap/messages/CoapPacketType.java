@@ -23,36 +23,49 @@ package org.ws4d.coap.messages;
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 public enum CoapPacketType {
-    CON(0x00),
-    NON(0x01),
-    ACK(0x02),
-    RST(0x03);
+	CON(0x00), NON(0x01), ACK(0x02), RST(0x03);
 
-    private int packetType;
+	private int packetType;
 
-    CoapPacketType(int packetType) {
-    	if (packetType >= 0x00 && packetType <= 0x03){
-    		this.packetType = packetType;
-    	} else {
-    		throw new IllegalStateException("Unknown CoAP Packet Type");
+	/**
+	 * 
+	 * @param packetType
+	 * @throws IllegalStateException
+	 *             If packet type is out of range.
+	 */
+	CoapPacketType(int packetType) {
+		if (packetType >= 0x00 && packetType <= 0x03) {
+			this.packetType = packetType;
+		} else {
+			throw new IllegalStateException("Unknown CoAP Packet Type");
 		}
-    	
-    }
 
-    public static CoapPacketType getPacketType(int packetType) {
-        if (packetType == 0x00)
-            return CON;
-        else if (packetType == 0x01)
-            return NON;
-        else if (packetType == 0x02)
-            return ACK;
-        else if (packetType == 0x03)
-            return RST;
-        else
-        	throw new IllegalStateException("Unknown CoAP Packet Type");
-    }
-    
-    public int getValue() {
-        return packetType;
-    }
+	}
+
+	/**
+	 * @param packetType
+	 *            the code for the packet type.
+	 * @return The ENUM element matching the packetType. <br>
+	 * @throws IllegalStateException
+	 *             If packetType is out of range.
+	 */
+	public static CoapPacketType getPacketType(int packetType) {
+		if (packetType == 0x00)
+			return CON;
+		else if (packetType == 0x01)
+			return NON;
+		else if (packetType == 0x02)
+			return ACK;
+		else if (packetType == 0x03)
+			return RST;
+		else
+			throw new IllegalStateException("Unknown CoAP Packet Type");
+	}
+
+	/**
+	 * @return The packetType of the ENUM element.
+	 */
+	public int getValue() {
+		return packetType;
+	}
 }

@@ -24,18 +24,24 @@ import org.ws4d.coap.messages.CoapPacketType;
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 public interface CoapMessage {
+
 	/**
-	 * The number of milliseconds before a timeout is indicated
+	 * The number of milliseconds before a timeout for an ACK is indicated <br>
+	 * See rfc7252 - 4.8. "Transmission Parameters" for further details.
 	 */
 	public static final int RESPONSE_TIMEOUT_MS = 2000;
-	
+
 	/**
-	 * 
+	 * For a new confirmable message, the initial timeout is set to a random
+	 * duration (often not an integral number of seconds) between ACK_TIMEOUT
+	 * and (ACK_TIMEOUT * ACK_RANDOM_FACTOR)
+	 * See rfc7252 - 4.8. "Transmission Parameters" for further details.
 	 */
 	public static final double RESPONSE_RANDOM_FACTOR = 1.5;
-	
+
 	/**
 	 * The maximum number of retransmits
+	 * See rfc7252 - 4.8. "Transmission Parameters" for further details.
 	 */
 	public static final int MAX_RETRANSMIT = 4;
 
@@ -46,7 +52,8 @@ public interface CoapMessage {
 	public static final int ACK_RST_RETRANS_TIMEOUT_MS = 120000;
 
 	/**
-	 * @return Value of the internal message code.<br>-1, in case of an error.
+	 * @return Value of the internal message code.<br>
+	 *         -1, in case of an error.
 	 */
 	public int getMessageCodeValue();
 
@@ -57,7 +64,8 @@ public interface CoapMessage {
 
 	/**
 	 * 
-	 * @param msgID - The ID of the Message to be set.
+	 * @param msgID
+	 *            - The ID of the Message to be set.
 	 */
 	public void setMessageID(int msgID);
 
@@ -133,8 +141,8 @@ public interface CoapMessage {
 	public byte[] getToken();
 
 	// public URI getRequestUri();
-	// public void setRequestUri(URI uri); 
-	//TODO:allow this method only for Clients, Define Token Type
+	// public void setRequestUri(URI uri);
+	// TODO:allow this method only for Clients, Define Token Type
 
 	/**
 	 * 
@@ -183,6 +191,7 @@ public interface CoapMessage {
 	 * 
 	 * @return
 	 */
+	@Override
 	public String toString();
 
 	/**
@@ -238,6 +247,7 @@ public interface CoapMessage {
 	 * 
 	 * @return
 	 */
+	@Override
 	public int hashCode();
 
 	/**
@@ -245,6 +255,7 @@ public interface CoapMessage {
 	 * @param obj
 	 * @return
 	 */
+	@Override
 	public boolean equals(Object obj);
 
 }
