@@ -15,9 +15,7 @@
 
 package org.ws4d.coap.connection;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.net.InetAddress;
 
 import org.ws4d.coap.interfaces.CoapClient;
@@ -207,15 +205,16 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
     
     private class ClientBlockContext{
 
-    	private ByteArrayOutputStream incomingStream;
-    	private ByteArrayInputStream outgoingStream;
+		private ArrayList<Byte> payload;
+//    	private FastTable<Byte> payload;
     	boolean finished = false;
-    	boolean sending = false; //false=receiving; true=sending
+    	boolean context = false; //false=receiving; true=sending
     	CoapBlockSize blockSize; //null means no block option
     	int blockNumber;
     	int maxBlockNumber;
     	CoapRequest request;
     	CoapResponse response;
+		private int number;
     	
     	/** Create BlockContext for GET requests. This is done automatically, if the sent GET request or the obtained response
     	 *  contain a Block2-Option.
@@ -225,10 +224,9 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
     	 */
     	public ClientBlockContext(CoapBlockOption blockOption, CoapBlockSize maxBlocksize) {
     		
-    		this.incomingStream = new ByteArrayOutputStream();
-    		this.outgoingStream = null;
-    		
     		/* determine the right blocksize (min of remote and max)*/
+    		this.payload = new ArrayList<Byte>();
+//    		this.payload = new FastTable<Byte>();
     		if (maxBlocksize == null){
     			blockSize = blockOption.getBlockSize();
     		} else {
@@ -241,7 +239,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
     			}
     		}
     		this.blockNumber = blockOption.getNumber();
-    		this.sending=false;
+    		context=false;
     	}
     	
     	/** Create BlockContext for POST or PUT requests. Is only called by addBlockContext().
@@ -250,28 +248,26 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
     	 * @param payload		The whole payload, that should be transferred
     	 */
     	public ClientBlockContext(CoapBlockSize maxBlocksize, byte[] payload ){
-    		this.outgoingStream = new ByteArrayInputStream( payload );
-    		this.incomingStream = null;
     		this.blockSize = maxBlocksize;
-    		
+    		this.payload = new ArrayList<Byte>();
+//    		this.payload = new FastTable<Byte>();
+    		for(int i = 0; i < payload.length; i++ ){
+    			this.payload.add( payload[i] );
+    		}
     		this.blockNumber = 0;
-    		this.maxBlockNumber = payload.length / this.blockSize.getSize() - 1;
-    		if( payload.length%this.blockSize.getSize() > 0 )
+    		this.maxBlockNumber = this.payload.size() / this.blockSize.getSize() - 1;
+    		if( this.payload.size()%this.blockSize.getSize() > 0 )
     			this.maxBlockNumber++;
 
-    		this.sending = true;
+    		context = true;
     	}
 
 		public byte[] getPayload() {
-			
-			if (!this.sending ) {
-				return this.incomingStream.toByteArray();
-			} else if( this.outgoingStream != null ) {
-				byte[] payload = new byte[ this.outgoingStream.available() ];
-				outgoingStream.read(payload, 0, this.outgoingStream.available() );
-				return payload;
-			} else
-				return null;
+			byte[] tmp = new byte[ this.payload.size() ];
+			for( int i = 0; i < this.payload.size(); i++) {
+				tmp[i] = this.payload.get(i);
+			}
+			return tmp;
 		}
 
 		/** Adds the new obtained data block to the complete payload, in the case of blockwise GET requests.
@@ -283,19 +279,20 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		 */
 		public boolean addBlock(CoapMessage msg, CoapBlockOption block){
 			int number = block.getNumber();
-			if( number > this.blockNumber )
+			int blockLength =  msg.getPayloadLength();
+			if( number * blockSize.getSize() > this.payload.size()) {
 				return false;
-			
-			this.blockNumber++;
-			try{
-				this.incomingStream.write( msg.getPayload() );
-			} catch( IOException e) {
-				System.err.println("ERROR: Cannot write data block to input buffer!");
+			} else if( number*blockSize.getSize()+blockLength <= this.payload.size() ) {
+				return false;
 			}
+			
+			for(int i = 0; i < msg.getPayloadLength(); i++ ){
+    			this.payload.add( msg.getPayload()[i] );
+//    			this.payload.addLast( msg.getPayload()[i] );
+    		}
 			if( block.isLast() ) {
 				finished = true;
 			}
-
     		return true;
     	}
     	
@@ -304,8 +301,8 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		 * @return	BlockOption to indicate the next block, that should be send (POST or PUT) or received (GET)
 		 */
 		public CoapBlockOption getNextBlock() {
-			if( !sending ) {
-				blockNumber++; //ignore the rest (no rest should be there)
+			if( !context ) {
+				blockNumber = this.payload.size() / blockSize.getSize(); //ignore the rest (no rest should be there)
 				return new CoapBlockOption( blockNumber, false, blockSize);
 			}
 			else { 
@@ -324,16 +321,24 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		 */
 		public byte[] getNextPayload(CoapBlockOption block){
 			int number = block.getNumber();
+			int size =  blockSize.getSize();
+			Byte[] tmp;
 			byte[] payloadBlock;
-					
 			if( number == maxBlockNumber ) {
-				payloadBlock = new byte[ this.outgoingStream.available() ];
-				this.outgoingStream.read(payloadBlock, 0, this.outgoingStream.available());
+				//payloadBlock = payload.substring(number * size, payload.length() );
+				tmp = new Byte[ this.payload.size() - (number*size)];
+				this.payload.subList( number * size , this.payload.size() ).toArray(tmp);
 				finished = true;
 			} else {
-				payloadBlock = new byte[ block.getBlockSize().getSize() ];
-				this.outgoingStream.read(payloadBlock, 0, block.getBlockSize().getSize());
-			}		
+				tmp = new Byte[ block.getBlockSize().getSize() ];
+				this.payload.subList(number * size, number * size + size ).toArray( tmp );
+				//payloadBlock = payload.substring(number * size, number * size + size);
+			}
+			
+			payloadBlock = new byte[ tmp.length ];
+			for( int i = 0; i < payloadBlock.length; i++ )
+				payloadBlock[i] = tmp[i];
+				
 			
 			return payloadBlock;
 		}
@@ -371,4 +376,3 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 	}
 
 }
-
