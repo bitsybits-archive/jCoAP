@@ -1,6 +1,7 @@
 package org.ws4d.coap.messages;
 
 /**
+ * @author Bjoern Konieczek <bjoern.konieczek@uni-rostock.de>
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 
@@ -46,6 +47,7 @@ public enum CoapResponseCode {
 		case 67:  return Valid_203;
 		case 68:  return Changed_204;
 		case 69:  return Content_205;
+		case 95:  return Continue_231;
 		case 128: return Bad_Request_400;
 		case 129: return Unauthorized_401;
 		case 130: return Bad_Option_402;
@@ -83,6 +85,8 @@ public enum CoapResponseCode {
 			return "Deleted_202";
 		case Valid_203:
 			return "Valid_203";
+		case Continue_231:
+			return "Continue_231";
 		case Changed_204:
 			return "Changed_204";
 		case Content_205:
@@ -122,4 +126,5 @@ public enum CoapResponseCode {
 		}
 	}
 }
+
 
