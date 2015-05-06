@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
+import java.net.StandardSocketOptions;
 //import java.net.StandardProtocolFamily;
 //import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
@@ -77,29 +78,28 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
     	//StandardProtocolFamily test = StandardProtocolFamily.INET;StandardProtocolFamily.INET
         dgramChannel = DatagramChannel.open();
         boolean found = false;
-        //Enumeration<NetworkInterface> Interfaces = NetworkInterface.getNetworkInterfaces();
-        //NetworkInterface NetworkAdapter = null;
-//        while( !found ){
-//        	NetworkAdapter = Interfaces.nextElement();
-//        	if( NetworkAdapter.isUp() && !NetworkAdapter.isLoopback() ) {
-//        		found = true;
-//        	}
-//    	}
+        Enumeration<NetworkInterface> Interfaces = NetworkInterface.getNetworkInterfaces();
+        NetworkInterface NetworkAdapter = null;
+        while( !found ){
+        	NetworkAdapter = Interfaces.nextElement();
+        	if( NetworkAdapter.isUp() && !NetworkAdapter.isLoopback() ) {
+        		found = true;
+        	}
+    	}
 //       
-//        if( NetworkAdapter != null){
-//        }
-        	//dgramChannel.setOption(StandardSocketOptions.IP_MULTICAST_IF, NetworkAdapter);
-//        else {
-//        	System.err.println("ERROR: No suitable Network Interface");
-//        	System.exit(-1);
-//        }
+        if( NetworkAdapter != null){
+        	dgramChannel.setOption(StandardSocketOptions.IP_MULTICAST_IF, NetworkAdapter);
+        } else {
+        	System.err.println("ERROR: No suitable Network Interface");
+        	System.exit(-1);
+        }
         	
         //dgramChannel.socket().connect(InetAddress.getByName("0.0.0.0"), port);
        	dgramChannel.socket().bind(new InetSocketAddress(port)); //port can be 0, then a free port is chosen 
         this.localPort = dgramChannel.socket().getLocalPort();
         dgramChannel.configureBlocking(false);
         
-        //dgramChannel.join( InetAddress.getByName("224.0.0.1"), NetworkAdapter );
+        dgramChannel.join( InetAddress.getByName("224.0.0.1"), NetworkAdapter );
        
         workerThread = new WorkerThread();
         workerThread.start();
