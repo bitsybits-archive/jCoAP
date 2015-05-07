@@ -1,4 +1,4 @@
-/* Copyright 2011 University of Rostock
+/* Copyright [2011] [University of Rostock]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
 
 package org.ws4d.coap.connection;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.InetAddress;
-import java.util.ArrayList;
 
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
@@ -28,16 +30,18 @@ import org.ws4d.coap.interfaces.CoapSocketHandler;
 import org.ws4d.coap.messages.BasicCoapRequest;
 import org.ws4d.coap.messages.BasicCoapResponse;
 import org.ws4d.coap.messages.CoapBlockOption;
-import org.ws4d.coap.messages.CoapBlockOption.CoapBlockSize;
 import org.ws4d.coap.messages.CoapEmptyMessage;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapPacketType;
 import org.ws4d.coap.messages.CoapRequestCode;
 import org.ws4d.coap.messages.CoapResponseCode;
+import org.ws4d.coap.messages.CoapBlockOption.CoapBlockSize;
 
 /**
+ * @author Bjoern Konieczek <bjoern.konieczek@uni-rostock.de>
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
+
 public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServerChannel{
 	CoapServer server = null;
 	CoapResponse lastResponse;
@@ -98,21 +102,22 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 					response = createResponse(request, CoapResponseCode.Content_205 );					
 					response.setBlock2( newBlock );
 					response.setPayload( blockContext.getNextPayload(newBlock) );
+//					System.out.println("Sending Block Number: " + newBlock.getNumber()+"; Payload: " + new String(response.getPayload()) );
 					sendMessage(response);
 					if( blockContext.isFinished() ) {
 						blockContext = null;
-						return;
 					}
+					return;
 				}				
-			}
-
-			message.setPayload( blockContext.getPayload() );
-			
+			}			
 		}
 		
 		if( blockContext == null || (blockContext.getFirstRequest().getRequestCode() != CoapRequestCode.GET && blockContext.isFinished() ) ) {
 			CoapChannel channel = request.getChannel();
-			blockContext = null;
+			if( blockContext != null ){
+				request.setPayload( blockContext.getPayload() );
+				blockContext = null;
+			}
 			/* TODO make this cast safe */
 			server.onRequest((CoapServerChannel) channel, request);
 		}
@@ -234,14 +239,15 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 	
 	private class ServerBlockContext{
 
-		private ArrayList<Byte> payload;
-//		private FastTable<Byte> payload;
+    	private ByteArrayOutputStream incomingStream;
+    	private ByteArrayInputStream outgoingStream;
     	boolean finished = false;
-    	boolean context = false; //false=receiving; true=sending
+    	boolean sending = false; //false=receiving; true=sending
     	CoapBlockSize blockSize; //null means no block option
     	int blockNumber;
     	int maxBlockNumber;
     	CoapRequest request;
+    	CoapResponse response;
     	
     	/** Create BlockContext for GET requests. This is done automatically, if the sent GET request or the obtained response
     	 *  contain a Block2-Option.
@@ -250,10 +256,10 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
     	 * @param maxBlocksize	Indicates the maximum block size supported by the client
     	 */
     	public ServerBlockContext(CoapBlockOption blockOption, CoapBlockSize maxBlocksize) {
+    		this.incomingStream = new ByteArrayOutputStream();
+    		this.outgoingStream = null;
     		
     		/* determine the right blocksize (min of remote and max)*/
-    		this.payload = new ArrayList<Byte>();
-//    		this.payload = new FastTable<Byte>();
     		if (maxBlocksize == null){
     			blockSize = blockOption.getBlockSize();
     		} else {
@@ -265,7 +271,8 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
     				blockSize = maxBlocksize;
     			}
     		}
-    		context=false;
+    		this.blockNumber = blockOption.getNumber();
+    		this.sending=false;
     	}
     	
     	/** Create BlockContext for POST or PUT requests. Is only called by addBlockContext().
@@ -274,27 +281,32 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
     	 * @param payload		The whole payload, that should be transferred
     	 */
     	public ServerBlockContext(CoapBlockSize maxBlocksize, byte[] payload ){
+    		this.outgoingStream = new ByteArrayInputStream( payload );
+    		this.incomingStream = null;
     		this.blockSize = maxBlocksize;
-    		this.payload = new ArrayList<Byte>();
-//    		this.payload = new FastTable<Byte>();
-    		for(int i = 0; i < payload.length; i++ ){
-    			this.payload.add( payload[i] );
-    		}
-    		this.blockNumber = 0;
     		
-    		this.maxBlockNumber = this.payload.size() / this.blockSize.getSize() - 1;
-    		if( this.payload.size()%this.blockSize.getSize() > 0 )
+    		this.blockNumber = 0;
+    		this.maxBlockNumber = payload.length / this.blockSize.getSize() - 1;
+    		if( payload.length%this.blockSize.getSize() > 0 )
     			this.maxBlockNumber++;
 
-    		context = true;
+    		this.sending = true;
     	}
 
 		public byte[] getPayload() {
-			byte[] tmp = new byte[ this.payload.size() ];
-			for( int i = 0; i < this.payload.size(); i++) {
-				tmp[i] = this.payload.get(i);
-			}
-			return tmp;
+			if (!this.sending ) {
+				try{
+					this.incomingStream.close();
+				} catch(IOException e){
+					e.printStackTrace();
+				}
+				return this.incomingStream.toByteArray();
+			} else if( this.outgoingStream != null ) {
+				byte[] payload = new byte[ this.outgoingStream.available() ];
+				outgoingStream.read(payload, 0, this.outgoingStream.available());
+				return payload;
+			} else
+				return null;
 		}
 
 		/** Adds the new obtained data block to the complete payload, in the case of blockwise GET requests.
@@ -306,17 +318,15 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 		 */
 		public boolean addBlock(CoapMessage msg, CoapBlockOption block){
 			int number = block.getNumber();
-			int blockLength =  msg.getPayloadLength();
-			if( number * blockSize.getSize() > payload.size()) {
+			if( number > this.blockNumber )
 				return false;
-			} else if( number*blockSize.getSize()+blockLength <= payload.size() ) {
-				return false;
-			}
 			
-			for(int i = 0; i < msg.getPayloadLength(); i++ ){
-    			this.payload.add( msg.getPayload()[i] );
-//				this.payload.addLast( msg.getPayload()[i] );
-    		}
+			this.blockNumber++;
+			try{
+				this.incomingStream.write( msg.getPayload() );
+			} catch( IOException e) {
+				System.err.println("ERROR: Cannot write data block to input buffer!");
+			}
 			if( block.isLast() ) {
 				finished = true;
 			}
@@ -329,8 +339,8 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 		 * @return	BlockOption to indicate the next block, that should be send (POST or PUT) or received (GET)
 		 */
 		public CoapBlockOption getNextBlock() {
-			if( !context ) {
-				blockNumber = payload.size() / blockSize.getSize(); //ignore the rest (no rest should be there)
+			if( !sending ) {
+				blockNumber++; //ignore the rest (no rest should be there)
 				return new CoapBlockOption( blockNumber, false, blockSize);
 			}
 			else { 
@@ -348,24 +358,18 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 		 * @return			The next part of the payload
 		 */
 		public byte[] getNextPayload(CoapBlockOption block){
+			
 			int number = block.getNumber();
-			int size =  blockSize.getSize();
-			Byte[] tmp;
 			byte[] payloadBlock;
+					
 			if( number == maxBlockNumber ) {
-				//payloadBlock = payload.substring(number * size, payload.length() );
-				tmp = new Byte[ this.payload.size() - (number*size)];
-				this.payload.subList( number * size , this.payload.size() ).toArray(tmp);
+				payloadBlock = new byte[ block.getBlockSize().getSize() ];
+				this.outgoingStream.read(payloadBlock, 0, this.outgoingStream.available() );
 				finished = true;
 			} else {
-				//payloadBlock = payload.substring(number * size, number * size + size);
-				tmp = new Byte[ block.getBlockSize().getSize() ];
-				this.payload.subList(number * size, number * size + size ).toArray( tmp );
-			}
-			
-			payloadBlock = new byte[ tmp.length ];
-			for( int i = 0; i < payloadBlock.length; i++ )
-				payloadBlock[i] = tmp[i];
+				payloadBlock = new byte[ block.getBlockSize().getSize() ];
+				this.outgoingStream.read(payloadBlock, 0, block.getBlockSize().getSize());
+			}		
 			
 			return payloadBlock;
 		}
@@ -384,3 +388,4 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
     }
 
 }
+
