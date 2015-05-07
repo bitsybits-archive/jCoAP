@@ -122,8 +122,12 @@ public class InterfaceTest {
 		clientDummy = null;
 
 		// reset server
+		//FIXME: causes ConcurrentModificationException
 		for (String path : resourceServer.getResources().keySet()) {
-			resourceServer.deleteResource(path);
+			if(path!="/.well-known/core"){
+				System.out.println(path);
+				resourceServer.deleteResource(path);
+			}
 		}
 	}
 

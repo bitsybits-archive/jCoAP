@@ -49,7 +49,9 @@ public class BasicCoapResource implements CoapResource {
 	/** DEFAULT NULL: let the client decide */
 	Boolean reliableNotification = null;
 	
-	/** DEFAULT -1: expires never */
+	/** 
+	 * The Unix time (in milliseconds), when resource expires 
+	 * -1, when resource never expires */
 	long expires = -1;
 
 	public BasicCoapResource(String path, byte[] value, CoapMediaType mediaType) {

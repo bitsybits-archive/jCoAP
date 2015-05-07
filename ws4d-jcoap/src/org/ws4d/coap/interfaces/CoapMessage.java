@@ -46,6 +46,7 @@ public interface CoapMessage {
 	public static final int MAX_RETRANSMIT = 4;
 
 	/* TODO: what is the right value? */
+	//TODO: Documentation
 	/**
 	 * 
 	 */
@@ -70,73 +71,73 @@ public interface CoapMessage {
 	public void setMessageID(int msgID);
 
 	/**
-	 * 
-	 * @return
+	 * Convert the CoAP message into its serialized form for transmission.<br>
+	 * See rfc7252 - 3.  "Message Format" for further details.
+	 * @return The serialized CoAP message.
 	 */
 	public byte[] serialize();
 
+	//TODO: Documentation
 	/**
 	 * 
 	 */
 	public void incRetransCounterAndTimeout();
 
 	/**
-	 * 
-	 * @return
+	 * @return The packet type of the message (CON, NON, ACK, RST).
 	 */
 	public CoapPacketType getPacketType();
 
 	/**
-	 * 
-	 * @return
+	 * Get the payload of the message for further use on application level.
+	 * @return The payload of the message
 	 */
 	public byte[] getPayload();
 
 	/**
-	 * 
-	 * @param payload
+	 * Set the payload of the message to be sent.
+	 * @param payload the payload of the message to be sent.
 	 */
 	public void setPayload(byte[] payload);
 
 	/**
-	 * 
-	 * @param payload
+	 * Set the payload of the message to be sent.
+	 * @param payload the payload of the message to be sent.
 	 */
 	public void setPayload(char[] payload);
 
 	/**
-	 * 
-	 * @param payload
+	 * Set the payload of the message to be sent.
+	 * @param payload the payload of the message to be sent.
 	 */
 	public void setPayload(String payload);
 
 	/**
-	 * 
-	 * @return
+	 * @return The size of the message payload in byte. 
 	 */
 	public int getPayloadLength();
 
 	/**
-	 * 
-	 * @param mediaType
+	 * Change the media type of the message.
+	 * @param mediaType The new media type.
 	 */
 	public void setContentType(CoapMediaType mediaType);
 
 	/**
-	 * 
-	 * @return
+	 * @return The media type of the message.
 	 */
 	public CoapMediaType getContentType();
 
 	/**
-	 * 
-	 * @param token
+	 * Set the token of the message.
+	 * The token value is used to correlate requests and responses.
+	 * @param token The token to be set
 	 */
 	public void setToken(byte[] token);
 
 	/**
-	 * 
-	 * @return
+	 * The token value is used to correlate requests and responses.
+	 * @return The token of the message.
 	 */
 	public byte[] getToken();
 
@@ -145,26 +146,22 @@ public interface CoapMessage {
 	// TODO:allow this method only for Clients, Define Token Type
 
 	/**
-	 * 
-	 * @return
+	 * @return The block option for get requests.
 	 */
 	CoapBlockOption getBlock1();
 
 	/**
-	 * 
-	 * @param blockOption
+	 * @param blockOption The block option for get requests.
 	 */
 	void setBlock1(CoapBlockOption blockOption);
 
 	/**
-	 * 
-	 * @return
+	 * @return The block option for POST & PUT requests.
 	 */
 	CoapBlockOption getBlock2();
 
 	/**
-	 * 
-	 * @param blockOption
+	 * @param blockOption The block option for POST & PUT requests.
 	 */
 	void setBlock2(CoapBlockOption blockOption);
 
@@ -187,10 +184,6 @@ public interface CoapMessage {
 	 */
 	public void removeOption(CoapHeaderOptionType optionType);
 
-	/**
-	 * 
-	 * @return
-	 */
 	@Override
 	public String toString();
 
@@ -243,18 +236,9 @@ public interface CoapMessage {
 	public boolean isEmpty();
 
 	/* unique by remote address, remote port, local port and message id */
-	/**
-	 * 
-	 * @return
-	 */
 	@Override
 	public int hashCode();
 
-	/**
-	 * 
-	 * @param obj
-	 * @return
-	 */
 	@Override
 	public boolean equals(Object obj);
 

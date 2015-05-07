@@ -23,7 +23,10 @@ public class CoapBlockOption{
 	private boolean more;
 	private CoapBlockSize blockSize;
 	
-	
+	/**
+	 * Parse the block option from its serialized form
+	 * @param data The serialized form of the block option.
+	 */
 	public CoapBlockOption(byte[] data){
 		if (data.length <1 || data.length > 3){
 			throw new IllegalArgumentException("invalid block option");
@@ -44,6 +47,13 @@ public class CoapBlockOption{
 		number = (int) (val >> 4);
 	}
 	
+	
+	/**
+	 * Create new block option.
+	 * @param number
+	 * @param more
+	 * @param blockSize
+	 */
 	public CoapBlockOption(int number, boolean more, CoapBlockSize blockSize){
 		if (blockSize == null){
 			throw new IllegalArgumentException();

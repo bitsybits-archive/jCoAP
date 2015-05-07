@@ -29,7 +29,7 @@ import org.ws4d.coap.interfaces.CoapRequest;
 public interface ResourceServer {
 	
 	/**
-	 * creates a resource. resource must not exist.
+	 * Creates a resource. Resource must not exist.
 	 * @param resource The resource to be handled
 	 * @return false, if resource exists
 	 */

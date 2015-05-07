@@ -49,7 +49,7 @@ public interface CoapResource extends Resource {
 	public void removeObserver(CoapChannel channel);
 
 	/**
-	 * @return true if the resource is observable
+	 * @return true, if the resource is observable.
 	 */
 	public boolean isObservable();
 
@@ -60,7 +60,8 @@ public interface CoapResource extends Resource {
 	public int getObserveSequenceNumber();
 
 	/**
-	 * @return the unix time, when resource expires <br> -1, when resource never expires
+	 * @return The Unix time (in milliseconds), when resource expires. <br>
+	 * -1, when the resource never expires.
 	 */
 	public long expires();
 
