@@ -99,7 +99,18 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
         this.localPort = dgramChannel.socket().getLocalPort();
         dgramChannel.configureBlocking(false);
         
-        dgramChannel.join( InetAddress.getByName("224.0.0.1"), NetworkAdapter );
+        try {
+        	dgramChannel.join( InetAddress.getByName("224.0.1.187"), NetworkAdapter );
+        } catch(Exception e) {
+        	System.err.println("Interface not configured for IPv4! Cannot join Multicast Group!");
+        }
+        
+        try {
+        	dgramChannel.join( InetAddress.getByName("ff02::fd"), NetworkAdapter );
+        	dgramChannel.join( InetAddress.getByName("ff05::fd"), NetworkAdapter );
+        } catch(Exception e) {
+        	System.err.println("Interface not configured for IPv6! Cannot join Multicast Group!");
+        }
        
         workerThread = new WorkerThread();
         workerThread.start();
