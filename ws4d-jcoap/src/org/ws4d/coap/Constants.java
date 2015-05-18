@@ -54,6 +54,21 @@ public final class Constants {
 	 * See rfc7252 - 6.1. "coap URI Scheme" for further details.
 	 */
 	public final static int COAP_DEFAULT_PORT = 5683;
+	
+	/**
+	 * The all CoAP nodes IPv4 multicast address.
+	 */
+	public final static String COAP_ALL_NODES_IPV4_MC_ADDR = "224.0.1.187";
+	
+	/**
+	 * The all CoAP nodes link-local IPv6 multicast address.
+	 */
+	public final static String COAP_ALL_NODES_IPV6_LL_MC_ADDR = "ff02::fd";
+	
+	/**
+	 * The all CoAP nodes site-local IPv6 multicast address.
+	 */
+	public final static String COAP_ALL_NODES_IPV6_SL_MC_ADDR = "ff05::fd";
 
 	/**
 	 * This is the default value (in seconds) for the Max-Age Option. <br>

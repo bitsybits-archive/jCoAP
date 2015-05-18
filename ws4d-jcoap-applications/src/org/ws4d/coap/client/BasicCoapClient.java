@@ -56,6 +56,12 @@ public class BasicCoapClient implements CoapClient {
     	return true;
     }
     
+    public boolean connect( String server_addr, int port ){
+    	this.SERVER_ADDRESS = server_addr;
+    	this.PORT = port;
+    	return this.connect();
+    }
+    
     
     public CoapRequest createRequest( boolean reliable, CoapRequestCode reqCode ) {
     	return clientChannel.createRequest( reliable, reqCode );
