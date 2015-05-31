@@ -345,6 +345,10 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 					if( !mcResp ) {
 						logger.warn("Could not find channel of incomming response: message dropped");
 						return;
+					} else {
+						msg.setChannel( channel );
+						channel.handleMCResponse(msg, addr.getAddress(), addr.getPort() );
+						return;
 					}
 				}
 				

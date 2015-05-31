@@ -53,6 +53,14 @@ public interface CoapChannel {
 	 * @param message - the message to be handled
 	 */
 	public void handleMessage(CoapMessage message);
+	
+	/**
+	 * handles an incoming multicast response
+	 * @param message - the message to be handled
+	 * @param srcAddress - the source address of the multicast response
+	 * @param srcPort - the source port of the multicast response
+	 */
+	public void handleMCResponse(CoapMessage message, InetAddress srcAddress, int srcPort );
 
 	/* TODO: implement Error Type */
 	/**

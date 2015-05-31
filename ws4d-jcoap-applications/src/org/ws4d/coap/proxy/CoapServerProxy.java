@@ -154,6 +154,11 @@ public class CoapServerProxy implements CoapServer{
 	public void onSeparateResponseFailed(CoapServerChannel channel) {
 		// TODO Auto-generated method stub
 	}
+
+	@Override
+	public void onReset(CoapRequest lastRequest) {
+		System.out.println("Received RST message");
+	}
    
 }
 

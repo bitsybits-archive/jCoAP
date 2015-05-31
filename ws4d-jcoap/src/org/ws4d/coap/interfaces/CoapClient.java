@@ -15,6 +15,8 @@
 
 package org.ws4d.coap.interfaces;
 
+import java.net.InetAddress;
+
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
@@ -26,6 +28,15 @@ public interface CoapClient extends CoapChannelListener {
 	 * @param response - The {@link CoapResponse} that arrived.
 	 */
 	public void onResponse(CoapClientChannel channel, CoapResponse response);
+	
+	/**
+	 * This is a callback method which allows to handle a response to a multicast request at the application layer.
+	 * @param channel - The CoapClientChannel where the message arrived.
+	 * @param resonse - The CoapResponse that arrived
+	 * @param srcAddress - The IP address of the origin server of the response.
+	 * @param srcPort - The Port of the origin server.
+	 */
+	public void onMCResponse(CoapClientChannel channel, CoapResponse response, InetAddress srcAddress, int srcPort);
 
 	/**
 	 * This is a callback method which allows to handle a connection failure at the application layer.

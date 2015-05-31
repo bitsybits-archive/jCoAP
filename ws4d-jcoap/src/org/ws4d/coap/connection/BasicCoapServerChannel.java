@@ -123,6 +123,11 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 		}
 	}
 	
+	@Override
+	public void handleMCResponse(CoapMessage message, InetAddress srcAddress, int srcPort) {
+		System.err.println("ERROR: Received a response on a Server");
+	};
+	
     /*TODO: implement */
 	public void lostConnection(boolean notReachable, boolean resetByServer){
 		server.onSeparateResponseFailed(this);

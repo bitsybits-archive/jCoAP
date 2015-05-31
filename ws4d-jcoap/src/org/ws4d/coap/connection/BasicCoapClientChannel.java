@@ -139,6 +139,35 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		/* normal or separate response */
 		client.onResponse(this, (BasicCoapResponse) message);
 	}
+	
+	@Override
+	public void handleMCResponse(CoapMessage message, InetAddress srcAddress, int srcPort) {
+		
+		if (message.isRequest()){
+			/* this is a client channel, no requests allowed */
+			message.getChannel().sendMessage(new CoapEmptyMessage(CoapPacketType.RST, message.getMessageID()));
+			return;
+		}
+		
+		if (message.isEmpty() && message.getPacketType() == CoapPacketType.ACK){
+			/* this is the ACK of a separate response */
+			//TODO: implement a handler or listener, that informs a client when a sep. resp. ack was received
+			return;
+		}  
+		
+		if (message.getPacketType() == CoapPacketType.CON) {
+			/* this is a separate response */
+			/* send ACK */
+			this.sendMessage(new CoapEmptyMessage(CoapPacketType.ACK, message.getMessageID()));
+		} 
+		
+		if( message.getBlock1() != null || message.getBlock2() != null ){
+			//TODO: handle blockwise multicast transactions
+			System.err.println("ERROR: Received a blockwise response to a multicast request!");
+		} else {
+			client.onMCResponse(this, (BasicCoapResponse)message, srcAddress, srcPort);
+		}
+	}
 
 	@Override
 	public void lostConnection(boolean notReachable, boolean resetByServer) {

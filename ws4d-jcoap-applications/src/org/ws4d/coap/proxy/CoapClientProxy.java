@@ -18,6 +18,8 @@
  */
 package org.ws4d.coap.proxy;
 
+import java.net.InetAddress;
+
 import org.apache.log4j.Logger;
 import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapClient;
@@ -75,6 +77,11 @@ public class CoapClientProxy implements CoapClient{
 			context.setInCoapResponse(null); // null indicates no response
 			mapper.handleCoapClientResponse(context);
 		}
+	}
+
+	@Override
+	public void onMCResponse(CoapClientChannel channel, CoapResponse response, InetAddress srcAddress, int srcPort) {
+		System.out.println("Received Response");
 	}
 
 }

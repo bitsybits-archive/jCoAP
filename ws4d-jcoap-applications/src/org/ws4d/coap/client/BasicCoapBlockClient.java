@@ -56,4 +56,9 @@ public class BasicCoapBlockClient implements CoapClient {
 		System.out.println(response.toString());
 		System.out.println(new String(response.getPayload()));
 	}
+	
+	@Override
+	public void onMCResponse(CoapClientChannel channel, CoapResponse response, InetAddress srcAddress, int srcPort) {
+		System.out.println("Received response");
+	}
 }

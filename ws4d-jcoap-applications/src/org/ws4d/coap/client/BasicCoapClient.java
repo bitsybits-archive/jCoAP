@@ -105,4 +105,9 @@ public class BasicCoapClient implements CoapClient {
 	public void onResponse(CoapClientChannel channel, CoapResponse response) {
 		System.out.println("Received response");
 	}
+	
+	@Override
+	public void onMCResponse(CoapClientChannel channel, CoapResponse response, InetAddress srcAddress, int srcPort) {
+		System.out.println("Received response");
+	}
 }

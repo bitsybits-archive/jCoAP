@@ -80,5 +80,10 @@ public class SeparateResponseCoapServer implements CoapServer {
 		System.out.println("Separate Response failed");
 		
 	}
+
+	@Override
+	public void onReset(CoapRequest lastRequest) {
+		System.out.println("Received RST message");
+	}
 	
 }

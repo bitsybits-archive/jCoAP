@@ -220,4 +220,10 @@ public class PlugtestClient implements CoapClient{
 	    	System.exit(0);
 	    }
 	}
+
+	@Override
+	public void onMCResponse(CoapClientChannel channel, CoapResponse response, InetAddress srcAddress, int srcPort) {
+		System.out.println("Received Multicast Response");
+		
+	}
 }

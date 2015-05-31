@@ -33,7 +33,7 @@ import org.ws4d.coap.rest.CoapResourceServer;
 /**
  * Tests for jCoAP.
  *
- * @author Björn Butzin <bjoern.butzin[at]uni-rostock.de>
+ * @author Bjï¿½rn Butzin <bjoern.butzin[at]uni-rostock.de>
  */
 public class InterfaceTest {
 
@@ -46,6 +46,11 @@ public class InterfaceTest {
 	private class ClientDummy implements CoapClient {
 		@Override
 		public void onResponse(CoapClientChannel channel, CoapResponse response) {
+			// This is intended to be empty
+		}
+		
+		@Override
+		public void onMCResponse(CoapClientChannel channel, CoapResponse response, InetAddress srcAddress, int srcPort) {
 			// This is intended to be empty
 		}
 
