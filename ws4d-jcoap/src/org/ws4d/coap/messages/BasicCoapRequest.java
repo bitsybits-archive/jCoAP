@@ -89,9 +89,9 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 	public void setUriPath(String path) {
 		if (path == null) return;
 		
-		if (path.length() > CoapHeaderOption.MAX_LENGTH ){
-			throw new IllegalArgumentException("Uri-Path option too long");
-		}
+//		if (path.length() > CoapHeaderOption.MAX_LENGTH ){
+//			throw new IllegalArgumentException("Uri-Path option too long");
+//		}
 		
 		/* delete old options if present */
 		options.removeOption(CoapHeaderOptionType.Uri_Path);
@@ -102,7 +102,7 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 		for (String element : pathElements) {
 			/* check length */
 			if(element.length() < 0 || element.length() > CoapHeaderOption.MAX_LENGTH){
-				throw new IllegalArgumentException("Invalid Uri-Path");
+				throw new IllegalArgumentException("Invalid Uri-Path length!");
 			} else if (element.length() > 0){
 				/* ignore empty substrings */
 				options.addOption(CoapHeaderOptionType.Uri_Path, element.getBytes());

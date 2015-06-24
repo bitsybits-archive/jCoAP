@@ -560,7 +560,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	            longLength = 0;
 	        } else if ( value.length > 12 && value.length < 269 ){
 	            shortLength = 13;
-	            longLength = value.length - shortLength;	
+	            longLength = value.length - shortLength;
 	        } else {
 	        	shortLength = 14;
 	        	longLength = value.length - 269;
@@ -569,18 +569,16 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    
 	    public CoapHeaderOption(byte[] bytes, int offset, int lastOptionNumber){
 	    	int headerLength = 1;
-	    	int internalOffset = offset;
+
 	    	/* parse option type */
 	    	optionTypeValue = ((bytes[offset] & 0xF0) >> 4);
 	    	if( optionTypeValue == 13 ) {
 	    		optionTypeValue += bytes[offset + 1] + lastOptionNumber;
-	    		internalOffset++;
 	    		headerLength++;
 	    	} else if( optionTypeValue == 14 ) {
 	    		int part1 = ((bytes[offset + 1] & 0xFF) << 8);
 	    		int part2 = bytes[offset + 2];
 	    		optionTypeValue += part1 + part2 + lastOptionNumber;
-	    		internalOffset += 2;
 	    		headerLength += 2;
 	    	} else {
 	    		optionTypeValue += lastOptionNumber;
@@ -598,10 +596,13 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    	/* parse length */
 	    	shortLength = (bytes[offset] & 0x0F);
 			if ((bytes[offset] & 0x0F) == 13) {
+				longLength = ( bytes[offset + headerLength] & 0xFF ); 
 				headerLength++;
 			} else if( shortLength == 14 ) {
-				shortLength = bytes[offset] & 0x0F;
-				longLength = 0;
+				shortLength = 269;
+				int part1 = ((bytes[offset + headerLength] & 0xFF ) << 8 );
+				int part2 = (bytes[offset + headerLength + 1] & 0xFF );
+				longLength = part1 + part2;
 				headerLength += 2;
 			} else {
 				longLength = 0;
@@ -628,7 +629,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    }
 	    
 	    public boolean hasLongLength(){
-	    	if (shortLength == 15){
+	    	if (shortLength == 13 || shortLength == 14){
 	    		return true;
 	    	} else return false;
 	    }
@@ -700,7 +701,12 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 			}
 			
             if ( this.hasLongLength() ) {
-                data[arrayIndex++] = (byte) (this.getLongLength() & 0xFF);
+            	if( this.getShortLength() == 13 )
+            		data[arrayIndex++] = (byte) (this.getLongLength() & 0xFF);
+            	else if( this.getShortLength() == 14 ) {
+            		data[arrayIndex++] = (byte) ((this.getLongLength() & 0xFF00) >> 8 );
+            		data[arrayIndex++] = (byte) (this.getLongLength() & 0x00FF );
+            	}
             }
             
             byte[] value = this.getOptionData();
