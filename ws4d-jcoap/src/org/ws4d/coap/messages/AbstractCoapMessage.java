@@ -538,7 +538,8 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    int shortLength;
 	    int longLength;
 	    int deserializedLength;
-	    static final int MAX_LENGTH = 255;
+	    static final int MAX_SEGMENT_LENGTH = 255;
+	    static final int MAX_PROXI_URI_LENGTH = 1034;
 	
 	    public int getDeserializedLength() {
 			return deserializedLength;
@@ -652,9 +653,15 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    
 	    public int getSerializeLength(){
 	    	int serializedLength = optionData.length;
-	    	if (hasLongLength()){
-	    		serializedLength += 2;
+	    	if ( hasLongLength() ){
+	    		// If shortLength is 14, two extra length bytes follow the initial byte
+	    		if( shortLength == 14 )
+	    			serializedLength += 3;
+	    		// If shortLength is 13, only one extra length byte follows the initial byte
+	    		else
+	    			serializedLength += 2;
 	    	} else {
+	    		// If shortLength < 13, only the initial byte, containing 4 bit optionDelta and 4 bit option value length is added
 	    		serializedLength++;
 	    	}
 	    	

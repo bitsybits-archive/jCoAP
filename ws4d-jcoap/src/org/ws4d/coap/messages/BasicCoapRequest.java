@@ -65,7 +65,7 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 		if (options.optionExists(CoapHeaderOptionType.Uri_Host)){
 			throw new IllegalArgumentException("Uri-Host option already exists");
 		}
-		if (host.length() < 1 || host.length() > CoapHeaderOption.MAX_LENGTH){
+		if (host.length() < 1 || host.length() > CoapHeaderOption.MAX_SEGMENT_LENGTH){
 			throw new IllegalArgumentException("Invalid Uri-Host option length");
 		}
 		/*TODO: check if host is a valid address */
@@ -97,7 +97,7 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 		/* add a Uri Path option for each part */
 		for (String element : pathElements) {
 			/* check length */
-			if(element.length() < 0 || element.length() > CoapHeaderOption.MAX_LENGTH){
+			if(element.length() < 0 || element.length() > CoapHeaderOption.MAX_SEGMENT_LENGTH){
 				throw new IllegalArgumentException("Invalid Uri-Path length!");
 			} else if (element.length() > 0){
 				/* ignore empty substrings */
@@ -109,11 +109,7 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 	@Override
 	public void setUriQuery(String query) {
 		if (query == null) return;
-		
-		if (query.length() > CoapHeaderOption.MAX_LENGTH ){
-			throw new IllegalArgumentException("Uri-Query option too long");
-		}
-		
+				
 		/* delete old options if present */
 		options.removeOption(CoapHeaderOptionType.Uri_Query);
 		
@@ -122,8 +118,8 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 		/* add a Uri Path option for each part */
 		for (String element : pathElements) {
 			/* check length */
-			if(element.length() < 0 || element.length() > CoapHeaderOption.MAX_LENGTH){
-				throw new IllegalArgumentException("Invalid Uri-Path");
+			if(element.length() < 0 || element.length() > CoapHeaderOption.MAX_SEGMENT_LENGTH){
+				throw new IllegalArgumentException("Invalid Uri-Query");
 			} else if (element.length() > 0){
 				/* ignore empty substrings */
 				options.addOption(CoapHeaderOptionType.Uri_Query, element.getBytes());
@@ -144,8 +140,8 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 			throw new IllegalArgumentException("Proxy Uri must be at least one byte long");
 		}
 		
-		if (proxyUri.length() > CoapHeaderOption.MAX_LENGTH ){
-			throw new IllegalArgumentException("Proxy Uri longer then 270 bytes are not supported yet (to be implemented)");
+		if (proxyUri.length() > CoapHeaderOption.MAX_PROXI_URI_LENGTH ){
+			throw new IllegalArgumentException("Proxy Uri longer then 1034 bytes are not supported!");
 		}
 		
 		options.addOption(CoapHeaderOptionType.Proxy_Uri, proxyUri.getBytes());
