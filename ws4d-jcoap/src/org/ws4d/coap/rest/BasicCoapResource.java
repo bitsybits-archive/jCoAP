@@ -50,11 +50,18 @@ public class BasicCoapResource implements CoapResource {
 	Boolean reliableNotification = null;
 	
 	/** 
-	 * The Unix time (in milliseconds), when resource expires 
+	 * The Unix time (in milliseconds), when resource expires<br> 
 	 * -1, when resource never expires */
 	long expires = -1;
 
 	public BasicCoapResource(String path, byte[] value, CoapMediaType mediaType) {
+		path = path.trim();
+		String[] segments = path.split("/");
+		for(String segment : segments){
+			if(segment.getBytes().length > 255 ){
+				throw new IllegalArgumentException("Uri-Path too long");
+			}
+		}
 		this.path = path;
 		this.value = value;
 		this.mediaType = mediaType;

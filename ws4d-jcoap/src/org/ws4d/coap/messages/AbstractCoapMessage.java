@@ -538,7 +538,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    int shortLength;
 	    int longLength;
 	    int deserializedLength;
-	    static final int MAX_LENGTH = 270;
+	    static final int MAX_LENGTH = 255;
 	
 	    public int getDeserializedLength() {
 			return deserializedLength;
