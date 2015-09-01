@@ -42,6 +42,7 @@ public class BasicCoapResource implements CoapResource {
 	String resourceType = null;
 	HashMap<CoapChannel, CoapRequest> observer = new HashMap<CoapChannel, CoapRequest>();
 	boolean observable = false;
+	boolean deletable = false;
 	
 	/** MUST NOT be greater than 0xFFFF (2 byte integer) */
 	int observeSequenceNumber = 0;
@@ -200,7 +201,15 @@ public class BasicCoapResource implements CoapResource {
 	public int getObserveSequenceNumber() {
 		return observeSequenceNumber;
 	}
+	
+	public boolean isDeletable() {
+		return deletable;
+	}
 
+	public void setDeletable(boolean deletable) {
+		this.deletable = deletable;
+	}
+	
 	@Override
 	public long expires() {
 		return expires;

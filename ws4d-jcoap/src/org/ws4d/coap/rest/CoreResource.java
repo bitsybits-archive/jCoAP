@@ -159,6 +159,11 @@ public class CoreResource implements CoapResource {
 		return false;
 	}
 	
+	@Override
+	public boolean isDeletable() {
+		return false;
+	}
+	
 	public int getObserveSequenceNumber(){
 		return 0;
 	}

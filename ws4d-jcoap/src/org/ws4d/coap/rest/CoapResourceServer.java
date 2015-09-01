@@ -41,6 +41,7 @@ import org.ws4d.coap.messages.CoapResponseCode;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ * @author Björn Konieczek <bjoern.konieczek@uni-rostock.de>
  */
 public class CoapResourceServer implements CoapServer, ResourceServer {
     private  int port  = 0;
@@ -231,7 +232,7 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 		case DELETE:
 			/* CoAP: "A 2.02 (Deleted) response SHOULD be sent on
             success or in case the resource did not exist before the request.*/
-			if( resource != coreResource ) {
+			if( resource.isDeletable() ) {
 				deleteResource(targetPath);
 				response = channel.createResponse(request, CoapResponseCode.Deleted_202);
 			} else {

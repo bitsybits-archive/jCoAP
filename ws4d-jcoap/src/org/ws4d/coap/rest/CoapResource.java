@@ -52,6 +52,11 @@ public interface CoapResource extends Resource {
 	 * @return true, if the resource is observable.
 	 */
 	public boolean isObservable();
+	
+	/**
+	 * @return true, if the resource is deletable.
+	 */
+	public boolean isDeletable();
 
 	/**
 	 * if the resource is observable
