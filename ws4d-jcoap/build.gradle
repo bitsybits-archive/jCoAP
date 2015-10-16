@@ -10,7 +10,7 @@ sourceCompatibility = 1.7
 
 repositories {
 	mavenLocal()
-    jcenter()
+	jcenter()
 }
 
 dependencies {
@@ -19,15 +19,14 @@ dependencies {
 }
 
 sourceSets {
-    main {
-        java {
-            srcDir 'src/'
-        }
-    }
+	main {
+		java {
+			srcDir 'src/'
+		}
+	}
 	test {
 		java {
 			srcDir 'test/'
 		}
 	}
 }
-
