@@ -82,7 +82,7 @@ public class BasicResourceTest {
 		//FIXME: causes ConcurrentModificationException
 		for (String path : resourceServer.getResources().keySet()) {
 			if(path!="/.well-known/core"){
-				System.out.println(path);
+				//System.out.println(path);
 				resourceServer.deleteResource(path);
 			}
 		}
@@ -118,7 +118,7 @@ public class BasicResourceTest {
 	 * ########################################################################
 	 */
 
-	@Test(expected = Exception.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void invalidPathBadSeparatorResource() {
 		CoapResource res = new BasicCoapResource("\\", "".getBytes(),
 				CoapMediaType.text_plain);
@@ -127,15 +127,23 @@ public class BasicResourceTest {
 
 	@Test(expected = Exception.class)
 	public void invalidNameTooLongResource() {
-		CoapResource res = new BasicCoapResource("/shouldbetoolong",
+		String resourcename = "";
+		for(int i=0; i<256; i++){
+			resourcename += 'a';
+		}
+		CoapResource res = new BasicCoapResource("/"+resourcename,
 				"".getBytes(), CoapMediaType.text_plain);
 		resourceServer.createResource(res);
 	}
 
-	@Test(expected = Exception.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void invalidPathTooLongResource() {
+		String resourcename = "";
+		for(int i=0; i<256; i++){
+			resourcename += 'a';
+		}
 		CoapResource res = new BasicCoapResource(
-				"/1/2/3/4/5/6/7/8/9/0/1/2/3/4/5/6/7/8/9/0", "".getBytes(),
+				"/1/2/3/4/5/6/7/8/9/0/1/2/3/4/5/6/7/8/9/"+resourcename, "".getBytes(),
 				CoapMediaType.text_plain);
 		resourceServer.createResource(res);
 	}
@@ -164,7 +172,11 @@ public class BasicResourceTest {
 
 	@Test
 	public void validNameLongestResources() {
-		CoapResource res = new BasicCoapResource("/1234567890", "".getBytes(),
+		String resourcename = "";
+		for(int i=0; i<255; i++){
+			resourcename += 'a';
+		}
+		CoapResource res = new BasicCoapResource("/"+resourcename, "".getBytes(),
 				CoapMediaType.text_plain);
 		resourceServer.createResource(res);
 	}
