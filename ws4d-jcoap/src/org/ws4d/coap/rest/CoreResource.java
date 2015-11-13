@@ -35,9 +35,9 @@ public class CoreResource implements CoapResource {
     private final static String uriPath = "/.well-known/core";
     private HashMap<Resource, String> coreStrings = new HashMap<Resource, String>();
     ResourceServer serverListener = null; 
-    CoapResourceServer server = null;
+    ResourceServer server = null;
     
-    public CoreResource (CoapResourceServer server){
+    public CoreResource (ResourceServer server){
     	this.server = server;
     }
     

@@ -16,6 +16,7 @@
 package org.ws4d.coap.rest;
 
 import java.net.URI;
+import java.util.HashMap;
 
 import org.ws4d.coap.interfaces.CoapRequest;
 
@@ -73,4 +74,6 @@ public interface ResourceServer {
 	public URI getHostUri();
 
 	public void resourceChanged(Resource resource);
+	
+	public HashMap<String, Resource> getResources();
 }

@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 public class TimeoutHashMap<K, V> extends HashMap<Object, Object> {
+	
 
 	private static final long serialVersionUID = 4987370276778256858L;
 
@@ -117,14 +118,14 @@ public class TimeoutHashMap<K, V> extends HashMap<Object, Object> {
 	public Object clone() {
 		// TODO implement function
 		throw new IllegalStateException();
-		// return super.clone();
+//		 return super.clone();
 	}
 
 	@Override
 	public boolean containsKey(Object arg0) {
 		// TODO implement function
-		throw new IllegalStateException();
-		// return super.containsKey(arg0);
+//		throw new IllegalStateException();
+		 return super.containsKey(arg0);
 	}
 
 	@Override
