@@ -15,6 +15,8 @@
 
 package org.ws4d.coap.rest;
 
+import java.util.List;
+
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.messages.CoapMediaType;
@@ -23,55 +25,104 @@ import org.ws4d.coap.messages.CoapMediaType;
  * @author Nico Laum <nico.laum@uni-rostock.de>
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
-public interface CoapResource extends Resource {
-	/**
-	 * @return the CoAP Media Type
-	 */
-	public CoapMediaType getCoapMediaType();
+public interface CoapResource{
 
 	/**
-	 * called by the application, when the resource state changed -> used for
-	 * observation
+	 * Can be called to inform the resource about changed content.
 	 */
 	public void changed();
 
 	/**
-	 * called by the server to register a new observer
+	 * Adds an observer to this resource
+	 * 
 	 * @param request
-	 * @return false if resource is not observable
+	 *            - the client request to observe this resource
+	 * @return False if and only if the observer can not be added. <br>
+	 *         This might have several reasons e.g. that the resource is not
+	 *         observable.
 	 */
 	public boolean addObserver(CoapRequest request);
 
 	/**
-	 * removes an observer from the list
+	 * Removes an observer from this resource
+	 * 
 	 * @param channel
 	 */
 	public void removeObserver(CoapChannel channel);
 
 	/**
-	 * @return true, if the resource is observable.
-	 */
-	public boolean isObservable();
-	
-	/**
-	 * @return true, if the resource is deletable.
-	 */
-	public boolean isDeletable();
-
-	/**
-	 * if the resource is observable
-	 * @return
+	 * @return The last sequence number used for notification. Will not be
+	 *         greater than 0xFFFF (2 byte integer)
 	 */
 	public int getObserveSequenceNumber();
 
 	/**
-	 * @return The Unix time (in milliseconds), when resource expires. <br>
-	 * -1, when the resource never expires.
+	 * @return The Unix time (in milliseconds), when the resource expires. -1,
+	 *         when the resource never expires.
 	 */
 	public long expires();
 
 	/**
-	 * @return true, when the resource is expired
+	 * @return true if and only if the resource is expired
 	 */
 	public boolean isExpired();
+
+	/* ------------------------------------------------------------------*/
+    /**
+     * Get the MIME Type of the resource (e.g., "application/xml")
+     * @return The MIME Type of this resource as String.
+     */
+    public String getMimeType();
+
+    /**
+     * Get the unique name of this resource
+     * @return The unique name of the resource.
+     */
+    public String getPath();
+
+    public String getShortName();
+    
+    public boolean setValue(byte[] value);
+
+    public byte[] getValue();
+    
+	public byte[] getValue(List<String> query);
+    
+    //TODO: bad api: no return value
+    public boolean post(byte[] data);
+    
+	public void registerServerListener(ResourceServer server);
+	
+	public void unregisterServerListener(ResourceServer server);
+	/**
+	 * @return True, if and only if the resource is readable.
+	 */
+	public boolean isReadable();
+
+	/**
+	 * @return True, if and only if the resource is writable.
+	 */
+	public boolean isWriteable();
+
+	/**
+	 * @return True, if and only if the resource is observable.
+	 */
+	public boolean isObservable();
+
+	/**
+	 * @return True, if and only if the resource is delete-able.
+	 */
+	public boolean isDeletable();
+	
+	/**
+	 * @return the CoAP Media Type of this resource
+	 */
+	public CoapMediaType getCoapMediaType();
+	
+	
+    public String getResourceType();
+    
+    public String getInterfaceDescription();
+    
+    public int getSizeEstimate();
 }

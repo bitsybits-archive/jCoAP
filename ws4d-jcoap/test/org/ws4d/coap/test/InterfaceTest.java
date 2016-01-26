@@ -33,7 +33,7 @@ import org.ws4d.coap.rest.CoapResourceServer;
 /**
  * Tests for jCoAP.
  *
- * @author Bjï¿½rn Butzin <bjoern.butzin[at]uni-rostock.de>
+ * @author Björn Butzin <bjoern.butzin[at]uni-rostock.de>
  */
 public class InterfaceTest {
 
@@ -104,6 +104,7 @@ public class InterfaceTest {
 		}
 	}
 
+	@SuppressWarnings("synthetic-access")
 	@Before
 	public void setUp() {
 		// set up client

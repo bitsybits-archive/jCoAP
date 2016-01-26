@@ -554,6 +554,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	    		throw new IllegalArgumentException("Header option value MUST NOT be null");
 	    	}
 	    	
+	    	this.optionType = optionType;
 	        this.optionTypeValue = optionType.getValue();
 	        this.optionData = value;
 	        if (value.length < 13) {

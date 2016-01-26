@@ -16,7 +16,7 @@
 package org.ws4d.coap.rest;
 
 import java.net.URI;
-import java.util.HashMap;
+import java.util.Map;
 
 import org.ws4d.coap.interfaces.CoapRequest;
 
@@ -28,31 +28,38 @@ import org.ws4d.coap.interfaces.CoapRequest;
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 public interface ResourceServer {
-	
+
 	/**
 	 * Creates a resource. Resource must not exist.
-	 * @param resource The resource to be handled
+	 * 
+	 * @param resource
+	 *            The resource to be handled
 	 * @return false, if resource exists
 	 */
-	public boolean createResource(Resource resource);
+	public boolean createResource(CoapResource resource);
 
 	/**
 	 * @param path
-	 * @return resource at the given path. <br> null, if no resource exists
+	 * @return resource at the given path. <br>
+	 *         null, if no resource exists
 	 */
-	public Resource readResource(String path);
+	public CoapResource readResource(String path);
 
 	/**
-	 * Updates a resource. Resource must exist. Resource is NOT created.
+	 * Updates a resource. The resource must exist and is NOT created otherwise.
+	 * 
 	 * @param resource
+	 *            - the resource to be updated
 	 * @param request
 	 * @return false, if resource not exists
 	 */
-	public boolean updateResource(Resource resource, CoapRequest request);
+	public boolean updateResource(CoapResource resource, CoapRequest request);
 
 	/**
 	 * deletes the resource at path
-	 * @param path path of the resource to be deleted
+	 * 
+	 * @param path
+	 *            path of the resource to be deleted
 	 * @return false, if resource does not exist
 	 */
 	public boolean deleteResource(String path);
@@ -64,16 +71,31 @@ public interface ResourceServer {
 	public void start() throws Exception;
 
 	/**
-	 * Stops the ResourceServer.
+	 * Stops the ResourceServer. This usually closes network ports and makes the
+	 * resources unavailable through on the network.
 	 */
 	public void stop();
 
 	/**
-	 * @return the Host Uri
+	 * Can be used to obtain the current URI of this resource server.
+	 * 
+	 * @return the host URI of this resource server
 	 */
 	public URI getHostUri();
 
-	public void resourceChanged(Resource resource);
-	
-	public HashMap<String, Resource> getResources();
+	/**
+	 * This method can be used to inform the resource server about a changed
+	 * resource.
+	 * 
+	 * @param resource
+	 *            - the resource that has changed
+	 */
+	public void resourceChanged(CoapResource resource);
+
+	/**
+	 * This method is used to get all resources managed by the server.
+	 * 
+	 * @return A map of resource paths to the resource objects.
+	 */
+	public Map<String, CoapResource> getResources();
 }
