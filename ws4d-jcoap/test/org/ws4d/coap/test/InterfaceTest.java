@@ -39,27 +39,9 @@ public class InterfaceTest {
 
 	private static CoapResourceServer resourceServer;
 	private static CoapClientChannel clientChannel;
+	private static ClientDummy client;
 	private static CoapChannelManager channelManager;
-	private static ClientDummy clientDummy;
 	private static InetAddress inetAddress;
-
-	private class ClientDummy implements CoapClient {
-		@Override
-		public void onResponse(CoapClientChannel channel, CoapResponse response) {
-			// This is intended to be empty
-		}
-		
-		@Override
-		public void onMCResponse(CoapClientChannel channel, CoapResponse response, InetAddress srcAddress, int srcPort) {
-			// This is intended to be empty
-		}
-
-		@Override
-		public void onConnectionFailed(CoapClientChannel channel,
-				boolean notReachable, boolean resetByServer) {
-			// This is intended to be empty
-		}
-	}
 
 	// @Test //indicates a test method
 	// @Test(expected= IndexOutOfBoundsException.class) //indicates a test
@@ -73,26 +55,14 @@ public class InterfaceTest {
 	 * General Test preparations
 	 * ########################################################################
 	 */
-
 	@BeforeClass
 	public static void setUpClass() {
-		try {
-			inetAddress = InetAddress.getByName("127.0.0.1");
-		} catch (UnknownHostException e) {
-			System.err.println(e.getLocalizedMessage());
-		}
-
 		// set up server
 		if (resourceServer != null) {
 			resourceServer.stop();
 		}
 		resourceServer = new CoapResourceServer();
-		try {
-			resourceServer.start();
-		} catch (Exception e) {
-			System.err.println(e.getLocalizedMessage());
-			System.exit(-1);
-		}
+
 	}
 
 	@AfterClass
@@ -104,16 +74,23 @@ public class InterfaceTest {
 		}
 	}
 
-	@SuppressWarnings("synthetic-access")
 	@Before
 	public void setUp() {
 		// set up client
-		channelManager = BasicCoapChannelManager.getInstance();
-		clientDummy = new ClientDummy();
-		clientChannel = channelManager.connect(clientDummy, inetAddress,
-				Constants.COAP_DEFAULT_PORT);
-		if (clientChannel == null) {
-			System.err.println("Connect failed.");
+		try {
+			client = new ClientDummy();
+			clientChannel = BasicCoapChannelManager.getInstance()
+					.connect(client, InetAddress.getByName("127.0.0.1"), Constants.COAP_DEFAULT_PORT);
+		} catch (UnknownHostException e) {
+			System.err.println(e.getLocalizedMessage());
+			System.exit(-1);
+		}
+
+		// set up server
+		try {
+			resourceServer.start();
+		} catch (Exception e) {
+			System.err.println(e.getLocalizedMessage());
 			System.exit(-1);
 		}
 	}
@@ -123,18 +100,12 @@ public class InterfaceTest {
 		// tear down client
 		if (clientChannel != null) {
 			clientChannel.close();
-			channelManager = null;
+			clientChannel = null;
 		}
-		clientDummy = null;
+		client = null;
 
 		// reset server
-		//FIXME: causes ConcurrentModificationException
-		for (String path : resourceServer.getResources().keySet()) {
-			if(path!="/.well-known/core"){
-				System.out.println(path);
-				resourceServer.deleteResource(path);
-			}
-		}
+		resourceServer.stop();
 	}
 
 	/*
@@ -142,9 +113,38 @@ public class InterfaceTest {
 	 * Tests
 	 * ########################################################################
 	 * 
-	 * Considerations:
-	 * (/.well-known/core)
-	 * (GET / OBSERVE, POST, PUT, DELETE)
+	 * Considerations: (/.well-known/core) (GET / OBSERVE, POST, PUT, DELETE)
 	 * Blockwise Transfer
 	 */
+	
+	
+	
+	/*
+	 * ########################################################################
+	 * Client Dummy Class
+	 * ########################################################################
+	 */
+	
+	private class ClientDummy implements CoapClient {
+		
+		public ClientDummy(){
+			// This is intended to be empty
+		}
+
+		@Override
+		public void onResponse(CoapClientChannel channel, CoapResponse response) {
+			// This is intended to be empty
+		}
+
+		@Override
+		public void onMCResponse(CoapClientChannel channel, CoapResponse response, InetAddress srcAddress,
+				int srcPort) {
+			// This is intended to be empty
+		}
+
+		@Override
+		public void onConnectionFailed(CoapClientChannel channel, boolean notReachable, boolean resetByServer) {
+			// This is intended to be empty
+		}
+	}
 }

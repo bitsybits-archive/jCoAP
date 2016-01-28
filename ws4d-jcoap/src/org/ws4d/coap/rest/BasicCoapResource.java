@@ -26,6 +26,7 @@ import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.interfaces.CoapServerChannel;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapResponseCode;
+import org.ws4d.coap.tools.Encoder;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -42,11 +43,12 @@ public class BasicCoapResource implements CoapResource {
 	private CoapMediaType mediaType;
 	private String path;
 	private byte[] value;
-	private long expires = -1; // never expires
+	private long expires = -1; // -1 = never expires
 
 	// permissions
 	private boolean readable = true;
-	private boolean writable = true;
+	private boolean postable = true;
+	private boolean putable = true;
 	private boolean observable = true;
 	private boolean deletable = true;
 
@@ -57,18 +59,26 @@ public class BasicCoapResource implements CoapResource {
 	/** DEFAULT NULL: let the client decide **/
 	private Boolean reliableNotification = null;
 
-	public BasicCoapResource(String path, byte[] value, CoapMediaType mediaType) {
-		String[] segments = path.trim().split("/");
+	public BasicCoapResource(String path, String value, CoapMediaType mediaType) {
+		init(path, Encoder.StringToByte(value), mediaType);
+	}
+	
+	public BasicCoapResource(String path, byte[] value, CoapMediaType mediaType){
+		init(path, value, mediaType);
+	}
+	
+	private void init(String initPath, byte[] initValue, CoapMediaType initMediaType)throws IllegalArgumentException{
+		String[] segments = initPath.trim().split("/");
 		for (String segment : segments) {
 			if (segment.getBytes().length > 255) {
 				IllegalArgumentException e = new IllegalArgumentException("Uri-Path too long");
-				logger.warn("BasicCoapResource(" + path + "," + value + "," + mediaType + "): Uri-Path too long", e);
+				logger.info("Uri-Path too long: "+initPath, e);
 				throw e;
 			}
 		}
-		this.path = path;
-		this.value = value;
-		this.mediaType = mediaType;
+		this.path = initPath;
+		this.value = initValue;
+		this.mediaType = initMediaType;
 	}
 
 	public BasicCoapResource setCoapMediaType(CoapMediaType mediaType) {
@@ -92,6 +102,20 @@ public class BasicCoapResource implements CoapResource {
 		return getPath();
 	}
 
+	/**
+	 * Sets the value of the resource. Be aware to take care about the right
+	 * encoding!
+	 * 
+	 * @param value
+	 *            the value to be set
+	 * @return true if and only if the value was changed
+	 */
+	public boolean setValue(String value) {
+		this.value = Encoder.StringToByte(value);
+		this.changed();
+		return true;
+	}
+	
 	public boolean setValue(byte[] value) {
 		this.value = value;
 		this.changed();
@@ -103,12 +127,22 @@ public class BasicCoapResource implements CoapResource {
 	}
 
 	public byte[] getValue(List<String> query) {
+		// query string is ignored by intention
 		return this.value;
+	}
+	
+	public String getStringValue() {
+		return Encoder.ByteToString(this.value);
+	}
+
+	public String getStringValue(@SuppressWarnings("unused") List<String> query) {
+		// query string is ignored by intention
+		return Encoder.ByteToString(this.value);
 	}
 
 	/**
 	 * @param reliableNotification
-	 *            NULL = let the client decide
+	 * NULL = let the client decide
 	 */
 	public BasicCoapResource setReliableNotification(Boolean reliableNotification) {
 		this.reliableNotification = reliableNotification;
@@ -121,7 +155,7 @@ public class BasicCoapResource implements CoapResource {
 
 	@Override
 	public String toString() {
-		return getPath()+"\n"+getValue().toString(); 
+		return getPath()+"\n"+Encoder.ByteToString(getValue()); 
 	}
 
 	public boolean post(byte[] data) {
@@ -203,13 +237,14 @@ public class BasicCoapResource implements CoapResource {
 		return this.readable;
 	}
 
-	public BasicCoapResource setWritable(boolean writeable) {
-		this.writable = writeable;
+	public BasicCoapResource setPostable(boolean postable) {
+		this.postable = postable;
 		return this;
 	}
-
-	public boolean isWriteable() {
-		return this.writable;
+	
+	public BasicCoapResource setPutable(boolean putable) {
+		this.putable = putable;
+		return this;
 	}
 
 	public BasicCoapResource setObservable(boolean observable) {
@@ -250,5 +285,13 @@ public class BasicCoapResource implements CoapResource {
 
 	public int getSizeEstimate() {
 		return getValue().length;
+	}
+
+	public boolean isPostable() {
+		return this.postable;
+	}
+
+	public boolean isPutable() {
+		return this.putable;
 	}
 }

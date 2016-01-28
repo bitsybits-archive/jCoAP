@@ -16,7 +16,7 @@
 package org.ws4d.coap.rest;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
+import java.net.URLDecoder;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +24,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.ws4d.coap.messages.CoapMediaType;
+import org.ws4d.coap.tools.Encoder;
 
 /**
  * Well-Known CoRE support (rfc6690 - ietf-core-link-format)
@@ -40,27 +41,34 @@ public class CoreResource extends BasicCoapResource {
 	//parameter
 	private final static String uriPath = "/.well-known/core";
 	private final static CoapMediaType mediaType = CoapMediaType.link_format;
+	// stores the size of the last non-filtered core link string
 	private int lastSize = -1;
 
 	public CoreResource(ResourceServer server) {
-		super(uriPath, null, mediaType);
+		super(uriPath, "", mediaType);
 		this.setReadable(true);
-		this.setWritable(false);
+		this.setPostable(false);
+		this.setPutable(false);
 		this.setDeletable(false);
-		this.setObservable(false);
+		this.setObservable(true);
 		this.server = server;
 	}
 
 	@Override
 	public byte[] getValue() {
-		return buildCoreString(null).getBytes();
+		return Encoder.StringToByte(buildCoreString(null));
 	}
 	
 	@Override
 	public byte[] getValue(List<String> queries) {
-		return buildCoreString(queries).getBytes();
+		return Encoder.StringToByte(buildCoreString(queries));
 	}
 	
+	/**
+	 * Creates the core link format string out of the registered resources with respect to the query parameters.
+	 * @param queries - The list query strings to filter the results.
+	 * @return
+	 */
 	private String buildCoreString(List<String> queries) {
 		//set up filters
 		Set<String> rtFilter = new HashSet<String>();
@@ -68,20 +76,29 @@ public class CoreResource extends BasicCoapResource {
 		Set<String> hrefFilter = new HashSet<String>();
 		
 		if(null != queries){
-			// each query parameter can contain spaces (encoded as '%20') to separate individual values
-			// parameter values need to be split to test against them later
+			// query parameter needs to be decoded from URL encoding
 			for (String query : queries) {
-				if (query.startsWith("rt=")) for(String part : query.substring(3).split("%20")){rtFilter.add(part);}
-				if (query.startsWith("if=")) for(String part : query.substring(3).split("%20")){ifFilter.add(part);}
-				if (query.startsWith("href=")) for(String part : query.substring(5).split("%20")){hrefFilter.add(part);}
+				try {
+					query = URLDecoder.decode(query, "UTF-8");
+				} catch (UnsupportedEncodingException e) {
+					logger.warn("Can not decode query String: \""+query+"\"\n", e);
+					break;
+				}
+				// each query parameter can contain spaces to separate individual values
+				// parameter values need to be split to test against them later
+				if (query.startsWith("rt=")) for(String part : query.substring(3).split(" ")){rtFilter.add(part);}
+				if (query.startsWith("if=")) for(String part : query.substring(3).split(" ")){ifFilter.add(part);}
+				if (query.startsWith("href=")) for(String part : query.substring(5).split(" ")){hrefFilter.add(part);}
 			}
 		}
 		
 		Map<String, CoapResource> resources = this.server.getResources();
-		// used to optimize string builder behavior - '+' in the loop would render less optimal
+		// used to optimize string builder behavior; '+' as string append would render less optimal
 		StringBuilder returnString = new StringBuilder();
 		boolean first = true;
+		
 		for (CoapResource resource : resources.values()) {
+			// meets the filter?
 			if (	matchFilter(rtFilter, resource.getResourceType()) && 
 					matchFilter(ifFilter, resource.getInterfaceDescription()) &&
 					matchFilter(hrefFilter, resource.getPath())) {
@@ -92,21 +109,26 @@ public class CoreResource extends BasicCoapResource {
 				} else {
 					first = false;
 				}
+				// resource path
 				returnString.append("<");
 				returnString.append(resource.getPath());
 				returnString.append(">");
 				String tmp = null;
+				// resource description present?
 				if ((tmp = resource.getResourceType()) != null) {
 					returnString.append(";rt=\"");
 					returnString.append(tmp);
 					returnString.append("\"");
 				}
+				// interface description present?
 				if ((tmp = resource.getInterfaceDescription()) != null) {
 					returnString.append(";if=\"");
 					returnString.append(tmp);
 					returnString.append("\"");
 				}
-				if (resource.getSizeEstimate() > 1024) { //only display sz when larger than MTU; 1024 is MTU approx.
+				// size estimate to be displayed?
+				// only display sz when larger than MTU; 1024 is MTU approx.
+				if (resource.getSizeEstimate() > 1024) { 
 					returnString.append(";sz=\"");
 					returnString.append(resource.getSizeEstimate());
 					returnString.append("\"");
@@ -114,44 +136,48 @@ public class CoreResource extends BasicCoapResource {
 			}
 		}
 		String result = returnString.toString();
-		this.lastSize = result.length();
+		if(null == queries){
+			this.lastSize = result.length();
+		}
 		return result;
 	}
 	
+	/**
+	 * Checks if all words out of the filter set are contained in the string. Words in the filter set ending with '*' are assumed to be prefixes.
+	 * @param filterSet - The list of words to be contained in string.
+	 * @param string - The string to be checked against the filter set.
+	 * @return true if and only if all words and prefixes out of the filter set are contained in the string
+	 */
 	private static boolean matchFilter(Set<String> filterSet, String string){
+		// is there a filter
 		if(!filterSet.isEmpty()){
 			
-			//there is a filter, null can not match any filter
+			//null can not match any filter
 			if(null == string) return false; 
-			String encodedString = "";
-			Set<String> parts = new HashSet<String>();
-			// comparison is to be made with URL encoding
-			try {
-				encodedString = URLEncoder.encode(string, "UTF-8"); 
-			} catch (UnsupportedEncodingException e) {
-				logger.error("CoreRessource.matchFilter.URLEncoder.encode("+string+", UTF-8)", e);
-			}
-			// gather individual space (encoded as '+') separated entries
-			for(String part : encodedString.split("\\+")){parts.add(part);}
-						
+			
+			// gather individual space separated entries
+			Set<String> words = new HashSet<String>();
+			for(String word : string.split(" ")){words.add(word);}
+			
+			// every filter needs to be fulfilled
 			for(String filter : filterSet){
 				if(!filter.endsWith("*")){ // '*' at the end indicate prefix filter
-					//if no prefix filter
-					if(!parts.contains(filter))return false; //no match contained
+					//if no prefix filter -> compare full words
+					if(!words.contains(filter))return false; //no match contained
 				} else {
-					//if prefix filter
+					//if prefix filter -> compare if any word starts with prefix
 					boolean match = false;
-					for(String part : parts){ //any part matches the prefix-filter?
-						if(part.startsWith(filter.substring(0, filter.length()-1))){
+					for(String word : words){
+						if(word.startsWith(filter.substring(0, filter.length()-1))){
 							match = true;
 							break;
 						}
 					}
-					if(!match) return false; //no part has matched prefix-filter
+					if(!match) return false; //no word has matched the prefix-filter
 				}
 			} //go on with next filter
 		}
-		return true; // met all filters otherwise we would already have had returned false
+		return true; // met all filters otherwise we would already have returned false
 	}
 
 	@Override
@@ -165,9 +191,8 @@ public class CoreResource extends BasicCoapResource {
 		if (this.lastSize < 0) {
 			// only the case on startup
 			// otherwise the lastSize is set by the last call of buildCoreString
-			// lastSize need to be set to 0 to prevent infinite recursion
-			this.lastSize = 0;
-			buildCoreString(null);
+			this.lastSize = 0; // lastSize need to be set to 0 to prevent infinite recursion
+			buildCoreString(null); // init last size value
 		}
 		return this.lastSize;
 	}

@@ -48,6 +48,13 @@ public interface CoapChannelManager {
 	 * @param localPort
 	 */
 	public void createServerListener(CoapServer serverListener, int localPort);
+	
+	/**
+	 * removes a server socket listener for incoming connections
+	 * @param serverListener
+	 * @param localPort
+	 */
+	public void removeServerListener(CoapServer coapResourceServer, int port);
 
 	/**
 	 * called by a client to create a connection 

@@ -16,6 +16,8 @@
 package org.ws4d.coap.messages;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.Vector;
 
 import org.ws4d.coap.interfaces.CoapRequest;
@@ -180,26 +182,23 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
       	return (int)coapUint2Long(options.getOption(CoapHeaderOptionType.Uri_Port).getOptionData());
     }
     
-    @Override
-	public String getUriPath() {
-    	if (options.getOption(CoapHeaderOptionType.Uri_Path) == null){
-    		return null;
-    	}
-    	
+	@Override
+	public String getUriPath() throws IllegalArgumentException {
+		if (this.options.getOption(CoapHeaderOptionType.Uri_Path) == null) {
+			return null;
+		}
 		StringBuilder uriPathBuilder = new StringBuilder();
-		for (CoapHeaderOption option : options) {
-			if (option.getOptionType() == CoapHeaderOptionType.Uri_Path) {
-				String uriPathElement;
-				try {
-					uriPathElement = new String(option.getOptionData(), "UTF-8");
+		try {
+			for (CoapHeaderOption option : this.options) {
+				if (option.getOptionType() == CoapHeaderOptionType.Uri_Path) {
 					uriPathBuilder.append("/");
-					uriPathBuilder.append(uriPathElement);
-				} catch (UnsupportedEncodingException e) {
-					throw new IllegalArgumentException("Invalid Encoding");
+					uriPathBuilder.append(new String(option.getOptionData(), "UTF-8"));
 				}
 			}
+			return URLDecoder.decode(uriPathBuilder.toString(), "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new IllegalArgumentException("Invalid Encoding");
 		}
-		return uriPathBuilder.toString();
 	}
     
     @Override

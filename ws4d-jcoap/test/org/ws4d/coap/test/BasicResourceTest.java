@@ -54,12 +54,7 @@ public class BasicResourceTest {
 			resourceServer.stop();
 		}
 		resourceServer = new CoapResourceServer();
-		try {
-			resourceServer.start();
-		} catch (Exception e) {
-			System.err.println(e.getLocalizedMessage());
-			System.exit(-1);
-		}
+		
 	}
 
 	@AfterClass
@@ -73,23 +68,23 @@ public class BasicResourceTest {
 
 	@Before
 	public void setUp() {
-		// intentionally left blank
+		try {
+			resourceServer.start();
+		} catch (Exception e) {
+			System.err.println(e.getLocalizedMessage());
+			System.exit(-1);
+		}
 	}
 
 	@After
 	public void tearDown() {
-		// reset server
-		//FIXME: causes ConcurrentModificationException
-		for (String path : resourceServer.getResources().keySet()) {
-			if(path!="/.well-known/core"){
-				//System.out.println(path);
-				resourceServer.deleteResource(path);
-			}
-		}
+		resourceServer.stop();
 	}
 
 	/*
+	 * ########################################################################
 	 * Tests
+	 * ########################################################################
 	 */
 
 	@Test
@@ -98,12 +93,11 @@ public class BasicResourceTest {
 	}
 
 	/*
-	 * test percentage encoding
-	 * Path separator: (U+002F SOLIDUS "/") 
-	 * First Argument led by: (U+003F QUESTION MARK "?")
-	 * Argument separator: (U+0026 AMPERSAND "&") 
-	 * An empty path component is equivalent to an absolute path of "/"
-	 * The scheme and host are case insensitive and normally provided in lowercase
+	 * test percentage encoding Path separator: (U+002F SOLIDUS "/") First
+	 * Argument led by: (U+003F QUESTION MARK "?") Argument separator: (U+0026
+	 * AMPERSAND "&") An empty path component is equivalent to an absolute path
+	 * of "/" The scheme and host are case insensitive and normally provided in
+	 * lowercase
 	 * 
 	 * For example, the following three URIs are equivalent and cause the same
 	 * options and option values to appear in the CoAP messages:
@@ -118,32 +112,23 @@ public class BasicResourceTest {
 	 * ########################################################################
 	 */
 
-	@Test(expected = IllegalArgumentException.class)
-	public void invalidPathBadSeparatorResource() {
-		CoapResource res = new BasicCoapResource("\\", "".getBytes(),
-				CoapMediaType.text_plain);
-		resourceServer.createResource(res);
-	}
-
 	@Test(expected = Exception.class)
 	public void invalidNameTooLongResource() {
 		String resourcename = "";
-		for(int i=0; i<256; i++){
+		for (int i = 0; i < 256; i++) {
 			resourcename += 'a';
 		}
-		CoapResource res = new BasicCoapResource("/"+resourcename,
-				"".getBytes(), CoapMediaType.text_plain);
+		CoapResource res = new BasicCoapResource("/" + resourcename, "", CoapMediaType.text_plain);
 		resourceServer.createResource(res);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void invalidPathTooLongResource() {
 		String resourcename = "";
-		for(int i=0; i<256; i++){
+		for (int i = 0; i < 256; i++) {
 			resourcename += 'a';
 		}
-		CoapResource res = new BasicCoapResource(
-				"/1/2/3/4/5/6/7/8/9/0/1/2/3/4/5/6/7/8/9/"+resourcename, "".getBytes(),
+		CoapResource res = new BasicCoapResource("/1/2/3/4/5/6/7/8/9/0/1/2/3/4/5/6/7/8/9/" + resourcename, "",
 				CoapMediaType.text_plain);
 		resourceServer.createResource(res);
 	}
@@ -156,41 +141,31 @@ public class BasicResourceTest {
 
 	@Test
 	public void validPathShortestResources() {
-		//An empty path component is equivalent to an absolute path of "/"
-		CoapResource res = new BasicCoapResource("/test", "".getBytes(),
-				CoapMediaType.text_plain);
+		// An empty path component is equivalent to an absolute path of "/"
+		CoapResource res = new BasicCoapResource("/test", "", CoapMediaType.text_plain);
 		resourceServer.createResource(res);
 	}
-	
+
 	@Test
 	public void validPathRootResources() {
-		//An empty path component is equivalent to an absolute path of "/"
-		CoapResource res = new BasicCoapResource("/test", "".getBytes(),
-				CoapMediaType.text_plain);
+		// An empty path component is equivalent to an absolute path of "/"
+		CoapResource res = new BasicCoapResource("/test", "", CoapMediaType.text_plain);
 		resourceServer.createResource(res);
 	}
 
 	@Test
 	public void validNameLongestResources() {
 		String resourcename = "";
-		for(int i=0; i<255; i++){
+		for (int i = 0; i < 255; i++) {
 			resourcename += 'a';
 		}
-		CoapResource res = new BasicCoapResource("/"+resourcename, "".getBytes(),
-				CoapMediaType.text_plain);
+		CoapResource res = new BasicCoapResource("/" + resourcename, "", CoapMediaType.text_plain);
 		resourceServer.createResource(res);
 	}
 
 	@Test
 	public void validPathLongestResources() {
-		CoapResource res = new BasicCoapResource("/1/2/3/4/5", "".getBytes(),
-				CoapMediaType.text_plain);
+		CoapResource res = new BasicCoapResource("/1/2/3/4/5", "", CoapMediaType.text_plain);
 		resourceServer.createResource(res);
 	}
-
-	/*
-	 * ########################################################################
-	 * CoreResource (/.well-known/core)
-	 * ########################################################################
-	 */
 }

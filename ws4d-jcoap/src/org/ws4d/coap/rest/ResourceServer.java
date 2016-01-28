@@ -1,4 +1,4 @@
-/* Copyright 2015 University of Rostock
+/* Copyright 2016 University of Rostock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.ws4d.coap.interfaces.CoapRequest;
  * 
  * @author Nico Laum <nico.laum@uni-rostock.de>
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ * @author Björn Butzin <bjoern.butzin@uni-rostock.de>
  */
 public interface ResourceServer {
 
@@ -43,7 +44,7 @@ public interface ResourceServer {
 	 * @return resource at the given path. <br>
 	 *         null, if no resource exists
 	 */
-	public CoapResource readResource(String path);
+	public CoapResource getResource(String path);
 
 	/**
 	 * Updates a resource. The resource must exist and is NOT created otherwise.
@@ -98,4 +99,14 @@ public interface ResourceServer {
 	 * @return A map of resource paths to the resource objects.
 	 */
 	public Map<String, CoapResource> getResources();
+
+	/**
+	 * Defines if the server will create resources on remote requests
+	 * 
+	 * @param allow
+	 *            set to true if you want to allow the creation of resources,
+	 *            false otherwise
+	 * @return true - if and only if successful
+	 */
+	public boolean allowRemoteResourceCreation(boolean allow);
 }

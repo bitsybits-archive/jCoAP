@@ -119,6 +119,16 @@ public class BasicCoapChannelManager implements CoapChannelManager {
 			throw new IllegalStateException("address already in use");
 		}
 	}
+	
+	public void removeServerListener(CoapServer listener, int localPort) {
+		if (this.socketMap.containsKey(localPort)) {
+			SocketInformation socketInfo = this.socketMap.get(localPort);
+			if(socketInfo.serverListener.equals(listener)){
+				socketInfo.socketHandler.close();
+				this.socketMap.remove(localPort);
+			}
+		}
+	}
 
 	@Override
 	public CoapClientChannel connect(CoapClient client, InetAddress addr,
