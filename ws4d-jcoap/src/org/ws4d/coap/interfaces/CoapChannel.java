@@ -30,7 +30,6 @@ public interface CoapChannel {
 	 */
 	public void sendMessage(CoapMessage msg);
 
-	/* TODO: close when finished, & abort() */
 	/**
 	 * 
 	 */

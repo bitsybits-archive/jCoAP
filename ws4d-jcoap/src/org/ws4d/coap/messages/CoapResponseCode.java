@@ -21,7 +21,6 @@ package org.ws4d.coap.messages;
  * @author Bjoern Konieczek <bjoern.konieczek@uni-rostock.de>
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
-
 public enum CoapResponseCode {
 	
 	//Success 2.xx
@@ -31,7 +30,7 @@ public enum CoapResponseCode {
 	Changed_204(68), 
 	Content_205(69),
 	
-	//FIXME: Where is it defined? NOT part of rfc7252!
+	//Block-wise transfers in CoAP draft-ietf-core-block-18
 	Continue_231(95),
 	
 	//Client Error 4.xx
@@ -42,6 +41,7 @@ public enum CoapResponseCode {
 	Not_Found_404(132), 
 	Method_Not_Allowed_405(133),
 	Not_Acceptable_406(134),
+	//TODO correct? Request_Entity_Incomplete_408(?136?),
 	Precondition_Failed_412(140), 
 	Request_Entity_To_Large_413(141), 
 	Unsupported_Media_Type_415(143), 
@@ -102,9 +102,8 @@ public enum CoapResponseCode {
 		default:
 			if (codeValue >= 64 && codeValue <= 191) {
 				return UNKNOWN;
-			} else {
-				throw new IllegalArgumentException("Invalid Response Code");
 			}
+			throw new IllegalArgumentException("Invalid Response Code");
 		}
 	}
 
@@ -112,37 +111,7 @@ public enum CoapResponseCode {
 	 * @return The codeValue of the ENUM element.
 	 */
 	public int getValue() {
-		return code;
-	}
-
-	//FIXME: can be removed as it is the same as the super implementation
-	@Override
-	public String toString() {
-		switch (this) {
-		case Created_201: return "Created_201";
-		case Deleted_202: return "Deleted_202";
-		case Valid_203: return "Valid_203";
-		case Changed_204: return "Changed_204";
-		case Content_205: return "Content_205";
-		case Continue_231: return "Continue_231";
-		case Bad_Request_400: return "Bad_Request_400";
-		case Unauthorized_401: return "Unauthorized_401";
-		case Bad_Option_402: return "Bad_Option_402";
-		case Forbidden_403: return "Forbidden_403";
-		case Not_Found_404: return "Not_Found_404";
-		case Method_Not_Allowed_405: return "Method_Not_Allowed_405";
-		case Not_Acceptable_406: return "Not_Acceptable_406";
-		case Precondition_Failed_412: return "Precondition_Failed_412";
-		case Request_Entity_To_Large_413: return "Request_Entity_To_Large_413";
-		case Unsupported_Media_Type_415: return "Unsupported_Media_Type_415";
-		case Internal_Server_Error_500: return "Internal_Server_Error_500";
-		case Not_Implemented_501: return "Not_Implemented_501";
-		case Bad_Gateway_502: return "Bad_Gateway_502";
-		case Service_Unavailable_503: return "Service_Unavailable_503";
-		case Gateway_Timeout_504: return "Gateway_Timeout_504";
-		case Proxying_Not_Supported_505: return "Proxying_Not_Supported_505";
-		default: return "Unknown_Response_Code";
-		}
+		return this.code;
 	}
 }
 

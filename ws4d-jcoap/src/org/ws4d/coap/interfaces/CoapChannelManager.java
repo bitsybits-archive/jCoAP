@@ -63,7 +63,6 @@ public interface CoapChannelManager {
 	 * @param port
 	 * @return
 	 */
-	// TODO: (solved?) allow client to bind to a special port
 	public CoapClientChannel connect(CoapClient client, InetAddress addr,
 			int port);
 

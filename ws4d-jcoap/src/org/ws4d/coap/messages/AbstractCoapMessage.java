@@ -25,6 +25,7 @@ import org.apache.log4j.Logger;
 import org.ws4d.coap.connection.BasicCoapChannelManager;
 import org.ws4d.coap.interfaces.CoapChannel;
 import org.ws4d.coap.interfaces.CoapMessage;
+import org.ws4d.coap.tools.Encoder;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -178,6 +179,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         /* copy serialized options to the final array */
         int offset = HEADER_LENGTH + tokenLength;
         for (int i = 0; i < optionsLength; i++)
+        	//FIXME optionsArray may be null
         	serializedPacket[i + offset] = optionsArray[i];
         
         /* insert payload marker */
@@ -237,10 +239,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
     @Override    
     public CoapMediaType getContentType(){
     	CoapHeaderOption option = options.getOption(CoapHeaderOptionType.Content_Format);
-    	if (option == null){
-    		/* not content type TODO: return UNKNOWN ?*/
-    		return null;
-    	}
+    	if (option == null) return CoapMediaType.UNKNOWN;
     	/* no need to check length, CoapMediaType parse function will do*/
     	int mediaTypeCode = (int) coapUint2Long(options.getOption(CoapHeaderOptionType.Content_Format).getOptionData());
     	return CoapMediaType.parse(mediaTypeCode);
@@ -679,6 +678,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	
 	    @Override
 	    public String toString() {
+	    	String test = Encoder.ByteToString(optionData);
 	        char[] printableOptionValue = new char[optionData.length];
 	        for (int i = 0; i < optionData.length; i++)
 	            printableOptionValue[i] = (char) optionData[i];

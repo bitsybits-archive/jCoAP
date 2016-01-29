@@ -36,7 +36,7 @@ public enum CoapRequestCode {
 	 * @return The method code of the ENUM element.
 	 */
 	public int getValue() {
-		return code;
+		return this.code;
 	}
 
 	/**
@@ -54,20 +54,4 @@ public enum CoapRequestCode {
 			throw new IllegalArgumentException("Invalid Request Code");
 		}
 	}
-
-	//TODO can be removed as it is the same as the super implementation
-//	@Override
-//	public String toString() {
-//		switch (this) {
-//		case GET:
-//			return "GET";
-//		case POST:
-//			return "POST";
-//		case PUT:
-//			return "PUT";
-//		case DELETE:
-//			return "DELETE";
-//		}
-//		return null;
-//	}
 }

@@ -397,6 +397,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 						return;
 					} else {
 						msg.setChannel( channel );
+						//FIXME channel may be null
 						channel.handleMCResponse(msg, addr.getAddress(), addr.getPort() );
 						return;
 					}

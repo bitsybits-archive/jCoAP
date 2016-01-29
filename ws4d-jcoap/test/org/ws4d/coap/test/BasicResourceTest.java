@@ -26,20 +26,11 @@ import org.ws4d.coap.rest.CoapResource;
 import org.ws4d.coap.rest.CoapResourceServer;
 
 /**
- * Tests for jCoAP.
- *
  * @author Björn Butzin <bjoern.butzin[at]uni-rostock.de>
  */
 public class BasicResourceTest {
 
 	private static CoapResourceServer resourceServer;
-
-	// @Test //indicates a test method
-	// @Test(expected= IndexOutOfBoundsException.class) //indicates a test
-	// method expecting an exception
-	// @Test(timeout=1000) //indicates a test method that fails after 1000
-	// milliseconds execution time
-	// org.junit.Assert.* // compare result & expectation
 
 	/*
 	 * ########################################################################
@@ -84,6 +75,12 @@ public class BasicResourceTest {
 	/*
 	 * ########################################################################
 	 * Tests
+	 * 
+	 * @Test
+	 * @Test(expected= IndexOutOfBoundsException.class)
+	 * @Test(timeout=1000) - fails after 1000 milliseconds
+	 * org.junit.Assert.* - compare result & expectation
+	 * 
 	 * ########################################################################
 	 */
 

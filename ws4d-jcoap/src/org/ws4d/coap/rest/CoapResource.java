@@ -22,6 +22,9 @@ import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.messages.CoapMediaType;
 
 /**
+ * A CoapResource takes care of the resources content, its permissions and observers.
+ * In order to be served over a network connection it needs to be added to a {@link ResourceServer}
+ * 
  * @author Nico Laum <nico.laum@uni-rostock.de>
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Björn Butzin <bjoern.butzin@uni-rostock.de>

@@ -20,35 +20,33 @@ import java.net.UnknownHostException;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.ws4d.coap.Constants;
 import org.ws4d.coap.connection.BasicCoapChannelManager;
-import org.ws4d.coap.interfaces.CoapChannelManager;
 import org.ws4d.coap.interfaces.CoapClient;
 import org.ws4d.coap.interfaces.CoapClientChannel;
+import org.ws4d.coap.interfaces.CoapRequest;
 import org.ws4d.coap.interfaces.CoapResponse;
+import org.ws4d.coap.messages.CoapMediaType;
+import org.ws4d.coap.messages.CoapRequestCode;
+import org.ws4d.coap.rest.BasicCoapResource;
 import org.ws4d.coap.rest.CoapResourceServer;
-
+import org.ws4d.coap.tools.Encoder;
 /**
- * Tests for jCoAP.
- *
  * @author Björn Butzin <bjoern.butzin[at]uni-rostock.de>
  */
 public class InterfaceTest {
 
 	private static CoapResourceServer resourceServer;
 	private static CoapClientChannel clientChannel;
-	private static ClientDummy client;
-	private static CoapChannelManager channelManager;
-	private static InetAddress inetAddress;
+	private ClientDummy client;
+	//private static CoapChannelManager channelManager;
+	//private static InetAddress inetAddress;
 
-	// @Test //indicates a test method
-	// @Test(expected= IndexOutOfBoundsException.class) //indicates a test
-	// method expecting an exception
-	// @Test(timeout=1000) //indicates a test method that fails after 1000
-	// milliseconds execution time
-	// org.junit.Assert.* // compare result & expectation
+	static CoapResponse receivedResponse = null;
 
 	/*
 	 * ########################################################################
@@ -62,7 +60,6 @@ public class InterfaceTest {
 			resourceServer.stop();
 		}
 		resourceServer = new CoapResourceServer();
-
 	}
 
 	@AfterClass
@@ -77,15 +74,15 @@ public class InterfaceTest {
 	@Before
 	public void setUp() {
 		// set up client
+		receivedResponse = null;
+		this.client = new ClientDummy();
 		try {
-			client = new ClientDummy();
 			clientChannel = BasicCoapChannelManager.getInstance()
-					.connect(client, InetAddress.getByName("127.0.0.1"), Constants.COAP_DEFAULT_PORT);
+					.connect(this.client, InetAddress.getByName("127.0.0.1"), Constants.COAP_DEFAULT_PORT);
 		} catch (UnknownHostException e) {
 			System.err.println(e.getLocalizedMessage());
 			System.exit(-1);
 		}
-
 		// set up server
 		try {
 			resourceServer.start();
@@ -102,8 +99,7 @@ public class InterfaceTest {
 			clientChannel.close();
 			clientChannel = null;
 		}
-		client = null;
-
+		this.client = null;
 		// reset server
 		resourceServer.stop();
 	}
@@ -111,12 +107,67 @@ public class InterfaceTest {
 	/*
 	 * ########################################################################
 	 * Tests
+	 * 
+	 * @Test
+	 * @Test(expected= IndexOutOfBoundsException.class)
+	 * @Test(timeout=1000) - fails after 1000 milliseconds
+	 * org.junit.Assert.* - compare result & expectation
+	 * 
 	 * ########################################################################
 	 * 
-	 * Considerations: (/.well-known/core) (GET / OBSERVE, POST, PUT, DELETE)
-	 * Blockwise Transfer
+	 * (/.well-known/core)
+	 * 		full query
+	 * 		query filter
+	 * 			rt - single multiple
+	 * 			if - single multiple
+	 * 			href - single multiple
+	 * 			combinations
+	 * 	encoding
+	 * 		äöüß + % 
+	 * 	GET
+	 * 		without eTag
+	 * 		with eTag
+	 * 			matching
+	 * 			non matching
+	 * 	POST
+	 * 	PUT
+	 * 		If-Match
+	 * 		If-Non-Match
+	 * 	DELETE
 	 */
 	
+	@Test
+	public void wellKnownFull() throws InterruptedException {
+		resourceServer.createResource(new BasicCoapResource("/resource1","content1", CoapMediaType.text_plain)
+				.setResourceType("resource1Type")
+				.setInterfaceDescription("resource1Description"));
+		
+		CoapRequest request = clientChannel.createRequest(true, CoapRequestCode.GET);
+		request.setUriPath("/.well-known/core");
+		clientChannel.sendMessage(request);
+		
+		while(null == receivedResponse) Thread.sleep(10);
+	
+		Assert.assertEquals("</.well-known/core>,</resource1>;rt=\"resource1Type\";if=\"resource1Description\"", Encoder.ByteToString(receivedResponse.getPayload()));
+	}
+	
+	@Test
+	public void wellKnownRT() throws InterruptedException {
+		resourceServer.createResource(new BasicCoapResource("/resource1","content1", CoapMediaType.text_plain)
+				.setResourceType("resource1Type")
+				.setInterfaceDescription("resource1Description"));
+		resourceServer.createResource(new BasicCoapResource("/resource2","content2", CoapMediaType.text_plain)
+				.setResourceType("resource2Type")
+				.setInterfaceDescription("resource2Description"));
+		
+		CoapRequest request = clientChannel.createRequest(true, CoapRequestCode.GET);
+		request.setUriPath("/.well-known/core?rt=resource1Type");
+		clientChannel.sendMessage(request);
+		
+		while(null == receivedResponse) Thread.sleep(10);
+	
+		Assert.assertEquals("</resource1>;rt=\"resource1Type\";if=\"resource1Description\"", Encoder.ByteToString(receivedResponse.getPayload()));
+	}
 	
 	
 	/*
@@ -126,25 +177,24 @@ public class InterfaceTest {
 	 */
 	
 	private class ClientDummy implements CoapClient {
-		
-		public ClientDummy(){
+
+		public ClientDummy() {
 			// This is intended to be empty
 		}
 
-		@Override
-		public void onResponse(CoapClientChannel channel, CoapResponse response) {
-			// This is intended to be empty
-		}
 
-		@Override
 		public void onMCResponse(CoapClientChannel channel, CoapResponse response, InetAddress srcAddress,
 				int srcPort) {
 			// This is intended to be empty
 		}
 
-		@Override
+
 		public void onConnectionFailed(CoapClientChannel channel, boolean notReachable, boolean resetByServer) {
 			// This is intended to be empty
+		}
+
+		public void onResponse(CoapClientChannel channel, CoapResponse response) {
+			InterfaceTest.receivedResponse = response;
 		}
 	}
 }

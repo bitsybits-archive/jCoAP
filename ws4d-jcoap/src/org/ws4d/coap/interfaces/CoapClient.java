@@ -20,7 +20,7 @@ import java.net.InetAddress;
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
-public interface CoapClient extends CoapChannelListener {
+public interface CoapClient{
 
 	/**
 	 * This is a callback method which allows to handle a response at the application layer.

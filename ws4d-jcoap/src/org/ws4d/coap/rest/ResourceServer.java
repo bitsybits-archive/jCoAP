@@ -19,16 +19,16 @@ import java.net.URI;
 import java.util.Map;
 
 import org.ws4d.coap.interfaces.CoapRequest;
+import org.ws4d.coap.interfaces.CoapServer;
 
 /**
- * A ResourceServer provides network access to resources via a network protocol
- * such as HTTP or CoAP.
+ * A ResourceServer manages resources, takes care of resource permissions and handles GET, POST, PUT and DELETE requests.
  * 
  * @author Nico Laum <nico.laum@uni-rostock.de>
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Björn Butzin <bjoern.butzin@uni-rostock.de>
  */
-public interface ResourceServer {
+public interface ResourceServer extends CoapServer {
 
 	/**
 	 * Creates a resource. Resource must not exist.
@@ -66,13 +66,13 @@ public interface ResourceServer {
 	public boolean deleteResource(String path);
 
 	/**
-	 * Start the ResourceServer. This usually opens network ports and makes the
+	 * Start the ResourceServer. This usually opens network connections and makes the
 	 * resources available through a certain network protocol.
 	 */
 	public void start() throws Exception;
 
 	/**
-	 * Stops the ResourceServer. This usually closes network ports and makes the
+	 * Stops the ResourceServer. This usually closes network connections and makes the
 	 * resources unavailable through on the network.
 	 */
 	public void stop();

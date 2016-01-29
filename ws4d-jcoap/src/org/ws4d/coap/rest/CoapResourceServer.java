@@ -44,7 +44,7 @@ import org.ws4d.coap.messages.CoapResponseCode;
  * @author Björn Konieczek <bjoern.konieczek@uni-rostock.de>
  * @author Björn Butzin <bjoern.butzin@uni-rostock.de>
  */
-public class CoapResourceServer implements CoapServer, ResourceServer {
+public class CoapResourceServer implements ResourceServer {
 	private final static Logger logger = Logger.getLogger(CoapResourceServer.class);
 	private int port = 0;
 	private Map<String, byte[]> etags = new HashMap<String, byte[]>();
@@ -141,6 +141,7 @@ public class CoapResourceServer implements CoapServer, ResourceServer {
 		this.resources.clear();
 		this.etags.clear();
 		this.coreResource = null;
+		//FIXME causes java.nio.channels.ClosedChannelException when starting the server again
 		BasicCoapChannelManager.getInstance().removeServerListener(this, this.port);
 	}
 

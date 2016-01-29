@@ -66,6 +66,6 @@ public enum CoapPacketType {
 	 * @return The packetType of the ENUM element.
 	 */
 	public int getValue() {
-		return packetType;
+		return this.packetType;
 	}
 }

@@ -115,7 +115,6 @@ public class BasicCoapChannelManager implements CoapChannelManager {
 				e.printStackTrace();
 			}
 		} else {
-			/* TODO: (solved?) raise exception: address already in use */
 			throw new IllegalStateException("address already in use");
 		}
 	}
