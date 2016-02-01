@@ -678,7 +678,6 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	
 	    @Override
 	    public String toString() {
-	    	String test = Encoder.ByteToString(optionData);
 	        char[] printableOptionValue = new char[optionData.length];
 	        for (int i = 0; i < optionData.length; i++)
 	            printableOptionValue[i] = (char) optionData[i];

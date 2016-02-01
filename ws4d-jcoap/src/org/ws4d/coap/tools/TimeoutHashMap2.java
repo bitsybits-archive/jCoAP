@@ -15,99 +15,116 @@
 
 package org.ws4d.coap.tools;
 
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.PriorityBlockingQueue;
 
 public class TimeoutHashMap2<K, V> implements Map<K, V> {
 
-	private PriorityBlockingQueue<TimedEntry<K>> timequeue = new PriorityBlockingQueue<TimedEntry<K>>();
-	private Map<K, V> map = new Hashtable<K, V>();
+	private Map<K, TimedEntry<V>> map = new Hashtable<K, TimedEntry<V>>();
+	// the timeout of every new entry
 	private Long timeout;
-	private Timer timer = new Timer(this.timequeue,this.map);
-	private Thread thread = new Thread(this.timer);
+	// this timer calls the update method when the next entry is timed out
+	private Thread thread = new Thread(new TimeoutHashMapTimer(this));
 
-	public TimeoutHashMap2(long timeout){
+	public TimeoutHashMap2(long timeout) {
 		this.timeout = timeout;
-	}
-	
-	public void clear() {
-		this.map.clear();
-		this.timequeue.clear();
+		this.thread.start();
 	}
 
-	public boolean containsKey(Object key) {
+	public synchronized void clear() {
+		this.map.clear();
+	}
+
+	public synchronized boolean containsKey(Object key) {
 		return this.map.containsKey(key);
 	}
 
-	public boolean containsValue(Object value) {
-		return this.map.containsValue(value);
+	public synchronized boolean containsValue(Object value) {
+		for (TimedEntry<V> entry : this.map.values()) {
+			if (entry.getValue().equals(value)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
-	public Set<java.util.Map.Entry<K, V>> entrySet() {
-		return this.map.entrySet();
+	public synchronized Set<java.util.Map.Entry<K, V>> entrySet() {
+		Set<Entry<K, V>> set = new HashSet<Entry<K, V>>();
+		for (Entry<K, TimedEntry<V>> entry : this.map.entrySet()) {
+			set.add(new AbstractMap.SimpleEntry<K, V>(entry.getKey(), entry.getValue().getValue()));
+		}
+		return set;
 	}
 
-	public V get(Object key) {
-		return this.map.get(key);
+	public synchronized V get(Object key) {
+		return this.map.get(key).getValue();
 	}
 
-	public boolean isEmpty() {
+	public synchronized boolean isEmpty() {
 		return this.map.isEmpty();
 	}
 
-	public Set<K> keySet() {
+	public synchronized Set<K> keySet() {
 		return this.map.keySet();
 	}
 
-	public V put(K key, V value) {
-		
-		Long expires = System.currentTimeMillis() + this.timeout;
-		if (this.map.containsKey(key)) {
-			for (TimedEntry<K> entry : this.timequeue) {
-				if (entry.getValue().equals(key)) {
-					entry.setExpires(expires);
-				}
-			}
-		} else {
-			this.timequeue.add(new TimedEntry<K>(expires, key));
-		}
-		if(!this.thread.isAlive()){
-			this.thread.start();
-		} else {
-			this.thread.interrupt();
-		}
-		return this.map.put(key, value);
+	public synchronized V put(K key, V value) {
+		TimedEntry<V> entry = this.map.put(key, new TimedEntry<V>(System.currentTimeMillis() + this.timeout, value));
+		V old = null != entry ? entry.getValue() : null;
+		// important to wake the timer, especially if map was empty before
+		this.thread.interrupt();
+		return old;
 	}
 
-	public void putAll(Map<? extends K, ? extends V> m) {
+	public synchronized void putAll(Map<? extends K, ? extends V> m) {
 		for (Entry<? extends K, ? extends V> e : m.entrySet()) {
 			this.put(e.getKey(), e.getValue());
 		}
 	}
 
-	public V remove(Object key) {
-		if (this.map.containsKey(key)) {
-			for (TimedEntry<K> entry : this.timequeue) {
-				if (entry.getValue().equals(key)) {
-					this.timequeue.remove(entry);
-				}
-			}
-		}
-		return this.map.remove(key);
+	public synchronized V remove(Object key) {
+		return this.map.remove(key).getValue();
 	}
 
-	public int size() {
+	public synchronized int size() {
 		return this.map.size();
 	}
 
-	public Collection<V> values() {
-		return this.map.values();
+	public synchronized Collection<V> values() {
+		Collection<V> result = new ArrayList<V>();
+		for (TimedEntry<V> entry : this.map.values()) {
+			result.add(entry.getValue());
+		}
+		return result;
 	}
 
-	private class TimedEntry<A> implements Comparable<TimedEntry<A>> {
+	synchronized Long update() {
+		long time = Long.MAX_VALUE;
+
+		// search for next expiring entry & already expired entries
+		// iterator is required to prevent concurrent modification exception
+		Iterator<Entry<K, TimedEntry<V>>> it = this.map.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<K, TimedEntry<V>> entry = it.next();
+			long newTime = entry.getValue().getExpires() - System.currentTimeMillis();
+			if (newTime < 1) {
+				// Immediately remove expired entries
+				it.remove();
+			} else if (newTime < time) {
+				// set next expire time
+				time = newTime;
+			}
+		}
+		return time;
+	}
+
+	private class TimedEntry<A> {
 
 		private Long expires;
 		private A value;
@@ -121,46 +138,39 @@ public class TimeoutHashMap2<K, V> implements Map<K, V> {
 			return this.expires;
 		}
 
-		public void setExpires(Long expires) {
-			this.expires = expires;
-		}
-
 		public A getValue() {
 			return this.value;
 		}
-
-		public int compareTo(TimedEntry<A> o) {
-			return this.expires.compareTo(o.getExpires());
-		}
 	}
 
-	private class Timer implements Runnable {
-		private PriorityBlockingQueue<TimedEntry<K>> timerQueue;
-		private Map<K, V> timerMap;
+	private class TimeoutHashMapTimer implements Runnable {
 
-		Timer(PriorityBlockingQueue<TimedEntry<K>> timequeue, Map<K, V> map) {
-			this.timerQueue = timequeue;
+		private TimeoutHashMap2<K, V> timerMap;
+
+		TimeoutHashMapTimer(TimeoutHashMap2<K, V> map) {
 			this.timerMap = map;
 		}
-		
-			public void run() {
+
+		public void run() {
 			while (true) {
-				if (!this.timerQueue.isEmpty()) {
-					long time = this.timerQueue.peek().getExpires() - System.currentTimeMillis();
-					if (time > 0) {
-						try {
-							Thread.sleep(time);
-						} catch (InterruptedException e) {
-							// do nothing
-						}
-					} else {
-						this.timerMap.remove(this.timerQueue.poll().getValue());
+				if (!this.timerMap.isEmpty()) {
+					long time;
+
+					// remove expired entries & get next expire time
+					time = this.timerMap.update();
+					// next delete in <time> milliseconds -> sleep
+					try {
+						Thread.sleep(time);
+					} catch (InterruptedException e) {
+						// do nothing, InterruptedException is expected on a put
 					}
 				} else {
+					// timerMap is empty we can sleep until something is added
+					// we expect an interrupt when something is added
 					try {
-						Thread.sleep(99999999);
+						Thread.sleep(Long.MAX_VALUE);
 					} catch (InterruptedException e) {
-						// do nothing
+						// do nothing, InterruptedException is expected on a put
 					}
 				}
 			}

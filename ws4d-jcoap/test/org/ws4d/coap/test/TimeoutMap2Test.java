@@ -23,6 +23,12 @@ import org.ws4d.coap.tools.TimeoutHashMap2;
 public class TimeoutMap2Test {
 	
 	public static void main(String[] args) {
+		try {
+			Thread.sleep(3000);
+		} catch (InterruptedException e) {
+			// nothing
+		}
+		
 		TimeoutHashMap2<String, String> map = new TimeoutHashMap2<String, String>(2000);
 		
 		map.put("key", "value");
@@ -36,6 +42,37 @@ public class TimeoutMap2Test {
 		System.out.println(map.entrySet());
 		
 		map.put("key2", "value2");
+		System.out.println(map.entrySet());
+		
+		try {
+			Thread.sleep(3000);
+		} catch (InterruptedException e) {
+			// nothing
+		}
+		System.out.println(map.entrySet());
+		
+		map.put("key3", "value3");
+		System.out.println(map.entrySet());
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			// nothing
+		}
+		map.put("key4", "value4");
+		System.out.println(map.entrySet());
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			// nothing
+		}
+		map.put("key5", "value5");
+		System.out.println(map.entrySet());
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			// nothing
+		}
+		map.put("key6", "value6");
 		System.out.println(map.entrySet());
 		
 		try {
