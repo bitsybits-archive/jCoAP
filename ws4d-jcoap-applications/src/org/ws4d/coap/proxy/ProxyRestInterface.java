@@ -12,12 +12,12 @@ public class ProxyRestInterface {
 	private CoapResourceServer resourceServer;
 	
 	public void start(){
-	    if (resourceServer != null)
-		    resourceServer.stop();
-		resourceServer = new CoapResourceServer();
-		resourceServer.createResource(new ProxyStatisticResource());
+	    if (this.resourceServer != null)
+		    this.resourceServer.stop();
+		this.resourceServer = new CoapResourceServer();
+		this.resourceServer.createResource(new ProxyStatisticResource());
 		try {
-			resourceServer.start(5684);
+			this.resourceServer.start(5684);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -33,7 +33,6 @@ public class ProxyRestInterface {
 	    	this("/statistic", null, CoapMediaType.text_plain);
 	    }
 
-		@Override
 		public byte[] getValue(Vector<String> query) {
 			StringBuilder val = new StringBuilder();
 			ProxyMapper.getInstance().getCoapRequestCount();

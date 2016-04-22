@@ -100,17 +100,17 @@ public class ProxyMessageContext {
 	}
 	
 	public boolean isCoapRequest(){
-		return inCoapRequest != null;
+		return this.inCoapRequest != null;
 	}
 
 	public boolean isHttpRequest(){
-		return inHttpRequest != null;
+		return this.inHttpRequest != null;
 	}
 
 	
 	
 	public CoapRequest getInCoapRequest() {
-		return inCoapRequest;
+		return this.inCoapRequest;
 	}
 
 	public void setInCoapRequest(CoapRequest inCoapRequest) {
@@ -118,7 +118,7 @@ public class ProxyMessageContext {
 	}
 
 	public HttpRequest getInHttpRequest() {
-		return inHttpRequest;
+		return this.inHttpRequest;
 	}
 
 	public void setInHttpRequest(HttpRequest inHttpRequest) {
@@ -126,7 +126,7 @@ public class ProxyMessageContext {
 	}
 
 	public CoapResponse getInCoapResponse() {
-		return inCoapResponse;
+		return this.inCoapResponse;
 	}
 
 	public void setInCoapResponse(CoapResponse inCoapResponse) {
@@ -134,7 +134,7 @@ public class ProxyMessageContext {
 	}
 
 	public HttpResponse getInHttpResponse() {
-		return inHttpResponse;
+		return this.inHttpResponse;
 	}
 
 	public void setInHttpResponse(HttpResponse inHttpResponse) {
@@ -142,7 +142,7 @@ public class ProxyMessageContext {
 	}
 
 	public CoapResponse getOutCoapResponse() {
-		return outCoapResponse;
+		return this.outCoapResponse;
 	}
 
 	public void setOutCoapResponse(CoapResponse outCoapResponse) {
@@ -150,7 +150,7 @@ public class ProxyMessageContext {
 	}
 
 	public CoapRequest getOutCoapRequest() {
-		return outCoapRequest;
+		return this.outCoapRequest;
 	}
 
 	public void setOutCoapRequest(CoapRequest outCoapRequest) {
@@ -158,7 +158,7 @@ public class ProxyMessageContext {
 	}
 
 	public HttpResponse getOutHttpResponse() {
-		return outHttpResponse;
+		return this.outHttpResponse;
 	}
 
 	public void setOutHttpResponse(HttpResponse outHttpResponse) {
@@ -166,7 +166,7 @@ public class ProxyMessageContext {
 	}
 
 	public HttpUriRequest getOutHttpRequest() {
-		return outHttpRequest;
+		return this.outHttpRequest;
 	}
 
 	public void setOutHttpRequest(HttpUriRequest outHttpRequest) {
@@ -174,7 +174,7 @@ public class ProxyMessageContext {
 	}
 	
 	public CoapClientChannel getOutCoapClientChannel() {
-		return outCoapClientChannel;
+		return this.outCoapClientChannel;
 	}
 
 	public void setOutCoapClientChannel(CoapClientChannel outClientChannel) {
@@ -182,7 +182,7 @@ public class ProxyMessageContext {
 	}
 
 	public InetAddress getClientAddress() {
-		return clientAddress;
+		return this.clientAddress;
 	}
 
 	public void setClientAddress(InetAddress clientAddress, int clientPort) {
@@ -191,7 +191,7 @@ public class ProxyMessageContext {
 	}
 
 	public InetAddress getServerAddress() {
-		return serverAddress;
+		return this.serverAddress;
 	}
 
 	public void setServerAddress(InetAddress serverAddress, int serverPort) {
@@ -200,15 +200,15 @@ public class ProxyMessageContext {
 	}
 
 	public int getClientPort() {
-		return clientPort;
+		return this.clientPort;
 	}
 
 	public int getServerPort() {
-		return serverPort;
+		return this.serverPort;
 	}
 
 	public boolean isTranslate() {
-		return translate;
+		return this.translate;
 	}
 
 	public void setTranslatedCoapRequest(CoapRequest request) {
@@ -220,15 +220,15 @@ public class ProxyMessageContext {
 	}
 
 	public URI getUri() {
-		return uri;
+		return this.uri;
 	}
 
 	public NHttpResponseTrigger getTrigger() {
-		return trigger;
+		return this.trigger;
 	}
 
 	public boolean isCached() {
-		return cached;
+		return this.cached;
 	}
 
 	public void setCached(boolean cached) {
@@ -236,7 +236,7 @@ public class ProxyMessageContext {
 	}
 
 	public ProxyResource getResource() {
-		return resource;
+		return this.resource;
 	}
 
 	public void setResource(ProxyResource resource) {
@@ -248,11 +248,11 @@ public class ProxyMessageContext {
 	}
 
 	public boolean isHttpHeadMethod() {
-		return httpHeadMethod;
+		return this.httpHeadMethod;
 	}
 
 	public long getRequestTime() {
-		return requestTime;
+		return this.requestTime;
 	}
 
 	public void setRequestTime(long requestTime) {
@@ -260,7 +260,7 @@ public class ProxyMessageContext {
 	}
 
 	public long getResponseTime() {
-		return responseTime;
+		return this.responseTime;
 	}
 
 	public void setResponseTime(long responseTime) {

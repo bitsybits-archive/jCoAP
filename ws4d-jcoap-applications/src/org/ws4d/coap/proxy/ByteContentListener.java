@@ -43,28 +43,28 @@ class ByteContentListener implements ContentListener {
 
     public void consumeContent(ContentDecoder decoder, IOControl ioctrl)
             throws IOException {
-        input.consumeContent(decoder);
+        this.input.consumeContent(decoder);
     }
 
     public void finish() {
-        input.reset();
+        this.input.reset();
     }
 
     byte[] getContent() throws IOException {
-        byte[] b = new byte[input.length()];
-        input.read(b);
+        byte[] b = new byte[this.input.length()];
+        this.input.read(b);
         return b;
     }
 
 	@Override
 	public void contentAvailable(ContentDecoder decoder, IOControl arg1)
 			throws IOException {
-		input.consumeContent(decoder);
+		this.input.consumeContent(decoder);
 		
 	}
 
 	@Override
 	public void finished() {
-		input.reset();					
+		this.input.reset();					
 	}
 }

@@ -47,7 +47,7 @@ public class BasicCoapClient implements CoapClient {
     
     public boolean connect(){
     	try {
-    		clientChannel = (BasicCoapClientChannel) channelManager.connect(this, InetAddress.getByName(SERVER_ADDRESS), PORT);
+    		this.clientChannel = (BasicCoapClientChannel) this.channelManager.connect(this, InetAddress.getByName(this.SERVER_ADDRESS), this.PORT);
     	} catch( UnknownHostException e ){
     		e.printStackTrace();
     		return false;
@@ -64,35 +64,35 @@ public class BasicCoapClient implements CoapClient {
     
     
     public CoapRequest createRequest( boolean reliable, CoapRequestCode reqCode ) {
-    	return clientChannel.createRequest( reliable, reqCode );
+    	return this.clientChannel.createRequest( reliable, reqCode );
     }
     
     public void sendRequest( CoapRequest request ){
     	if( request.getRequestCode() == CoapRequestCode.PUT || request.getRequestCode() == CoapRequestCode.POST ){
-    		if( ( clientChannel.getMaxSendBlocksize() != null || request.getBlock1() != null ) ) {
-    			request = clientChannel.addBlockContext( request);
+    		if( ( this.clientChannel.getMaxSendBlocksize() != null || request.getBlock1() != null ) ) {
+    			request = this.clientChannel.addBlockContext( request);
     		}
-    	} else if( request.getRequestCode() == CoapRequestCode.GET && ( request.getBlock2() == null && clientChannel.getMaxReceiveBlocksize() != null )) {
-    		CoapBlockOption block2 = new CoapBlockOption( 0, false, clientChannel.getMaxReceiveBlocksize() );
+    	} else if( request.getRequestCode() == CoapRequestCode.GET && ( request.getBlock2() == null && this.clientChannel.getMaxReceiveBlocksize() != null )) {
+    		CoapBlockOption block2 = new CoapBlockOption( 0, false, this.clientChannel.getMaxReceiveBlocksize() );
     		request.setBlock2( block2 );
     	}
     		
-    	clientChannel.sendMessage(request);
+    	this.clientChannel.sendMessage(request);
     }
     
     public void setReceiveBlockSize( CoapBlockSize size ){
-    	if( clientChannel != null )
-    		clientChannel.setMaxReceiveBlocksize( size );
+    	if( this.clientChannel != null )
+    		this.clientChannel.setMaxReceiveBlocksize( size );
     }
     
     public void setSendBlockSize( CoapBlockSize size ){
-    	if( clientChannel != null )
-    		clientChannel.setMaxSendBlocksize(size);
+    	if( this.clientChannel != null )
+    		this.clientChannel.setMaxSendBlocksize(size);
     }
     
     public byte[] generateRequestToken(int tokenLength ){
    		byte[] token = new byte[tokenLength];
-    	tokenGen.nextBytes(token);
+    	this.tokenGen.nextBytes(token);
     	return token;
     }
     

@@ -54,7 +54,7 @@ public class SeparateResponseCoapServer implements CoapServer {
 		
 		
 		this.channel = channel;
-		response = channel.createSeparateResponse(request, CoapResponseCode.Content_205);
+		this.response = channel.createSeparateResponse(request, CoapResponseCode.Content_205);
 		Thread t =   new Thread( new SendDelayedResponse() );
 	    t.start();
 	}
@@ -63,14 +63,14 @@ public class SeparateResponseCoapServer implements CoapServer {
 	  {
 	    public void run()
 	    {
-	    	response.setContentType(CoapMediaType.text_plain);
-	    	response.setPayload("payload...".getBytes());
+	    	SeparateResponseCoapServer.this.response.setContentType(CoapMediaType.text_plain);
+	    	SeparateResponseCoapServer.this.response.setPayload("payload...".getBytes());
 	    	try {
 	    		Thread.sleep(4000);
 	    	} catch (InterruptedException e) {
 	    		e.printStackTrace();
 	    	}
-	    	channel.sendSeparateResponse(response);
+	    	SeparateResponseCoapServer.this.channel.sendSeparateResponse(SeparateResponseCoapServer.this.response);
 
 	    }
 	}

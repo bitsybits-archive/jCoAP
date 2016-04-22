@@ -7,7 +7,6 @@ import org.apache.log4j.SimpleLayout;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.rest.BasicCoapResource;
 import org.ws4d.coap.rest.CoapResourceServer;
-import org.ws4d.coap.rest.ResourceHandler;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -42,12 +41,12 @@ public class CoapSampleResourceServer {
 		
 		/* add resources */
 		BasicCoapResource light = new BasicCoapResource("/test/light", "Content".getBytes(), CoapMediaType.text_plain);
-		light.registerResourceHandler(new ResourceHandler() {
-			@Override
-			public void onPost(byte[] data) {
-				System.out.println("Post to /test/light");
-			}
-		});
+//		light.registerResourceHandler(new ResourceHandler() {
+//			@Override
+//			public void onPost(byte[] data) {
+//				System.out.println("Post to /test/light");
+//			}
+//		});
 		light.setResourceType("light");
 		light.setObservable(true);
 		

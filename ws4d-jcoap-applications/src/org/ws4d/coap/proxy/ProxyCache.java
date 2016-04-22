@@ -189,9 +189,8 @@ public class ProxyCache {
 		}
 		if (cache.isKeyInCache(key)) {
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
 	
 	//for some operations it is necessary to build an http-date from string
@@ -206,7 +205,7 @@ public class ProxyCache {
         formatter.setTimeZone(TimeZone.getDefault());				//CEST, default is GMT
 		
 		try {
-			date = (Date) formatter.parse(string_date);
+			date = formatter.parse(string_date);
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -262,7 +261,7 @@ public class ProxyCache {
 	}
 
 	public boolean isEnabled() {
-		return enabled;
+		return this.enabled;
 	}
 
 	public void setEnabled(boolean enabled) {

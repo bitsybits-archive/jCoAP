@@ -40,12 +40,12 @@ public class HttpClientNIO extends Thread {
 
 	public HttpClientNIO() {
 		try {
-			httpClient = new DefaultHttpAsyncClient();
+			this.httpClient = new DefaultHttpAsyncClient();
 		} catch (IOReactorException e) {
 			System.exit(-1);
 			e.printStackTrace();
 		}
-		httpClient.start();
+		this.httpClient.start();
 		logger.info("HTTP client started");
 	}
 		
@@ -56,7 +56,7 @@ public class HttpClientNIO extends Thread {
 		logger.info("send HTTP request");
 		ProxyHttpFutureCallback fc = new ProxyHttpFutureCallback();
 		fc.setContext(context);
-		httpClient.execute(context.getOutHttpRequest(), fc);
+		this.httpClient.execute(context.getOutHttpRequest(), fc);
 	}
 	
 	private class ProxyHttpFutureCallback implements FutureCallback<HttpResponse>{
@@ -68,26 +68,26 @@ public class HttpClientNIO extends Thread {
 
 		// this is called when response is received
 		public void completed(final HttpResponse response) {
-			if (context != null) {
-				context.setInHttpResponse(response);
-				mapper.handleHttpClientResponse(context);
+			if (this.context != null) {
+				this.context.setInHttpResponse(response);
+				HttpClientNIO.this.mapper.handleHttpClientResponse(this.context);
 			}
 		}
 
 		public void failed(final Exception ex) {
 			logger.warn("HTTP client request failed");
-			if (context != null) {
-				context.setInHttpResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, ex.getMessage()));
-				mapper.handleHttpClientResponse(context);
+			if (this.context != null) {
+				this.context.setInHttpResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, ex.getMessage()));
+				HttpClientNIO.this.mapper.handleHttpClientResponse(this.context);
 			}
 		}
 
 		public void cancelled() {
 			logger.warn("HTTP Client Request cancelled");
-			if (context != null) {
+			if (this.context != null) {
 				/* null indicates no response */
-				context.setInHttpResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_INTERNAL_SERVER_ERROR, "http connection canceled"));
-				mapper.handleHttpClientResponse(context);
+				this.context.setInHttpResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_INTERNAL_SERVER_ERROR, "http connection canceled"));
+				HttpClientNIO.this.mapper.handleHttpClientResponse(this.context);
 			}
 		}
 	}

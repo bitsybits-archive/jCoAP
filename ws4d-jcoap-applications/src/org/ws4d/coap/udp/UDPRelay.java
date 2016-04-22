@@ -35,19 +35,19 @@ public class UDPRelay {
 
 	public void run(InetSocketAddress serverAddr) {
 		try {
-			serverChannel = DatagramChannel.open();
-			serverChannel.socket().bind(new InetSocketAddress(SERVER_PORT));  
-			serverChannel.configureBlocking(false);
-			serverChannel.connect(serverAddr);
+			this.serverChannel = DatagramChannel.open();
+			this.serverChannel.socket().bind(new InetSocketAddress(SERVER_PORT));  
+			this.serverChannel.configureBlocking(false);
+			this.serverChannel.connect(serverAddr);
 			
-			clientChannel = DatagramChannel.open();
-			clientChannel.socket().bind(new InetSocketAddress(CLIENT_PORT));  
-			clientChannel.configureBlocking(false);
+			this.clientChannel = DatagramChannel.open();
+			this.clientChannel.socket().bind(new InetSocketAddress(CLIENT_PORT));  
+			this.clientChannel.configureBlocking(false);
 
 		    try {
-				selector = Selector.open();
-				serverChannel.register(selector, SelectionKey.OP_READ);
-				clientChannel.register(selector, SelectionKey.OP_READ);
+				this.selector = Selector.open();
+				this.serverChannel.register(this.selector, SelectionKey.OP_READ);
+				this.clientChannel.register(this.selector, SelectionKey.OP_READ);
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
@@ -64,13 +64,13 @@ public class UDPRelay {
 			/* Receive Packets */
 			InetSocketAddress tempClientAddr = null;
 			try {
-				clientBuffer.clear();
-				tempClientAddr = (InetSocketAddress) clientChannel.receive(clientBuffer);
-				clientBuffer.flip();
+				this.clientBuffer.clear();
+				tempClientAddr = (InetSocketAddress) this.clientChannel.receive(this.clientBuffer);
+				this.clientBuffer.flip();
 				
-				serverBuffer.clear();
-				serverLen = serverChannel.read(serverBuffer);
-				serverBuffer.flip();
+				this.serverBuffer.clear();
+				serverLen = this.serverChannel.read(this.serverBuffer);
+				this.serverBuffer.flip();
 			} catch (IOException e1) {
 				e1.printStackTrace();
 				System.out.println("Read failed");
@@ -80,12 +80,12 @@ public class UDPRelay {
 			if (tempClientAddr != null) {
 				/* the client address is obtained automatically by the first request of the client 
 				 * clientAddr is the last known valid address of the client */
-				clientAddr = tempClientAddr;
+				this.clientAddr = tempClientAddr;
 				try {
-					serverChannel.write(clientBuffer);
-					System.out.println("Forwarded Message client ("+clientAddr.getHostName()+" "+clientAddr.getPort()
+					this.serverChannel.write(this.clientBuffer);
+					System.out.println("Forwarded Message client ("+this.clientAddr.getHostName()+" "+this.clientAddr.getPort()
 							+ ") -> server (" + serverAddr.getHostName()+" " + serverAddr.getPort() + "): " 
-							+ clientBuffer.limit() + " bytes");
+							+ this.clientBuffer.limit() + " bytes");
 				} catch (IOException e) {
 					e.printStackTrace();
 					System.out.println("Send failed");
@@ -95,10 +95,10 @@ public class UDPRelay {
 			/* forward/send packets server -> client*/
 			if (serverLen > 0) {
 				try {
-					clientChannel.send(serverBuffer, clientAddr);
+					this.clientChannel.send(this.serverBuffer, this.clientAddr);
 					System.out.println("Forwarded Message server ("+serverAddr.getHostName()+" "+serverAddr.getPort()
-							+ ") -> client (" + clientAddr.getHostName()+" " + clientAddr.getPort() + "): " 
-							+ serverBuffer.limit() + " bytes");
+							+ ") -> client (" + this.clientAddr.getHostName()+" " + this.clientAddr.getPort() + "): " 
+							+ this.serverBuffer.limit() + " bytes");
 				} catch (IOException e) {
 					e.printStackTrace();
 					System.out.println("Send failed");
@@ -107,7 +107,7 @@ public class UDPRelay {
 			
 			/* Select */
 			try {
-				selector.select(2000);
+				this.selector.select(2000);
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.out.println("select failed");

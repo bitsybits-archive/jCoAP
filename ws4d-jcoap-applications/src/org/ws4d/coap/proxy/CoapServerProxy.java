@@ -53,8 +53,8 @@ public class CoapServerProxy implements CoapServer{
     //constructor of coapserver-class, initiates the jcoap-components and starts CoapSender
     public CoapServerProxy() {
 
-        channelManager = BasicCoapChannelManager.getInstance();
-        channelManager.createServerListener(this, LOCAL_PORT);
+        this.channelManager = BasicCoapChannelManager.getInstance();
+        this.channelManager.createServerListener(this, LOCAL_PORT);
     }
     
     //interface-function for the message-queue
@@ -141,7 +141,7 @@ public class CoapServerProxy implements CoapServer{
 			ProxyMessageContext context = new ProxyMessageContext(request, translate, proxyUri);
 			context.setServerAddress(serverAddress, serverPort);
 			context.setOutCoapResponse(response);
-			mapper.handleCoapServerRequest(context);
+			this.mapper.handleCoapServerRequest(context);
 		} catch (Exception e) {
 			logger.warn("invalid message");
 			channel.sendMessage(channel.createResponse(request, CoapResponseCode.Bad_Request_400));

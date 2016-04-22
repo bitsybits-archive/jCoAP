@@ -34,11 +34,11 @@ public class BasicCoapBlockClient implements CoapClient {
     	
     	
     	try {
-			clientChannel = channelManager.connect(this, InetAddress.getByName(SERVER_ADDRESS), PORT);
-			CoapRequest coapRequest = clientChannel.createRequest(true, CoapRequestCode.GET);
+			this.clientChannel = this.channelManager.connect(this, InetAddress.getByName(SERVER_ADDRESS), PORT);
+			CoapRequest coapRequest = this.clientChannel.createRequest(true, CoapRequestCode.GET);
 			coapRequest.setUriPath("/large");
-			clientChannel.setMaxReceiveBlocksize(CoapBlockSize.BLOCK_64);
-			clientChannel.sendMessage(coapRequest);
+			this.clientChannel.setMaxReceiveBlocksize(CoapBlockSize.BLOCK_64);
+			this.clientChannel.sendMessage(coapRequest);
 			System.out.println("Sent Request");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();

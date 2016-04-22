@@ -64,7 +64,7 @@ public class CoapClientProxy implements CoapClient{
 		channel.close();
 		if (context != null) {
 			context.setInCoapResponse(response);
-			mapper.handleCoapClientResponse(context);
+			this.mapper.handleCoapClientResponse(context);
 		}
 	}
 
@@ -75,7 +75,7 @@ public class CoapClientProxy implements CoapClient{
 		if (context != null) {
 			logger.warn("Coap client connection failed (e.g., timeout)!");
 			context.setInCoapResponse(null); // null indicates no response
-			mapper.handleCoapClientResponse(context);
+			this.mapper.handleCoapClientResponse(context);
 		}
 	}
 

@@ -118,7 +118,7 @@ public class ProxyMapper {
     
     
 	public void handleHttpServerRequest(ProxyMessageContext context) {
-		httpRequestCount++;
+		this.httpRequestCount++;
 		// do not translate methods: OPTIONS,TRACE,CONNECT -> error
 		// "Not Implemented"
 		if (isHttpRequestMethodSupported(context.getInHttpRequest())) {
@@ -134,16 +134,16 @@ public class ProxyMapper {
 				/* answer from cache */
 				resourceToHttp(context, resource);
 				context.setCached(true); // avoid "recaching"
-				httpServer.sendResponse(context);
+				this.httpServer.sendResponse(context);
 				logger.info("served HTTP request from cache");
-				servedFromCacheCount++;
+				this.servedFromCacheCount++;
 			} else {
 				/* not cached -> forward request */
 				try {
-					coapClient.createChannel(context); //channel must be created first 
+					this.coapClient.createChannel(context); //channel must be created first 
 					transRequestHttpToCoap(context);
 					context.setRequestTime(System.currentTimeMillis());
-					coapClient.sendRequest(context);
+					this.coapClient.sendRequest(context);
 				} catch (Exception e) {
 					logger.warn("HTTP to CoAP Request failed: " + e.getMessage());
 					/* close if a channel was connected */
@@ -160,7 +160,7 @@ public class ProxyMapper {
 	}
 
 	public void handleCoapServerRequest(ProxyMessageContext context) {
-		coapRequestCount++;
+		this.coapRequestCount++;
 		ProxyResource resource = null;
 		if (context.getInCoapRequest().getRequestCode() == CoapRequestCode.GET){
 			resource = cache.get(context);
@@ -171,15 +171,15 @@ public class ProxyMapper {
 				/* answer from cache */
 				resourceToHttp(context, resource);
 				context.setCached(true); // avoid "recaching"
-				httpServer.sendResponse(context);
+				this.httpServer.sendResponse(context);
 				logger.info("served CoAP request from cache");
-				servedFromCacheCount++;
+				this.servedFromCacheCount++;
 			} else {
 				/* translate CoAP Request -> HTTP Request */
 				try {
 					transRequestCoapToHttp(context);
 					context.setRequestTime(System.currentTimeMillis());
-					httpClient.sendRequest(context); 
+					this.httpClient.sendRequest(context); 
 				} catch (Exception e) {
 					logger.warn("CoAP to HTTP Request translation failed: " + e.getMessage());
 					sendDirectCoapError(context, CoapResponseCode.Not_Found_404);
@@ -191,16 +191,16 @@ public class ProxyMapper {
 				/* answer from cache */
 				resourceToCoap(context, resource);
 				context.setCached(true); // avoid "recaching"
-				coapServer.sendResponse(context);
+				this.coapServer.sendResponse(context);
 				logger.info("served from cache");
-				servedFromCacheCount++;
+				this.servedFromCacheCount++;
 			} else {
 				/* translate CoAP Request -> CoAP Request */
 				try {
-					coapClient.createChannel(context); //channel must be created first 
+					this.coapClient.createChannel(context); //channel must be created first 
 					transRequestCoapToCoap(context);
 					context.setRequestTime(System.currentTimeMillis());
-					coapClient.sendRequest(context);
+					this.coapClient.sendRequest(context);
 				} catch (Exception e) {
 					logger.warn("CoAP to CoAP Request forwarding failed: " + e.getMessage());
 					sendDirectCoapError(context, CoapResponseCode.Not_Found_404);
@@ -224,7 +224,7 @@ public class ProxyMapper {
 				logger.warn("CoAP to HTTP Response translation failed: " + e.getMessage());
 				context.setOutHttpResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Internal Server Error"));
 			}
-			httpServer.sendResponse(context);
+			this.httpServer.sendResponse(context);
 		} else {
 			/* coap to coap */
 			try {
@@ -233,7 +233,7 @@ public class ProxyMapper {
 				logger.warn("CoAP to CoAP Response forwarding failed: " + e.getMessage());
 				context.getOutCoapResponse().setResponseCode(CoapResponseCode.Internal_Server_Error_500);
 			}
-			coapServer.sendResponse(context);
+			this.coapServer.sendResponse(context);
 		}
 	}
 
@@ -250,7 +250,7 @@ public class ProxyMapper {
 			logger.warn("HTTP to CoAP Response translation failed: " + e.getMessage());
 			context.getOutCoapResponse().setResponseCode(CoapResponseCode.Internal_Server_Error_500);
 		}
-		coapServer.sendResponse(context);
+		this.coapServer.sendResponse(context);
 	}
 	
 
@@ -507,7 +507,7 @@ public class ProxyMapper {
 	public void sendDirectHttpError(ProxyMessageContext context,int code, String reason){
 		HttpResponse httpResponse = new BasicHttpResponse(HttpVersion.HTTP_1_1, code, reason);
 		context.setOutHttpResponse(httpResponse);
-		httpServer.sendResponse(context);
+		this.httpServer.sendResponse(context);
 	}
 
 	/* these functions are called if the request translation fails and no message was forwarded */
@@ -515,7 +515,7 @@ public class ProxyMapper {
 		CoapServerChannel channel = (CoapServerChannel) context.getInCoapRequest().getChannel();
 		CoapResponse response = channel.createResponse(context.getInCoapRequest(), code); 
 		context.setInCoapResponse(response);
-		coapServer.sendResponse(context);
+		this.coapServer.sendResponse(context);
 	}
 	
 	public static void resourceToHttp(ProxyMessageContext context, ProxyResource resource){
@@ -714,9 +714,8 @@ public class ProxyMapper {
 			case HttpStatus.SC_NO_CONTENT:				
 				if (context.getInCoapRequest().getRequestCode() == CoapRequestCode.DELETE) {
 					return CoapResponseCode.Deleted_202;
-				} else {
-					return CoapResponseCode.Changed_204;
-				}				
+				}
+			return CoapResponseCode.Changed_204;				
 			case HttpStatus.SC_NOT_MODIFIED: return CoapResponseCode.Valid_203;
 			case HttpStatus.SC_OK: return CoapResponseCode.Content_205;
 			case HttpStatus.SC_UNAUTHORIZED: return CoapResponseCode.Unauthorized_401;
@@ -863,16 +862,16 @@ public class ProxyMapper {
 	
 	//setter-functions to introduce other threads
 	public void setHttpServer(HttpServerNIO server) {
-		httpServer = server;
+		this.httpServer = server;
 	}
 	public void setHttpClient(HttpClientNIO client) {
-		httpClient = client;
+		this.httpClient = client;
 	}
 	public void setCoapServer(CoapServerProxy server) {
-		coapServer = server;
+		this.coapServer = server;
 	}
 	public void setCoapClient(CoapClientProxy client) {
-		coapClient = client;
+		this.coapClient = client;
 	}
 	
 
@@ -953,21 +952,21 @@ public class ProxyMapper {
 	}
 
 	public int getHttpRequestCount() {
-		return httpRequestCount;
+		return this.httpRequestCount;
 	}
 
 	public int getCoapRequestCount() {
-		return coapRequestCount;
+		return this.coapRequestCount;
 	}
 
 	public int getServedFromCacheCount() {
-		return servedFromCacheCount;
+		return this.servedFromCacheCount;
 	}
 	
 	public void resetCounter(){
-		httpRequestCount = 0;
-		coapRequestCount = 0;
-		servedFromCacheCount = 0;
+		this.httpRequestCount = 0;
+		this.coapRequestCount = 0;
+		this.servedFromCacheCount = 0;
 	}
 
 	public void setCacheEnabled(boolean enabled) {
@@ -975,19 +974,19 @@ public class ProxyMapper {
 	}
 
 	public CoapClientProxy getCoapClient() {
-		return coapClient;
+		return this.coapClient;
 	}
 
 	public CoapServerProxy getCoapServer() {
-		return coapServer;
+		return this.coapServer;
 	}
 
 	public HttpServerNIO getHttpServer() {
-		return httpServer;
+		return this.httpServer;
 	}
 
 	public HttpClientNIO getHttpClient() {
-		return httpClient;
+		return this.httpClient;
 	}
 	
 }

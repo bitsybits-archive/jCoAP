@@ -28,9 +28,7 @@ public class BasicCoapServer {
     private CoapResourceServer resourceServer = null;
     static int counter = 0;
     
-    public BasicCoapServer(int port){
-    	
-    }
+    public BasicCoapServer(int port){}
     
     public BasicCoapServer(){
     	
@@ -38,14 +36,14 @@ public class BasicCoapServer {
     
     public void init() {
 	    BasicCoapChannelManager.getInstance().setMessageId(2000);
-		if (resourceServer != null)
-			resourceServer.stop();
-		resourceServer = new CoapResourceServer();
+		if (this.resourceServer != null)
+			this.resourceServer.stop();
+		this.resourceServer = new CoapResourceServer();
     }
     
     public boolean addResource( CoapResource resource ){
-    	if( resourceServer != null ) {
-    		resourceServer.createResource( resource );
+    	if( this.resourceServer != null ) {
+    		this.resourceServer.createResource( resource );
     		return true;
     	}
     	
@@ -55,7 +53,7 @@ public class BasicCoapServer {
     public void run() {
 		try {
 			System.out.println("=== Starting Server ===");
-		    resourceServer.start();
+		    this.resourceServer.start();
 		} catch (Exception e) {
 		    e.printStackTrace();
 		}

@@ -16,7 +16,7 @@ public class ProxyResource extends BasicCoapResource {
 	}
 	
 	public ProxyResourceKey getKey() {
-		return key;
+		return this.key;
 	}
 
 	public void setKey(ProxyResourceKey key) {
