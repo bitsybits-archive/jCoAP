@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.ws4d.coap.Constants;
 import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.tools.Encoder;
 
@@ -127,8 +128,8 @@ public class CoreResource extends BasicCoapResource {
 					returnString.append("\"");
 				}
 				// size estimate to be displayed?
-				// only display sz when larger than MTU; 1024 is MTU approx.
-				if (resource.getSizeEstimate() > 1024) { 
+				// only display sz when larger than MTU
+				if (resource.getSizeEstimate() > Constants.COAP_PAYLOAD_SIZE_MAX) { 
 					returnString.append(";sz=\"");
 					returnString.append(resource.getSizeEstimate());
 					returnString.append("\"");

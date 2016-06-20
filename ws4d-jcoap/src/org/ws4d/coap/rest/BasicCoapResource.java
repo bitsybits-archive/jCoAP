@@ -186,7 +186,7 @@ public class BasicCoapResource implements CoapResource {
 				response = channel.createNotification(obsRequest, CoapResponseCode.Content_205,
 						this.observeSequenceNumber, this.reliableNotification);
 			}
-			response.setPayload(getValue());
+			response.setPayload(this.getValue());
 			channel.sendNotification(response);
 		}
 	}
