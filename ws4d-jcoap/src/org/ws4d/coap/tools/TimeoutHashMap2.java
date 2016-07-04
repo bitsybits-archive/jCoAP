@@ -24,14 +24,39 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+
+/**
+ * This class provides a hash map implementation that automatically removes added items after a fixed amount of miliseconds.
+ * 
+ * @author Björn Butzin <bjoern.butzin@uni-rostock.de>
+ *
+ * @param <K> the data type to be used as hash map key
+ * @param <V> the data type to be used as hash map value
+ */
 public class TimeoutHashMap2<K, V> implements Map<K, V> {
 
+	/**
+	 * This map that actually keeps the key value pairs.
+	 * The original value is wrapped into a TimedEntry.
+	 * A TimedEntry enhances the original value with the point in time when the item has to be deleted.
+	 * This point in time is represented as milliseconds since the same point in time as used by System.currentTimeMillis().
+	 */
 	private Map<K, TimedEntry<V>> map = new Hashtable<K, TimedEntry<V>>();
-	// the timeout of every new entry
+	
+	/**
+	 * the timeout of every new entry in ms
+	 */
 	private Long timeout;
-	// this timer calls the update method when the next entry is timed out
+	
+	/**
+	 *  this timer calls the update method when the next entry is timed out
+	 */
 	private Thread thread = new Thread(new TimeoutHashMapTimer(this));
 
+	/**
+	 * Creates a new TimeoutHashMap2 object
+	 * @param timeout - the amount of milliseconds after which a newly added item will automatically be removed
+	 */
 	public TimeoutHashMap2(long timeout) {
 		this.timeout = timeout;
 		this.thread.start();
