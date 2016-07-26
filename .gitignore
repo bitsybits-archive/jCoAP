@@ -1,0 +1,6 @@
+/.settings
+/log
+/build.xml
+/bin
+/logref
+*.class
