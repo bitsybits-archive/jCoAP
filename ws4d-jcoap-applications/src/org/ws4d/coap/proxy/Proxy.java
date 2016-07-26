@@ -20,15 +20,13 @@ package org.ws4d.coap.proxy;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.ws4d.coap.Constants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.ws4d.coap.core.CoapConstants;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
@@ -36,56 +34,43 @@ import org.ws4d.coap.Constants;
  */
 
 public class Proxy {
-	static Logger logger = Logger.getLogger(Proxy.class);
-	static int defaultCachingTime = Constants.COAP_DEFAULT_MAX_AGE_S;
+	private static final Logger logger = LogManager.getLogger();
+	private static int defaultCachingTime = CoapConstants.COAP_DEFAULT_MAX_AGE_S;
 
 	public static void main(String[] args) {
-		CommandLineParser cmdParser = new GnuParser();
-		Options options = new Options();
+
+		CommandLineParser cmdParser = new DefaultParser();
+
 		/* Add command line options */
+		Options options = new Options();
 		options.addOption("c", "default-cache-time", true, "Default caching time in seconds");
 		CommandLine cmd = null;
 		try {
 			cmd = cmdParser.parse(options, args);
-		} catch (ParseException e) {
-			System.out.println( "Unexpected exception:" + e.getMessage() );
-			HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp( "jCoAP-Proxy", options );
-			System.exit(-1);
-		}
-		
-		/* evaluate command line */
-		if(cmd.hasOption("c")) {
-			try {
+			if (cmd.hasOption("c")) {
 				defaultCachingTime = Integer.parseInt(cmd.getOptionValue("c"));
-				if (defaultCachingTime == 0){
+				if (defaultCachingTime == 0) {
 					ProxyMapper.getInstance().setCacheEnabled(false);
 				}
-				System.out.println("Set caching time to " + cmd.getOptionValue("c") + " seconds (0 disables the cache)");
-			} catch (NumberFormatException e) {
-				System.out.println( "Unexpected exception:" + e.getMessage() );
-				HelpFormatter formatter = new HelpFormatter();
-				formatter.printHelp( "jCoAP-Proxy", options );
-				System.exit(-1);
+				logger.info("Set caching time to " + cmd.getOptionValue("c") + " seconds (0 disables the cache)");
 			}
+		} catch (ParseException e) {
+			logger.warn("Unexpected exception:" + e.getLocalizedMessage());
+			HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp("jCoAP-Proxy", options);
+			System.exit(-1);
 		}
-		
-		
-        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-        // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
-        logger.setLevel(Level.ALL);
-	
+
 		HttpServerNIO httpserver = new HttpServerNIO();
 		HttpClientNIO httpclient = new HttpClientNIO();
 		CoapClientProxy coapclient = new CoapClientProxy();
-		CoapServerProxy coapserver = new CoapServerProxy();	
+		CoapServerProxy coapserver = new CoapServerProxy();
 
-		
 		ProxyMapper.getInstance().setHttpServer(httpserver);
 		ProxyMapper.getInstance().setHttpClient(httpclient);
 		ProxyMapper.getInstance().setCoapClient(coapclient);
 		ProxyMapper.getInstance().setCoapServer(coapserver);
-	
+
 		httpserver.start();
 		httpclient.start();
 
@@ -93,10 +78,6 @@ public class Proxy {
 			@Override
 			public void run() {
 				System.out.println("===END===");
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-				}
 			}
 		});
 

@@ -21,76 +21,74 @@ package org.ws4d.coap.proxy;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
+import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.nio.client.DefaultHttpAsyncClient;
 import org.apache.http.message.BasicHttpResponse;
-import org.apache.http.nio.client.HttpAsyncClient;
-import org.apache.http.nio.concurrent.FutureCallback;
 import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Andy Seidel <andy.seidel@uni-rostock.de>
  */
-
 public class HttpClientNIO extends Thread {
-	static Logger logger = Logger.getLogger(Proxy.class);
-	ProxyMapper mapper = ProxyMapper.getInstance();
-	HttpAsyncClient httpClient;
+	private static Logger logger = LogManager.getLogger();
+	private DefaultHttpAsyncClient httpClient;
 
 	public HttpClientNIO() {
 		try {
 			this.httpClient = new DefaultHttpAsyncClient();
+			this.httpClient.start();
+			logger.info("HTTP client started");
 		} catch (IOReactorException e) {
+			logger.error(e.getLocalizedMessage());
 			System.exit(-1);
-			e.printStackTrace();
 		}
-		this.httpClient.start();
-		logger.info("HTTP client started");
 	}
-		
-	public void sendRequest(ProxyMessageContext context) {
 
+	public void sendRequest(ProxyMessageContext context) {
 		// future is used to receive response asynchronous, without blocking
-		//ProxyHttpFutureCallback allows to associate a ProxyMessageContext
+		// ProxyHttpFutureCallback allows to associate a ProxyMessageContext
 		logger.info("send HTTP request");
-		ProxyHttpFutureCallback fc = new ProxyHttpFutureCallback();
-		fc.setContext(context);
+		ProxyHttpFutureCallback fc = new ProxyHttpFutureCallback(context);
 		this.httpClient.execute(context.getOutHttpRequest(), fc);
 	}
-	
-	private class ProxyHttpFutureCallback implements FutureCallback<HttpResponse>{
-		private ProxyMessageContext context = null;
 
-		public void setContext(ProxyMessageContext context) {
-			this.context = context;
+	private class ProxyHttpFutureCallback implements FutureCallback<HttpResponse> {
+		private ProxyMessageContext context = null;
+		private final Logger callbackLogger = LogManager.getLogger();
+		private ProxyMapper callbackMapper = ProxyMapper.getInstance();
+
+		public ProxyHttpFutureCallback(ProxyMessageContext messageContext) {
+			this.context = messageContext;
 		}
 
 		// this is called when response is received
 		public void completed(final HttpResponse response) {
 			if (this.context != null) {
 				this.context.setInHttpResponse(response);
-				HttpClientNIO.this.mapper.handleHttpClientResponse(this.context);
+				this.callbackMapper.handleHttpClientResponse(this.context);
 			}
 		}
 
 		public void failed(final Exception ex) {
-			logger.warn("HTTP client request failed");
+			this.callbackLogger.warn("HTTP client request failed");
 			if (this.context != null) {
-				this.context.setInHttpResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, ex.getMessage()));
-				HttpClientNIO.this.mapper.handleHttpClientResponse(this.context);
+				this.context.setInHttpResponse(
+						new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, ex.getMessage()));
+				this.callbackMapper.handleHttpClientResponse(this.context);
 			}
 		}
 
 		public void cancelled() {
-			logger.warn("HTTP Client Request cancelled");
+			this.callbackLogger.warn("HTTP Client Request cancelled");
 			if (this.context != null) {
 				/* null indicates no response */
-				this.context.setInHttpResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_INTERNAL_SERVER_ERROR, "http connection canceled"));
-				HttpClientNIO.this.mapper.handleHttpClientResponse(this.context);
+				this.context.setInHttpResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1,
+						HttpStatus.SC_INTERNAL_SERVER_ERROR, "http connection canceled"));
+				this.callbackMapper.handleHttpClientResponse(this.context);
 			}
 		}
 	}
-	
-
 }

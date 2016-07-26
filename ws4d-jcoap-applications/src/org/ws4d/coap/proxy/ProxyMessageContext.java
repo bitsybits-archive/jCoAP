@@ -25,47 +25,55 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.nio.protocol.NHttpResponseTrigger;
-import org.ws4d.coap.interfaces.CoapClientChannel;
-import org.ws4d.coap.interfaces.CoapRequest;
-import org.ws4d.coap.interfaces.CoapResponse;
+import org.ws4d.coap.core.connection.api.CoapClientChannel;
+import org.ws4d.coap.core.messages.api.CoapRequest;
+import org.ws4d.coap.core.messages.api.CoapResponse;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Andy Seidel <andy.seidel@uni-rostock.de>
  */
 public class ProxyMessageContext {
-	/*unique for reqMessageID, remoteHost, remotePort*/
-
-	/*
-	*                  Server                 Client
-	*     inRequest  +--------+  TRANSFORM  +--------+ outRequest
-	*  ------------->|        |-----|||---->|        |------------->
-	*                |        |             |        |
-	*    outResponse |        |  TRANSFORM  |        | inResponse
-	*  <-------------|        |<----|||-----|        |<-------------
-	*                +--------+             +--------+
-	*
+	/* unique for reqMessageID, remoteHost, remotePort
+	 * 
+	 *                  Server                 Client
+	 *     inRequest  +--------+  TRANSFORM  +--------+ outRequest
+	 *  ------------->|        |-----|||---->|        |------------->
+	 *                |        |             |        |
+	 *    outResponse |        |  TRANSFORM  |        | inResponse
+	 *  <-------------|        |<----|||-----|        |<-------------
+	 *                +--------+             +--------+
+	 *
 	*/	
 
-	
 	/* incomming messages */
-	private CoapRequest inCoapRequest;  //the coapRequest of the origin client (maybe translated)
-	private HttpRequest inHttpRequest;	//the httpRequest of the origin client (maybe translated)
-	private CoapResponse inCoapResponse; //the coap response of the final server
-	private HttpResponse inHttpResponse; //the http response of the final server
+	/** the coapRequest of the origin client (maybe translated) */
+	private CoapRequest inCoapRequest; 
+	
+	/** the httpRequest of the origin client (maybe translated) */
+	private HttpRequest inHttpRequest; 
+	
+	/** the coap response of the final server */
+	private CoapResponse inCoapResponse;
+	
+	/** the http response of the final server */
+	private HttpResponse inHttpResponse;
 
-	/* generated outgoing messages */
-	private CoapResponse outCoapResponse; //the coap response send to the client
-	private CoapRequest outCoapRequest; 
-	private HttpResponse outHttpResponse; 
-	private HttpUriRequest outHttpRequest; 
+	/* outgoing messages */
+	/** the coap response send to the client */
+	private CoapResponse outCoapResponse;
+	
+	private CoapRequest outCoapRequest;
+	private HttpResponse outHttpResponse;
+	private HttpUriRequest outHttpRequest;
 
-	/* trigger and channels*/
-	private CoapClientChannel outCoapClientChannel; 
-	NHttpResponseTrigger trigger; //needed by http
-
-	/* corresponding cached resource*/
-	private ProxyResource resource; 
+	/* trigger and channels */
+	private CoapClientChannel outCoapClientChannel;
+	// needed by http
+	private NHttpResponseTrigger trigger;
+	
+	/* corresponding cached resource */
+	private ProxyResource resource;
 
 	private URI uri;
 	private InetAddress clientAddress;
@@ -73,42 +81,44 @@ public class ProxyMessageContext {
 	private InetAddress serverAddress;
 	private int serverPort;
 
-	/* is true if a translation was done (always true for incoming http requests)*/
-	private boolean translate;  //translate from coap to http
+	/**
+	 * true, if a translation was done (always true for incoming http requests)
+	 */
+	private boolean translate;
 
-	/* indicates that the response comes from the cache*/
+	/** indicates that the response comes from the cache */
 	private boolean cached = false;
-	/* in case of a HTTP Head this is true, GET and HEAD are both mapped to CoAP GET */
+	/*
+	 * in case of a HTTP Head this is true, GET and HEAD are both mapped to CoAP
+	 * GET
+	 */
 	private boolean httpHeadMethod = false;
-	
+
 	/* times */
-	long requestTime;
-	long responseTime;
-	
-	
+	private long requestTime;
+	private long responseTime;
+
 	public ProxyMessageContext(CoapRequest request, boolean translate, URI uri) {
 		this.inCoapRequest = request;
 		this.translate = translate;
 		this.uri = uri;
 	}
-	
+
 	public ProxyMessageContext(HttpRequest request, boolean translate, URI uri, NHttpResponseTrigger trigger) {
 		this.inHttpRequest = request;
 		this.translate = translate;
 		this.uri = uri;
 		this.trigger = trigger;
 	}
-	
-	public boolean isCoapRequest(){
+
+	public boolean isCoapRequest() {
 		return this.inCoapRequest != null;
 	}
 
-	public boolean isHttpRequest(){
+	public boolean isHttpRequest() {
 		return this.inHttpRequest != null;
 	}
 
-	
-	
 	public CoapRequest getInCoapRequest() {
 		return this.inCoapRequest;
 	}
@@ -172,7 +182,7 @@ public class ProxyMessageContext {
 	public void setOutHttpRequest(HttpUriRequest outHttpRequest) {
 		this.outHttpRequest = outHttpRequest;
 	}
-	
+
 	public CoapClientChannel getOutCoapClientChannel() {
 		return this.outCoapClientChannel;
 	}

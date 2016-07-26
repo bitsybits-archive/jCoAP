@@ -20,44 +20,50 @@ package org.ws4d.coap.proxy;
 
 import java.net.InetAddress;
 
-import org.apache.log4j.Logger;
-import org.ws4d.coap.connection.BasicCoapChannelManager;
-import org.ws4d.coap.interfaces.CoapClient;
-import org.ws4d.coap.interfaces.CoapClientChannel;
-import org.ws4d.coap.interfaces.CoapResponse;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.ws4d.coap.core.CoapClient;
+import org.ws4d.coap.core.connection.BasicCoapChannelManager;
+import org.ws4d.coap.core.connection.api.CoapClientChannel;
+import org.ws4d.coap.core.messages.api.CoapResponse;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Andy Seidel <andy.seidel@uni-rostock.de>
  */
-public class CoapClientProxy implements CoapClient{
-	static Logger logger = Logger.getLogger(Proxy.class);
-	ProxyMapper mapper = ProxyMapper.getInstance();
-	static final boolean RELIABLE = true; //use CON as client (NON has no timeout!!!)
+public class CoapClientProxy implements CoapClient {
+	private static final Logger logger = LogManager.getLogger();
+	private ProxyMapper mapper = ProxyMapper.getInstance();
 	
+	// use CON as client (NON has no timeout!!!)
+	private static final boolean RELIABLE = true; 
 
-	/* creates a client channel and stores it in the context*/
-	public void createChannel(ProxyMessageContext context){
+	/* creates a client channel and stores it in the context */
+	public void createChannel(ProxyMessageContext context) {
 		// create channel
 		CoapClientChannel channel;
-		channel = BasicCoapChannelManager.getInstance().connect(this, context.getServerAddress(), context.getServerPort());
+		channel = BasicCoapChannelManager.getInstance().connect(this, context.getServerAddress(),
+				context.getServerPort());
 		if (channel != null) {
 			channel.setTrigger(context);
 			context.setOutCoapClientChannel(channel);
 		} else {
-			throw new IllegalStateException("CoAP client connect() failed");
+			logger.warn("CoAP client connect() failed");
 		}
 	}
 	
-	public void closeChannel(ProxyMessageContext context){
+	public static boolean isReliable(){
+		return CoapClientProxy.RELIABLE;
+	}
+
+	public void closeChannel(ProxyMessageContext context) {
 		context.getOutCoapClientChannel().close();
 	}
-	
-	
+
 	public void sendRequest(ProxyMessageContext context) {
 		context.getOutCoapRequest().getChannel().sendMessage(context.getOutCoapRequest());
 	}
-		
+
 	@Override
 	public void onResponse(CoapClientChannel channel, CoapResponse response) {
 		ProxyMessageContext context = (ProxyMessageContext) channel.getTrigger();
@@ -83,5 +89,4 @@ public class CoapClientProxy implements CoapClient{
 	public void onMCResponse(CoapClientChannel channel, CoapResponse response, InetAddress srcAddress, int srcPort) {
 		System.out.println("Received Response");
 	}
-
 }

@@ -1,20 +1,15 @@
 package org.ws4d.coap.proxy;
 
-import org.apache.log4j.Logger;
-import org.ws4d.coap.messages.CoapMediaType;
-import org.ws4d.coap.rest.BasicCoapResource;
+import org.ws4d.coap.core.enumerations.CoapMediaType;
+import org.ws4d.coap.core.rest.BasicCoapResource;
 
 public class ProxyResource extends BasicCoapResource {
-	static Logger logger = Logger.getLogger(Proxy.class);
-	
 	private ProxyResourceKey key = null;
-	
 
 	public ProxyResource(String path, byte[] value, CoapMediaType mediaType) {
 		super(path, value, mediaType);
-		
 	}
-	
+
 	public ProxyResourceKey getKey() {
 		return this.key;
 	}

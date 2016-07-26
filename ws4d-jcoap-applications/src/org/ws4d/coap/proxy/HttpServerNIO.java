@@ -50,69 +50,68 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.ImmutableHttpProcessor;
 import org.apache.http.protocol.ResponseConnControl;
-import org.apache.log4j.Logger;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Andy Seidel <andy.seidel@uni-rostock.de>
  * 
- * TODO: IMPROVE Async Server Implementation, avoid ModifiedAsyncNHttpServiceHandler and deprecated function calls
+ *         TODO: IMPROVE Async Server Implementation, avoid
+ *         ModifiedAsyncNHttpServiceHandler and deprecated function calls
  */
 
-public class HttpServerNIO extends Thread{
-	static Logger logger = Logger.getLogger(Proxy.class);
-	static private int PORT = 8080;
+public class HttpServerNIO extends Thread {
 	
-	ProxyMapper mapper = ProxyMapper.getInstance();
+	static final Logger logger = LogManager.getLogger();
+	private static int PORT = 8080;
 	
-	//interface-function for other classes/modules
+	// interface-function for other classes/modules
 	public void sendResponse(ProxyMessageContext context) {
-    	HttpResponse httpResponse = context.getOutHttpResponse();
-    	NHttpResponseTrigger trigger = context.getTrigger();
-   		trigger.submitResponse(httpResponse);
+		HttpResponse httpResponse = context.getOutHttpResponse();
+		NHttpResponseTrigger trigger = context.getTrigger();
+		trigger.submitResponse(httpResponse);
 	}
-	
+
+	@Override
 	public void run() {
-		
-		this.setName("HTTP_NIO_Server");				
-		
-		//parameters for connection
-        HttpParams params = new SyncBasicHttpParams();
-        params
-            .setIntParameter(CoreConnectionPNames.SO_TIMEOUT, 50000)
-            .setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024)
-            .setBooleanParameter(CoreConnectionPNames.STALE_CONNECTION_CHECK, false)
-            .setBooleanParameter(CoreConnectionPNames.TCP_NODELAY, true)
-            .setParameter(CoreProtocolPNames.ORIGIN_SERVER, "HttpComponents/1.1");
-                
-        //needed by framework, don't need any processors except the connection-control
-        HttpProcessor httpproc = new ImmutableHttpProcessor(new HttpResponseInterceptor[] {
-                new ResponseConnControl()
-        });
-        
-        //create own service-handler with bytecontentlistener-class
-        ModifiedAsyncNHttpServiceHandler handler = new ModifiedAsyncNHttpServiceHandler(
-                httpproc, new DefaultHttpResponseFactory(),
-                new DefaultConnectionReuseStrategy(), params);
-        
-        // Set up request handlers, use the same request-handler for all uris
-        NHttpRequestHandlerRegistry reqistry = new NHttpRequestHandlerRegistry();
-        reqistry.register("*", new ProxyHttpRequestHandler());
-        handler.setHandlerResolver(reqistry);
-        
-        
+
+		this.setName("HTTP_NIO_Server");
+
+		// parameters for connection
+		HttpParams params = new SyncBasicHttpParams();
+		params.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, 50000)
+				.setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024)
+				.setBooleanParameter(CoreConnectionPNames.STALE_CONNECTION_CHECK, false)
+				.setBooleanParameter(CoreConnectionPNames.TCP_NODELAY, true)
+				.setParameter(CoreProtocolPNames.ORIGIN_SERVER, "HttpComponents/1.1");
+
+		// needed by framework, don't need any processors except the
+		// connection-control
+		HttpProcessor httpproc = new ImmutableHttpProcessor(
+				new HttpResponseInterceptor[] { new ResponseConnControl() });
+
+		// create own service-handler with bytecontentlistener-class
+		ModifiedAsyncNHttpServiceHandler handler = new ModifiedAsyncNHttpServiceHandler(httpproc,
+				new DefaultHttpResponseFactory(), new DefaultConnectionReuseStrategy(), params);
+
+		// Set up request handlers, use the same request-handler for all uris
+		NHttpRequestHandlerRegistry reqistry = new NHttpRequestHandlerRegistry();
+		reqistry.register("*", new ProxyHttpRequestHandler());
+		handler.setHandlerResolver(reqistry);
+
 		try {
-			//create and start responder-thread
-			//ioreactor is used by nio-framework to listen and react to http connections
-			//2 dispatcher-threads are used to do the work
+			// create and start responder-thread
+			// ioreactor is used by nio-framework to listen and react to http
+			// connections
+			// 2 dispatcher-threads are used to do the work
 			ListeningIOReactor ioReactor = new DefaultListeningIOReactor(2, params);
 
 			IOEventDispatch ioeventdispatch = new DefaultServerIOEventDispatch(handler, params);
 
 			ioReactor.listen(new InetSocketAddress(PORT));
 			ioReactor.execute(ioeventdispatch);
-			
+
 		} catch (IOReactorException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -120,43 +119,42 @@ public class HttpServerNIO extends Thread{
 		}
 	}
 
-	
-	static class ProxyHttpRequestHandler implements NHttpRequestHandler  {
+	static class ProxyHttpRequestHandler implements NHttpRequestHandler {
 
-
-        public ProxyHttpRequestHandler() {
-            super();
-        }
+		public ProxyHttpRequestHandler() {
+			super();
+		}
 
 		@Override
-		public ConsumingNHttpEntity entityRequest(
-				HttpEntityEnclosingRequest arg0, HttpContext arg1)
+		public ConsumingNHttpEntity entityRequest(HttpEntityEnclosingRequest arg0, HttpContext arg1)
 				throws HttpException, IOException {
 			return null;
 		}
 
-		//handle() is called when a request is received
-		//response is automatically generated by HttpProcessor, but use response from mapper
-		//trigger is used for asynchronous response, see java-documentation
+		// handle() is called when a request is received
+		// response is automatically generated by HttpProcessor, but use
+		// response from mapper
+		// trigger is used for asynchronous response, see java-documentation
 		@Override
-		public void handle(final HttpRequest request, final HttpResponse response,
-				final NHttpResponseTrigger trigger, HttpContext con)
-				throws HttpException, IOException {
+		public void handle(final HttpRequest request, final HttpResponse response, final NHttpResponseTrigger trigger,
+				HttpContext con) throws HttpException, IOException {
 			logger.info("incomming HTTP request");
 			URI uri = ProxyMapper.resolveHttpRequestUri(request);
-			if (uri != null){
-				InetAddress serverAddress = InetAddress.getByName(uri.getHost()); //FIXME: blocking operation??? 
+			if (uri != null) {
+				// FIXME: blocking operation???
+				InetAddress serverAddress = InetAddress.getByName(uri.getHost()); 
 				int serverPort = uri.getPort();
 				if (serverPort == -1) {
-					serverPort = org.ws4d.coap.Constants.COAP_DEFAULT_PORT;
+					serverPort = org.ws4d.coap.core.CoapConstants.COAP_DEFAULT_PORT;
 				}
 				/* translate always */
 				ProxyMessageContext context = new ProxyMessageContext(request, true, uri, trigger);
 				context.setServerAddress(serverAddress, serverPort);
-				ProxyMapper.getInstance().handleHttpServerRequest(context); 
+				ProxyMapper.getInstance().handleHttpServerRequest(context);
 			} else {
-				trigger.submitResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST, "Bad Header: Host"));
+				trigger.submitResponse(
+						new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST, "Bad Header: Host"));
 			}
 		}
-    }
+	}
 }

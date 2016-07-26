@@ -48,51 +48,54 @@ import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.nio.entity.ConsumingNHttpEntityTemplate;
 import org.apache.http.nio.entity.NStringEntity;
 import org.apache.http.util.EntityUtils;
-import org.apache.log4j.Logger;
-import org.ws4d.coap.interfaces.CoapClientChannel;
-import org.ws4d.coap.interfaces.CoapRequest;
-import org.ws4d.coap.interfaces.CoapResponse;
-import org.ws4d.coap.interfaces.CoapServerChannel;
-import org.ws4d.coap.messages.AbstractCoapMessage.CoapHeaderOptionType;
-import org.ws4d.coap.messages.BasicCoapRequest;
-import org.ws4d.coap.messages.BasicCoapResponse;
-import org.ws4d.coap.messages.CoapMediaType;
-import org.ws4d.coap.messages.CoapRequestCode;
-import org.ws4d.coap.messages.CoapResponseCode;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.ws4d.coap.cache.CoapCache;
+import org.ws4d.coap.core.CoapConstants;
+import org.ws4d.coap.core.connection.api.CoapClientChannel;
+import org.ws4d.coap.core.connection.api.CoapServerChannel;
+import org.ws4d.coap.core.enumerations.CoapHeaderOptionType;
+import org.ws4d.coap.core.enumerations.CoapMediaType;
+import org.ws4d.coap.core.enumerations.CoapRequestCode;
+import org.ws4d.coap.core.enumerations.CoapResponseCode;
+import org.ws4d.coap.core.messages.BasicCoapRequest;
+import org.ws4d.coap.core.messages.BasicCoapResponse;
+import org.ws4d.coap.core.messages.api.CoapRequest;
+import org.ws4d.coap.core.messages.api.CoapResponse;
+import org.ws4d.coap.core.rest.CoapData;
+import org.ws4d.coap.core.tools.Encoder;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Andy Seidel <andy.seidel@uni-rostock.de>
  */
 public class ProxyMapper {
-	static Logger logger = Logger.getLogger(Proxy.class);
-	static final int DEFAULT_MAX_AGE_MS = 60000; //Max Age Default in ms 
+	private static Logger logger = LogManager.getLogger();
 
-	//introduce other needed classes for communication
+	// introduce other needed classes for communication
 	private CoapClientProxy coapClient;
 	private CoapServerProxy coapServer;
 	private HttpServerNIO httpServer;
 	private HttpClientNIO httpClient;
-	private static ProxyCache cache;	
-	
+	private static CoapCache cache;
+
 	private static ProxyMapper instance;
-	
-	/*for statistics*/
+
+	/* for statistics */
 	private int httpRequestCount = 0;
 	private int coapRequestCount = 0;
 	private int servedFromCacheCount = 0;
-	
 
-    public synchronized static ProxyMapper getInstance() {
-        if (instance == null) {
-            instance = new ProxyMapper();
-        }
-        return instance;
-    }
+	public synchronized static ProxyMapper getInstance() {
+		if (instance == null) {
+			instance = new ProxyMapper();
+		}
+		return instance;
+	}
 
-    private ProxyMapper() {
-		cache = new ProxyCache();
-    }
+	private ProxyMapper() {
+		cache = new CoapCache();
+	}
     
     /*
     *               Server                              Client
@@ -114,22 +117,19 @@ public class ProxyMapper {
     *                CoAP -----------------------------> CoAP
     */
 
-    
-    
-    
 	public void handleHttpServerRequest(ProxyMessageContext context) {
 		this.httpRequestCount++;
 		// do not translate methods: OPTIONS,TRACE,CONNECT -> error
 		// "Not Implemented"
 		if (isHttpRequestMethodSupported(context.getInHttpRequest())) {
 			// perform request-transformation
-			
+
 			/* try to get from cache */
 			ProxyResource resource = null;
-			if (context.getInHttpRequest().getRequestLine().getMethod().toLowerCase().equals("get")){
+			if (context.getInHttpRequest().getRequestLine().getMethod().toLowerCase().equals("get")) {
 				resource = cache.get(context);
 			}
-			
+
 			if (resource != null) {
 				/* answer from cache */
 				resourceToHttp(context, resource);
@@ -140,14 +140,15 @@ public class ProxyMapper {
 			} else {
 				/* not cached -> forward request */
 				try {
-					this.coapClient.createChannel(context); //channel must be created first 
+					this.coapClient.createChannel(context); // channel must be
+															// created first
 					transRequestHttpToCoap(context);
 					context.setRequestTime(System.currentTimeMillis());
 					this.coapClient.sendRequest(context);
 				} catch (Exception e) {
 					logger.warn("HTTP to CoAP Request failed: " + e.getMessage());
 					/* close if a channel was connected */
-					if (context.getOutCoapClientChannel() != null){
+					if (context.getOutCoapClientChannel() != null) {
 						context.getOutCoapClientChannel().close();
 					}
 					sendDirectHttpError(context, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
@@ -162,7 +163,7 @@ public class ProxyMapper {
 	public void handleCoapServerRequest(ProxyMessageContext context) {
 		this.coapRequestCount++;
 		ProxyResource resource = null;
-		if (context.getInCoapRequest().getRequestCode() == CoapRequestCode.GET){
+		if (context.getInCoapRequest().getRequestCode() == CoapRequestCode.GET) {
 			resource = cache.get(context);
 		}
 		if (context.isTranslate()) {
@@ -179,7 +180,7 @@ public class ProxyMapper {
 				try {
 					transRequestCoapToHttp(context);
 					context.setRequestTime(System.currentTimeMillis());
-					this.httpClient.sendRequest(context); 
+					this.httpClient.sendRequest(context);
 				} catch (Exception e) {
 					logger.warn("CoAP to HTTP Request translation failed: " + e.getMessage());
 					sendDirectCoapError(context, CoapResponseCode.Not_Found_404);
@@ -197,7 +198,8 @@ public class ProxyMapper {
 			} else {
 				/* translate CoAP Request -> CoAP Request */
 				try {
-					this.coapClient.createChannel(context); //channel must be created first 
+					this.coapClient.createChannel(context); // channel must be
+															// created first
 					transRequestCoapToCoap(context);
 					context.setRequestTime(System.currentTimeMillis());
 					this.coapClient.sendRequest(context);
@@ -211,8 +213,9 @@ public class ProxyMapper {
 
 	public void handleCoapClientResponse(ProxyMessageContext context) {
 		context.setResponseTime(System.currentTimeMillis());
-		
-		if (!context.isCached() && context.getInCoapResponse() !=null ) { // avoid recaching
+
+		if (!context.isCached() && context.getInCoapResponse() != null) { // avoid
+																			// recaching
 			cache.cacheCoapResponse(context);
 		}
 
@@ -222,7 +225,8 @@ public class ProxyMapper {
 				transResponseCoapToHttp(context);
 			} catch (Exception e) {
 				logger.warn("CoAP to HTTP Response translation failed: " + e.getMessage());
-				context.setOutHttpResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Internal Server Error"));
+				context.setOutHttpResponse(new BasicHttpResponse(HttpVersion.HTTP_1_1,
+						HttpStatus.SC_INTERNAL_SERVER_ERROR, "Internal Server Error"));
 			}
 			this.httpServer.sendResponse(context);
 		} else {
@@ -237,13 +241,9 @@ public class ProxyMapper {
 		}
 	}
 
-        
 	public void handleHttpClientResponse(ProxyMessageContext context) {
 		context.setResponseTime(System.currentTimeMillis());
-		
-		if (!context.isCached()) {
-			cache.cacheHttpResponse(context);
-		}
+
 		try {
 			transResponseHttpToCoap(context);
 		} catch (Exception e) {
@@ -252,33 +252,37 @@ public class ProxyMapper {
 		}
 		this.coapServer.sendResponse(context);
 	}
-	
 
-	/* ------------------------------------ Translate Functions -----------------------------------*/
-	
-	public static void transRequestCoapToCoap(ProxyMessageContext context){
+	/*
+	 * ------------------------------------ Translate Functions
+	 * -----------------------------------
+	 */
+
+	public static void transRequestCoapToCoap(ProxyMessageContext context) {
 		CoapRequest in = context.getInCoapRequest();
 		CoapClientChannel channel = context.getOutCoapClientChannel();
-		context.setOutCoapRequest(channel.createRequest(CoapClientProxy.RELIABLE, in.getRequestCode()));
+		context.setOutCoapRequest(channel.createRequest(CoapClientProxy.isReliable(), in.getRequestCode()));
 		CoapRequest out = context.getOutCoapRequest();
-		
-		/*TODO: translate not using copy header options */
-		((BasicCoapRequest) out).copyHeaderOptions((BasicCoapRequest)in);
-		
-		/* TODO: check if the next hop is a proxy or the final serer 
-		 * implement coapUseProxy option for proxy */
+
+		/* TODO: translate not using copy header options */
+		((BasicCoapRequest) out).copyHeaderOptions((BasicCoapRequest) in);
+
+		/*
+		 * TODO: check if the next hop is a proxy or the final serer implement
+		 * coapUseProxy option for proxy
+		 */
 		out.removeOption(CoapHeaderOptionType.Proxy_Uri);
-		
+
 		out.setUriPath(context.getUri().getPath());
-		if (context.getUri().getQuery() != null){
+		if (context.getUri().getQuery() != null) {
 			out.setUriQuery(context.getUri().getQuery());
 		}
 
-		//out.removeOption(CoapHeaderOptionType.Token);
+		// out.removeOption(CoapHeaderOptionType.Token);
 		out.setToken(null);
 		out.setPayload(in.getPayload());
 	}
-	
+
 	public static void transRequestHttpToCoap(ProxyMessageContext context) throws IOException {
 		HttpRequest httpRequest = context.getInHttpRequest();
 		boolean hasContent = false;
@@ -306,7 +310,7 @@ public class ProxyMapper {
 		}
 
 		CoapClientChannel channel = context.getOutCoapClientChannel();
-		context.setOutCoapRequest(channel.createRequest(CoapClientProxy.RELIABLE, requestCode));
+		context.setOutCoapRequest(channel.createRequest(CoapClientProxy.isReliable(), requestCode));
 
 		// Translate Headers
 		CoapRequest coapRequest = context.getOutCoapRequest();
@@ -392,7 +396,8 @@ public class ProxyMapper {
 		// Header[] headers = request.getHeaders("If-None-Match");
 		// if (headers.length > 0) {
 		// if (headers.length > 1) {
-		// System.out.println("multiple headers in request, ignoring all except the first");
+		// System.out.println("multiple headers in request, ignoring all except
+		// the first");
 		// }
 		// String header_value = headers[0].getValue();
 		// CoapHeaderOption option_ifnonematch = new
@@ -403,7 +408,7 @@ public class ProxyMapper {
 		// }
 
 		// pass-through the payload
-		if (hasContent){
+		if (hasContent) {
 			BasicHttpEntityEnclosingRequest entirequest = (BasicHttpEntityEnclosingRequest) httpRequest;
 			ConsumingNHttpEntityTemplate entity = (ConsumingNHttpEntityTemplate) entirequest.getEntity();
 			ByteContentListener listener = (ByteContentListener) entity.getContentListener();
@@ -412,56 +417,60 @@ public class ProxyMapper {
 		}
 	}
 
-	public static void transRequestCoapToHttp(ProxyMessageContext context) throws UnsupportedEncodingException{
+	public static void transRequestCoapToHttp(ProxyMessageContext context) throws UnsupportedEncodingException {
 		HttpUriRequest httpRequest;
 		CoapRequest request = context.getInCoapRequest();
 		CoapRequestCode code = request.getRequestCode();
-		//TODO:translate header options from coap-request to http-request
+		// TODO:translate header options from coap-request to http-request
 		NStringEntity entity;
 		entity = new NStringEntity(new String(request.getPayload()));
 		switch (code) {
-			case GET:
-				httpRequest = new HttpGet(context.getUri().toString());
-				break;
-			case PUT:
-				httpRequest = new HttpPut(context.getUri().toString());	
-				((HttpPut)httpRequest).setEntity(entity);
-				break;
-			case POST:
-				httpRequest = new HttpPost(context.getUri().toString());
-				((HttpPost)httpRequest).setEntity(entity);
-				break;
-			case DELETE:
-				httpRequest = new HttpDelete(context.getUri().toString());		
-			default:
-				throw new IllegalStateException("unknown request code");
+		case GET:
+			httpRequest = new HttpGet(context.getUri().toString());
+			break;
+		case PUT:
+			httpRequest = new HttpPut(context.getUri().toString());
+			((HttpPut) httpRequest).setEntity(entity);
+			break;
+		case POST:
+			httpRequest = new HttpPost(context.getUri().toString());
+			((HttpPost) httpRequest).setEntity(entity);
+			break;
+		case DELETE:
+			httpRequest = new HttpDelete(context.getUri().toString());
+			break;
+		default:
+			entity.close();
+			throw new IllegalStateException("unknown request code");
 		}
-		
+
 		context.setOutHttpRequest(httpRequest);
+		entity.close();
 	}
 
-	public static void transResponseCoapToCoap(ProxyMessageContext context){
+	public static void transResponseCoapToCoap(ProxyMessageContext context) {
 		CoapResponse in = context.getInCoapResponse();
 		CoapResponse out = context.getOutCoapResponse();
-		
-		/*TODO: translate not using copy header options */
-		((BasicCoapResponse) out).copyHeaderOptions((BasicCoapResponse)in);
-		
+
+		/* TODO: translate not using copy header options */
+		((BasicCoapResponse) out).copyHeaderOptions((BasicCoapResponse) in);
+
 		out.setResponseCode(in.getResponseCode());
-		//out.removeOption(CoapHeaderOptionType.Token);
+		// out.removeOption(CoapHeaderOptionType.Token);
 		out.setToken(null);
 		out.setPayload(in.getPayload());
 	}
 
-	public static void transResponseCoapToHttp(ProxyMessageContext context) throws UnsupportedEncodingException{
+	public static void transResponseCoapToHttp(ProxyMessageContext context) throws UnsupportedEncodingException {
 		CoapResponse coapResponse = context.getInCoapResponse();
-		//create a response-object, set http version and assume a default state of ok
+		// create a response-object, set http version and assume a default state
+		// of ok
 		HttpResponse httpResponse = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK");
-		
+
 		// differ between methods is necessary to set the right status-code
 		String requestMethod = context.getInHttpRequest().getRequestLine().getMethod();
 
-		if (requestMethod.toLowerCase().contains("get")){
+		if (requestMethod.toLowerCase().contains("get")) {
 
 			// set status code and reason phrase
 			setHttpMsgCode(coapResponse, "get", httpResponse);
@@ -473,11 +482,11 @@ public class ProxyMapper {
 				entity.setContentType("text/plain");
 				httpResponse.setEntity(entity);
 			}
-		} else if (requestMethod.toLowerCase().contains("put")){
+		} else if (requestMethod.toLowerCase().contains("put")) {
 			setHttpMsgCode(coapResponse, "put", httpResponse);
-		} else if (requestMethod.toLowerCase().contains("post")){
+		} else if (requestMethod.toLowerCase().contains("post")) {
 			setHttpMsgCode(coapResponse, "post", httpResponse);
-		} else if (requestMethod.toLowerCase().contains("delete")){
+		} else if (requestMethod.toLowerCase().contains("delete")) {
 			setHttpMsgCode(coapResponse, "delete", httpResponse);
 		} else {
 			throw new IllegalStateException("unknown request method");
@@ -487,43 +496,50 @@ public class ProxyMapper {
 		headerTranslateCoapToHttp(coapResponse, httpResponse);
 		context.setOutHttpResponse(httpResponse);
 	}
-	
-	public static void transResponseHttpToCoap(ProxyMessageContext context) throws ParseException, IOException{
-		//set the response-code according to response-code-mapping-table
+
+	public static void transResponseHttpToCoap(ProxyMessageContext context) throws ParseException, IOException {
+		// set the response-code according to response-code-mapping-table
 		CoapResponse coapResponse = context.getOutCoapResponse();
-		coapResponse.setResponseCode(getCoapResponseCode(context)); //throws an exception if mapping failed
-		//TODO: translate header-options
-		
-		//assume in this case a string-entity
-		//TODO: add more entity-types
+		// throws an exception if mapping failed
+		coapResponse.setResponseCode(getCoapResponseCode(context)); 
+		// TODO: translate header-options
+
+		// assume in this case a string-entity
+		// TODO: add more entity-types
 		coapResponse.setContentType(CoapMediaType.text_plain);
-		
+
 		String entity = "";
 		entity = EntityUtils.toString(context.getInHttpResponse().getEntity());
 		coapResponse.setPayload(entity);
 	}
 
-	/* these functions are called if the request translation fails and no message was forwarded */
-	public void sendDirectHttpError(ProxyMessageContext context,int code, String reason){
+	/*
+	 * these functions are called if the request translation fails and no
+	 * message was forwarded
+	 */
+	public void sendDirectHttpError(ProxyMessageContext context, int code, String reason) {
 		HttpResponse httpResponse = new BasicHttpResponse(HttpVersion.HTTP_1_1, code, reason);
 		context.setOutHttpResponse(httpResponse);
 		this.httpServer.sendResponse(context);
 	}
 
-	/* these functions are called if the request translation fails and no message was forwarded */
-	public void sendDirectCoapError(ProxyMessageContext context, CoapResponseCode code){
+	/*
+	 * these functions are called if the request translation fails and no
+	 * message was forwarded
+	 */
+	public void sendDirectCoapError(ProxyMessageContext context, CoapResponseCode code) {
 		CoapServerChannel channel = (CoapServerChannel) context.getInCoapRequest().getChannel();
-		CoapResponse response = channel.createResponse(context.getInCoapRequest(), code); 
+		CoapResponse response = channel.createResponse(context.getInCoapRequest(), code);
 		context.setInCoapResponse(response);
 		this.coapServer.sendResponse(context);
 	}
-	
-	public static void resourceToHttp(ProxyMessageContext context, ProxyResource resource){
+
+	public static void resourceToHttp(ProxyMessageContext context, ProxyResource resource) {
 		/* TODO: very rudimentary implementation */
-		HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK"); 
+		HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK");
 		try {
 			NStringEntity entity;
-			entity = new NStringEntity(new String(resource.getValue()), "UTF-8");
+			entity = new NStringEntity(Encoder.ByteToString(resource.get(null).getPayload()), "UTF-8");
 			entity.setContentType("text/plain");
 			response.setEntity(entity);
 		} catch (UnsupportedEncodingException e) {
@@ -531,224 +547,241 @@ public class ProxyMapper {
 		}
 		context.setOutHttpResponse(response);
 	}
-	
-	public static void resourceToCoap(ProxyMessageContext context, ProxyResource resource){
-		CoapResponse response = context.getOutCoapResponse(); //already generated
+
+	public static void resourceToCoap(ProxyMessageContext context, ProxyResource resource) {
+		CoapResponse response = context.getOutCoapResponse(); // already
+																// generated
 		/* response code */
 		response.setResponseCode(CoapResponseCode.Content_205);
+		CoapData cd = resource.get(null);
 		/* payload */
-		response.setPayload(resource.getValue());
+		response.setPayload(cd.getPayload());
 		/* mediatype */
-		if (resource.getCoapMediaType() != null) {
-			response.setContentType(resource.getCoapMediaType());
+		if (cd.getMediaType() != null) {
+			response.setContentType(cd.getMediaType());
 		}
 		/* Max-Age */
-		int maxAge = (int)(resource.expires() -  System.currentTimeMillis()) / 1000;
-		if (maxAge < 0){
-			/* should never happen because the function is only called if the resource is valid. 
-			 * However, processing time can be an issue */
+		int maxAge = (int) (resource.expires() - System.currentTimeMillis()) / 1000;
+		if (maxAge < 0) {
+			/*
+			 * should never happen because the function is only called if the
+			 * resource is valid. However, processing time can be an issue
+			 */
 			logger.warn("return expired resource (Max-Age = 0)");
 			maxAge = 0;
 		}
 		response.setMaxAge(maxAge);
 	}
-	
-	
-	public static void setHttpMsgCode(CoapResponse coapResponse, String requestMethod, HttpResponse httpResponse) {
-		
-		CoapResponseCode responseCode = coapResponse.getResponseCode();
-		
-		switch(responseCode) {
-//			case OK_200: { //removed from CoAP draft
-//				httpResponse.setStatusCode(HttpStatus.SC_OK);
-//				httpResponse.setReasonPhrase("Ok");
-//				break;
-//			}
-			case Created_201: {
-				if (requestMethod.contains("post") || requestMethod.contains("put")) {				
-					httpResponse.setStatusCode(HttpStatus.SC_CREATED);
-					httpResponse.setReasonPhrase("Created");
-				}
-				else {
-					System.out.println("wrong msgCode for request-method!");
-					httpResponse.setStatusCode(HttpStatus.SC_METHOD_FAILURE);
-					httpResponse.setReasonPhrase("Method Failure");
-				}
-				break;
-			}
-			case Deleted_202: {
-				if (requestMethod.contains("delete")) {				
-					httpResponse.setStatusCode(HttpStatus.SC_NO_CONTENT);
-					httpResponse.setReasonPhrase("No Content");
-				}
-				else {
-					System.out.println("wrong msgCode for request-method!");
-					httpResponse.setStatusCode(HttpStatus.SC_METHOD_FAILURE);
-					httpResponse.setReasonPhrase("Method Failure");
-				}
-				break;
-			}
-			case Valid_203: {
-				httpResponse.setStatusCode(HttpStatus.SC_NOT_MODIFIED);
-				httpResponse.setReasonPhrase("Not Modified");
-				break;
-			}
-			case Changed_204: {
-				if (requestMethod.contains("post") || requestMethod.contains("put")) {				
-					httpResponse.setStatusCode(HttpStatus.SC_NO_CONTENT);
-					httpResponse.setReasonPhrase("No Content");
-				}
-				else {
-					System.out.println("wrong msgCode for request-method!");
-					httpResponse.setStatusCode(HttpStatus.SC_METHOD_FAILURE);
-					httpResponse.setReasonPhrase("Method Failure");
-				}
-				break;
-			}
-			case Content_205: {
-				if (requestMethod.contains("get")) {
-					httpResponse.setStatusCode(HttpStatus.SC_OK);
-					httpResponse.setReasonPhrase("OK");
-				}
-				else {
-					System.out.println("wrong msgCode for request-method!");
-					httpResponse.setStatusCode(HttpStatus.SC_METHOD_FAILURE);
-					httpResponse.setReasonPhrase("Method Failure");
-				}
-				break;
-			}
-			case Bad_Request_400: {
-				httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-				httpResponse.setReasonPhrase("Bad Request");
-				break;
-			}
-			case Unauthorized_401: {
-				httpResponse.setStatusCode(HttpStatus.SC_UNAUTHORIZED);
-				httpResponse.setReasonPhrase("Unauthorized");
-				break;
-			}
-			case Bad_Option_402: {
-				httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-				httpResponse.setReasonPhrase("Bad Option");
-				break;
-			}
-			case Forbidden_403: {
-				httpResponse.setStatusCode(HttpStatus.SC_FORBIDDEN);
-				httpResponse.setReasonPhrase("Forbidden");
-				break;
-			}
-			case Not_Found_404: {
-				httpResponse.setStatusCode(HttpStatus.SC_NOT_FOUND);
-				httpResponse.setReasonPhrase("Not Found");
-				break;
-			}
-			case Method_Not_Allowed_405: {
-				httpResponse.setStatusCode(HttpStatus.SC_METHOD_NOT_ALLOWED);
-				httpResponse.setReasonPhrase("Method Not Allowed");
-				break;
-			}
-			case Precondition_Failed_412: {
-				httpResponse.setStatusCode(HttpStatus.SC_PRECONDITION_FAILED);
-				httpResponse.setReasonPhrase("Precondition Failed");
-				break;
-			}
-			case Request_Entity_To_Large_413: {
-				httpResponse.setStatusCode(HttpStatus.SC_REQUEST_TOO_LONG);
-				httpResponse.setReasonPhrase("Request Too Long : Request entity too large");
-				break;
-			}
-			case Unsupported_Media_Type_415: {
-				httpResponse.setStatusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE);
-				httpResponse.setReasonPhrase("Unsupported Media Type");
-				break;
-			}
-			case Internal_Server_Error_500: {
-				httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				httpResponse.setReasonPhrase("Internal Server Error");
-				break;
-			}
-			case Not_Implemented_501: {
-				httpResponse.setStatusCode(HttpStatus.SC_NOT_IMPLEMENTED);
-				httpResponse.setReasonPhrase("Not Implemented");
-				break;
-			}
-			case Bad_Gateway_502: {
-				httpResponse.setStatusCode(HttpStatus.SC_BAD_GATEWAY);
-				httpResponse.setReasonPhrase("Bad Gateway");
-				break;
-			}
-			case Service_Unavailable_503: {
-				httpResponse.setStatusCode(HttpStatus.SC_SERVICE_UNAVAILABLE);
-				httpResponse.setReasonPhrase("Service Unavailable");
-				break;
-			}
-			case Gateway_Timeout_504: {
-				httpResponse.setStatusCode(HttpStatus.SC_GATEWAY_TIMEOUT);
-				httpResponse.setReasonPhrase("Gateway Timeout");
-				break;
-			}
-			case Proxying_Not_Supported_505: {
-				httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				httpResponse.setReasonPhrase("Internal Server Error : Proxying not supported");
-				break;
-			}
-			case UNKNOWN: {
-				httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-				httpResponse.setReasonPhrase("Bad Request : Unknown Coap Message Code");
-				break;
-			}
-			default: {
-				httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-				httpResponse.setReasonPhrase("Bad Request : Unknown Coap Message Code");
-				break;
-			}
-		}		
-	}
 
-	//sets the coap-response code under use of http-status code; used in case coap-http
-	public static CoapResponseCode getCoapResponseCode(ProxyMessageContext context) {
-		HttpResponse httpResponse = context.getInHttpResponse();
-		//TODO: add cases in which http-code is the same, but coap-code is different, look at response-code-mapping-table
-		switch(httpResponse.getStatusLine().getStatusCode()) {
-			case HttpStatus.SC_CREATED:	return CoapResponseCode.Created_201;
-			case HttpStatus.SC_NO_CONTENT:				
-				if (context.getInCoapRequest().getRequestCode() == CoapRequestCode.DELETE) {
-					return CoapResponseCode.Deleted_202;
-				}
-			return CoapResponseCode.Changed_204;				
-			case HttpStatus.SC_NOT_MODIFIED: return CoapResponseCode.Valid_203;
-			case HttpStatus.SC_OK: return CoapResponseCode.Content_205;
-			case HttpStatus.SC_UNAUTHORIZED: return CoapResponseCode.Unauthorized_401;
-			case HttpStatus.SC_FORBIDDEN:return CoapResponseCode.Forbidden_403;
-			case HttpStatus.SC_NOT_FOUND:return CoapResponseCode.Not_Found_404;
-			case HttpStatus.SC_METHOD_NOT_ALLOWED:return CoapResponseCode.Method_Not_Allowed_405;
-			case HttpStatus.SC_PRECONDITION_FAILED: return CoapResponseCode.Precondition_Failed_412;
-			case HttpStatus.SC_REQUEST_TOO_LONG: return CoapResponseCode.Request_Entity_To_Large_413;
-			case HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE:return CoapResponseCode.Unsupported_Media_Type_415;
-			case HttpStatus.SC_INTERNAL_SERVER_ERROR:return CoapResponseCode.Internal_Server_Error_500;
-			case HttpStatus.SC_NOT_IMPLEMENTED:return CoapResponseCode.Not_Implemented_501;
-			case HttpStatus.SC_BAD_GATEWAY:return CoapResponseCode.Bad_Gateway_502;
-			case HttpStatus.SC_SERVICE_UNAVAILABLE:return CoapResponseCode.Service_Unavailable_503;
-			case HttpStatus.SC_GATEWAY_TIMEOUT:return CoapResponseCode.Gateway_Timeout_504;
-			default:
-				throw new IllegalStateException("unknown HTTP response code");
+	public static void setHttpMsgCode(CoapResponse coapResponse, String requestMethod, HttpResponse httpResponse) {
+
+		CoapResponseCode responseCode = coapResponse.getResponseCode();
+
+		switch (responseCode) {
+		// case OK_200: { //removed from CoAP draft
+		// httpResponse.setStatusCode(HttpStatus.SC_OK);
+		// httpResponse.setReasonPhrase("Ok");
+		// break;
+		// }
+		case Created_201: {
+			if (requestMethod.contains("post") || requestMethod.contains("put")) {
+				httpResponse.setStatusCode(HttpStatus.SC_CREATED);
+				httpResponse.setReasonPhrase("Created");
+			} else {
+				System.out.println("wrong msgCode for request-method!");
+				httpResponse.setStatusCode(HttpStatus.SC_METHOD_FAILURE);
+				httpResponse.setReasonPhrase("Method Failure");
+			}
+			break;
+		}
+		case Deleted_202: {
+			if (requestMethod.contains("delete")) {
+				httpResponse.setStatusCode(HttpStatus.SC_NO_CONTENT);
+				httpResponse.setReasonPhrase("No Content");
+			} else {
+				System.out.println("wrong msgCode for request-method!");
+				httpResponse.setStatusCode(HttpStatus.SC_METHOD_FAILURE);
+				httpResponse.setReasonPhrase("Method Failure");
+			}
+			break;
+		}
+		case Valid_203: {
+			httpResponse.setStatusCode(HttpStatus.SC_NOT_MODIFIED);
+			httpResponse.setReasonPhrase("Not Modified");
+			break;
+		}
+		case Changed_204: {
+			if (requestMethod.contains("post") || requestMethod.contains("put")) {
+				httpResponse.setStatusCode(HttpStatus.SC_NO_CONTENT);
+				httpResponse.setReasonPhrase("No Content");
+			} else {
+				System.out.println("wrong msgCode for request-method!");
+				httpResponse.setStatusCode(HttpStatus.SC_METHOD_FAILURE);
+				httpResponse.setReasonPhrase("Method Failure");
+			}
+			break;
+		}
+		case Content_205: {
+			if (requestMethod.contains("get")) {
+				httpResponse.setStatusCode(HttpStatus.SC_OK);
+				httpResponse.setReasonPhrase("OK");
+			} else {
+				System.out.println("wrong msgCode for request-method!");
+				httpResponse.setStatusCode(HttpStatus.SC_METHOD_FAILURE);
+				httpResponse.setReasonPhrase("Method Failure");
+			}
+			break;
+		}
+		case Bad_Request_400: {
+			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+			httpResponse.setReasonPhrase("Bad Request");
+			break;
+		}
+		case Unauthorized_401: {
+			httpResponse.setStatusCode(HttpStatus.SC_UNAUTHORIZED);
+			httpResponse.setReasonPhrase("Unauthorized");
+			break;
+		}
+		case Bad_Option_402: {
+			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+			httpResponse.setReasonPhrase("Bad Option");
+			break;
+		}
+		case Forbidden_403: {
+			httpResponse.setStatusCode(HttpStatus.SC_FORBIDDEN);
+			httpResponse.setReasonPhrase("Forbidden");
+			break;
+		}
+		case Not_Found_404: {
+			httpResponse.setStatusCode(HttpStatus.SC_NOT_FOUND);
+			httpResponse.setReasonPhrase("Not Found");
+			break;
+		}
+		case Method_Not_Allowed_405: {
+			httpResponse.setStatusCode(HttpStatus.SC_METHOD_NOT_ALLOWED);
+			httpResponse.setReasonPhrase("Method Not Allowed");
+			break;
+		}
+		case Precondition_Failed_412: {
+			httpResponse.setStatusCode(HttpStatus.SC_PRECONDITION_FAILED);
+			httpResponse.setReasonPhrase("Precondition Failed");
+			break;
+		}
+		case Request_Entity_To_Large_413: {
+			httpResponse.setStatusCode(HttpStatus.SC_REQUEST_TOO_LONG);
+			httpResponse.setReasonPhrase("Request Too Long : Request entity too large");
+			break;
+		}
+		case Unsupported_Media_Type_415: {
+			httpResponse.setStatusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE);
+			httpResponse.setReasonPhrase("Unsupported Media Type");
+			break;
+		}
+		case Internal_Server_Error_500: {
+			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			httpResponse.setReasonPhrase("Internal Server Error");
+			break;
+		}
+		case Not_Implemented_501: {
+			httpResponse.setStatusCode(HttpStatus.SC_NOT_IMPLEMENTED);
+			httpResponse.setReasonPhrase("Not Implemented");
+			break;
+		}
+		case Bad_Gateway_502: {
+			httpResponse.setStatusCode(HttpStatus.SC_BAD_GATEWAY);
+			httpResponse.setReasonPhrase("Bad Gateway");
+			break;
+		}
+		case Service_Unavailable_503: {
+			httpResponse.setStatusCode(HttpStatus.SC_SERVICE_UNAVAILABLE);
+			httpResponse.setReasonPhrase("Service Unavailable");
+			break;
+		}
+		case Gateway_Timeout_504: {
+			httpResponse.setStatusCode(HttpStatus.SC_GATEWAY_TIMEOUT);
+			httpResponse.setReasonPhrase("Gateway Timeout");
+			break;
+		}
+		case Proxying_Not_Supported_505: {
+			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			httpResponse.setReasonPhrase("Internal Server Error : Proxying not supported");
+			break;
+		}
+		case UNKNOWN: {
+			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+			httpResponse.setReasonPhrase("Bad Request : Unknown Coap Message Code");
+			break;
+		}
+		default: {
+			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+			httpResponse.setReasonPhrase("Bad Request : Unknown Coap Message Code");
+			break;
+		}
 		}
 	}
-		
-	//mediatype-mapping:
+
+	// sets the coap-response code under use of http-status code; used in case
+	// coap-http
+	public static CoapResponseCode getCoapResponseCode(ProxyMessageContext context) {
+		HttpResponse httpResponse = context.getInHttpResponse();
+		// TODO: add cases in which http-code is the same, but coap-code is
+		// different, look at response-code-mapping-table
+		switch (httpResponse.getStatusLine().getStatusCode()) {
+		case HttpStatus.SC_CREATED:
+			return CoapResponseCode.Created_201;
+		case HttpStatus.SC_NO_CONTENT:
+			if (context.getInCoapRequest().getRequestCode() == CoapRequestCode.DELETE) {
+				return CoapResponseCode.Deleted_202;
+			}
+			return CoapResponseCode.Changed_204;
+		case HttpStatus.SC_NOT_MODIFIED:
+			return CoapResponseCode.Valid_203;
+		case HttpStatus.SC_OK:
+			return CoapResponseCode.Content_205;
+		case HttpStatus.SC_UNAUTHORIZED:
+			return CoapResponseCode.Unauthorized_401;
+		case HttpStatus.SC_FORBIDDEN:
+			return CoapResponseCode.Forbidden_403;
+		case HttpStatus.SC_NOT_FOUND:
+			return CoapResponseCode.Not_Found_404;
+		case HttpStatus.SC_METHOD_NOT_ALLOWED:
+			return CoapResponseCode.Method_Not_Allowed_405;
+		case HttpStatus.SC_PRECONDITION_FAILED:
+			return CoapResponseCode.Precondition_Failed_412;
+		case HttpStatus.SC_REQUEST_TOO_LONG:
+			return CoapResponseCode.Request_Entity_To_Large_413;
+		case HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE:
+			return CoapResponseCode.Unsupported_Media_Type_415;
+		case HttpStatus.SC_INTERNAL_SERVER_ERROR:
+			return CoapResponseCode.Internal_Server_Error_500;
+		case HttpStatus.SC_NOT_IMPLEMENTED:
+			return CoapResponseCode.Not_Implemented_501;
+		case HttpStatus.SC_BAD_GATEWAY:
+			return CoapResponseCode.Bad_Gateway_502;
+		case HttpStatus.SC_SERVICE_UNAVAILABLE:
+			return CoapResponseCode.Service_Unavailable_503;
+		case HttpStatus.SC_GATEWAY_TIMEOUT:
+			return CoapResponseCode.Gateway_Timeout_504;
+		default:
+			throw new IllegalStateException("unknown HTTP response code");
+		}
+	}
+
+	// mediatype-mapping:
 	public static void httpMediaType2coapMediaType(String mediatype, CoapRequest request) {
-		
+
 		String[] type_subtype = mediatype.split(",");
 		for (String value : type_subtype) {
-			if (value.toLowerCase().contains("text")
-					&& value.toLowerCase().contains("plain")) {
+			if (value.toLowerCase().contains("text") && value.toLowerCase().contains("plain")) {
 				request.addAccept(CoapMediaType.text_plain);
-			} else if (value.toLowerCase().contains("application")) { // value is for example "application/xml;q=0.9"
+				// value is for example "application/xml;q=0.9"
+			} else if (value.toLowerCase().contains("application")) { 
 				String[] subtypes = value.toLowerCase().split("/");
 				String subtype = "";
 
 				if (subtypes.length == 2) {
-					subtype = subtypes[1]; // subtype is for example now "xml;q=0.9"
+					// subtype is for example now "xml;q=0.9"
+					subtype = subtypes[1]; 
 				} else {
 					System.out.println("Error in reading Mediatypes!");
 				}
@@ -781,7 +814,6 @@ public class ProxyMapper {
 			}
 		}
 	}
-		
 
 	// translate response-header-options in case of http-coap
 	public static void headerTranslateCoapToHttp(CoapResponse coapResponse, HttpResponse httpResponse) {
@@ -794,8 +826,7 @@ public class ProxyMapper {
 				httpResponse.addHeader("Content-Type", "text/plain");
 				break;
 			case link_format:
-				httpResponse.addHeader("Content-Type",
-						"application/link-format");
+				httpResponse.addHeader("Content-Type", "application/link-format");
 				break;
 			case json:
 				httpResponse.addHeader("Content-Type", "application/json");
@@ -804,8 +835,7 @@ public class ProxyMapper {
 				httpResponse.addHeader("Content-Type", "application/exi");
 				break;
 			case octet_stream:
-				httpResponse.addHeader("Content-Type",
-						"application/octet-stream");
+				httpResponse.addHeader("Content-Type", "application/octet-stream");
 				break;
 			case xml:
 				httpResponse.addHeader("Content-Type", "application/xml");
@@ -817,123 +847,126 @@ public class ProxyMapper {
 		} else {
 			httpResponse.addHeader("Content-Type", "text/plain");
 		}
-		
+
 		long maxAge = coapResponse.getMaxAge();
-		if (maxAge < 0){
-			maxAge = DEFAULT_MAX_AGE_MS;
+		if (maxAge < 0) {
+			maxAge = CoapConstants.COAP_DEFAULT_MAX_AGE_MS;
 		}
-		long maxAgeMs = maxAge * 1000; 
-		if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_SERVICE_UNAVAILABLE){
+		long maxAgeMs = maxAge * 1000;
+		if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_SERVICE_UNAVAILABLE) {
 			httpResponse.addHeader("Retry-After", String.valueOf(maxAge));
 		}
-		
+
 		byte[] etag = coapResponse.getETag();
-		if (etag != null){
+		if (etag != null) {
 			httpResponse.addHeader("Etag", new String(etag));
 		}
-				
-		//generate content-length-header
+
+		// generate content-length-header
 		if (httpResponse.getEntity() != null)
 			httpResponse.addHeader("Content-length", "" + httpResponse.getEntity().getContentLength());
-		
-		//set creation-date for Caching:
+
+		// set creation-date for Caching:
 		httpResponse.addHeader("Date", "" + formatDate(new GregorianCalendar().getTime()));
-		
-		//expires-option is option-value (default is 60 secs) + current_date
+
+		// expires-option is option-value (default is 60 secs) + current_date
 		Calendar calendar = new GregorianCalendar();
 		calendar.setTimeInMillis(calendar.getTimeInMillis() + maxAgeMs);
 		String date = formatDate(calendar.getTime());
 		httpResponse.addHeader("Expires", date);
 	}
-	
 
-	public static HttpResponse handleCoapDELETEresponse(CoapResponse response, HttpResponse httpResponse) {		
-		//set status code and reason phrase
+	public static HttpResponse handleCoapDELETEresponse(CoapResponse response, HttpResponse httpResponse) {
+		// set status code and reason phrase
 
 		headerTranslateCoapToHttp(response, httpResponse);
-		return httpResponse;		
+		return httpResponse;
 	}
-	
-//	//the mode is used to indicate for which case the proxy is listening to
-//	//mode is unneccessary when proxy is listening to all cases, then there are more threads neccessary
-//	public void setMode(Integer modenumber) {
-//		mode = modenumber;
-//	}
-	
-	//setter-functions to introduce other threads
+
+	// //the mode is used to indicate for which case the proxy is listening to
+	// //mode is unneccessary when proxy is listening to all cases, then there
+	// are more threads neccessary
+	// public void setMode(Integer modenumber) {
+	// mode = modenumber;
+	// }
+
+	// setter-functions to introduce other threads
 	public void setHttpServer(HttpServerNIO server) {
 		this.httpServer = server;
 	}
+
 	public void setHttpClient(HttpClientNIO client) {
 		this.httpClient = client;
 	}
+
 	public void setCoapServer(CoapServerProxy server) {
 		this.coapServer = server;
 	}
+
 	public void setCoapClient(CoapClientProxy client) {
 		this.coapClient = client;
 	}
-	
 
-	//exclude methods from processing:OPTIONS/TRACE/CONNECT
+	// exclude methods from processing:OPTIONS/TRACE/CONNECT
 	public static boolean isHttpRequestMethodSupported(HttpRequest request) {
-		
+
 		String method = request.getRequestLine().getMethod().toLowerCase();
-		
-		if (method.contentEquals("options") || method.contentEquals("trace") || method.contentEquals("connect"))		
+
+		if (method.contentEquals("options") || method.contentEquals("trace") || method.contentEquals("connect"))
 			return false;
 
 		return true;
 	}
-		
-	//makes a date to a string; http-header-values (expires, date...) must be a string in most cases
-    public static String formatDate(Date date) {
-    	
-    	final String PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
-    	
-    	if (date == null) {
-            throw new IllegalArgumentException("date is null");
-        }
 
-        SimpleDateFormat formatter = new SimpleDateFormat(PATTERN_RFC1123, Locale.US);
-        formatter.setTimeZone(TimeZone.getDefault());				//CEST
-        String ret = formatter.format(date);
-        return ret;
-        
-    }
-    
-    public static URI resolveHttpRequestUri(HttpRequest request){
-			URI uri = null;
-			
-			String uriString = request.getRequestLine().getUri();
-			/* make sure to have the scheme */
-			if (uriString.startsWith("coap://")){
-				/* do nothing */
-			} else if (uriString.startsWith("http://")){
-				uriString = "coap://" + uriString.substring(7);
-			} else {
-				/* not an absolute uri */
-				Header[] host = request.getHeaders("Host");
-				/* only one is accepted */
-				if (host.length <= 0){
-					/* error, unknown host*/
-					return null;
-				}
-				uriString = "coap://"  + host[0].getValue() + uriString;
-			}
-			
-			try {
-				uri = new URI(uriString);
-			} catch (URISyntaxException e) {
-				return null; //indicates that resolve failed
-			}				
-				
-			return uri;
+	// makes a date to a string; http-header-values (expires, date...) must be a
+	// string in most cases
+	public static String formatDate(Date date) {
+
+		final String PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
+
+		if (date == null) {
+			throw new IllegalArgumentException("date is null");
+		}
+
+		SimpleDateFormat formatter = new SimpleDateFormat(PATTERN_RFC1123, Locale.US);
+		formatter.setTimeZone(TimeZone.getDefault()); // CEST
+		String ret = formatter.format(date);
+		return ret;
+
 	}
-    
+
+	public static URI resolveHttpRequestUri(HttpRequest request) {
+		URI uri = null;
+
+		String uriString = request.getRequestLine().getUri();
+		/* make sure to have the scheme */
+		if (uriString.startsWith("coap://")) {
+			/* do nothing */
+		} else if (uriString.startsWith("http://")) {
+			uriString = "coap://" + uriString.substring(7);
+		} else {
+			/* not an absolute uri */
+			Header[] host = request.getHeaders("Host");
+			/* only one is accepted */
+			if (host.length <= 0) {
+				/* error, unknown host */
+				return null;
+			}
+			uriString = "coap://" + host[0].getValue() + uriString;
+		}
+
+		try {
+			uri = new URI(uriString);
+		} catch (URISyntaxException e) {
+			return null; // indicates that resolve failed
+		}
+
+		return uri;
+	}
+
 	public static boolean isIPv4Address(InetAddress addr) {
 		try {
-			@SuppressWarnings("unused") //just to check if casting fails
+			@SuppressWarnings("unused") // just to check if casting fails
 			Inet4Address addr4 = (Inet4Address) addr;
 			return true;
 		} catch (ClassCastException ex) {
@@ -943,7 +976,7 @@ public class ProxyMapper {
 
 	public static boolean isIPv6Address(InetAddress addr) {
 		try {
-			@SuppressWarnings("unused") //just to check if casting fails
+			@SuppressWarnings("unused") // just to check if casting fails
 			Inet6Address addr6 = (Inet6Address) addr;
 			return true;
 		} catch (ClassCastException ex) {
@@ -962,15 +995,15 @@ public class ProxyMapper {
 	public int getServedFromCacheCount() {
 		return this.servedFromCacheCount;
 	}
-	
-	public void resetCounter(){
+
+	public void resetCounter() {
 		this.httpRequestCount = 0;
 		this.coapRequestCount = 0;
 		this.servedFromCacheCount = 0;
 	}
 
 	public void setCacheEnabled(boolean enabled) {
-			cache.setEnabled(enabled);
+		cache.setEnabled(enabled);
 	}
 
 	public CoapClientProxy getCoapClient() {
@@ -988,5 +1021,4 @@ public class ProxyMapper {
 	public HttpClientNIO getHttpClient() {
 		return this.httpClient;
 	}
-	
 }

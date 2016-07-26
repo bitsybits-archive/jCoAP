@@ -28,43 +28,39 @@ import org.apache.http.nio.util.HeapByteBufferAllocator;
 import org.apache.http.nio.util.SimpleInputBuffer;
 
 /**
- * This class is used to consume an entity and get the entity-data as byte-array.
- * The only other class which implements ContentListener is SkipContentListener.
- * SkipContentListener is ignoring all content.
- * Look at Apache HTTP Components Core NIO Framework -> Java-Documentation of SkipContentListener. 
- */
-
-/**
+ * This class is used to consume an entity and get the entity-data as
+ * byte-array. The only other class which implements ContentListener is
+ * SkipContentListener. SkipContentListener is ignoring all content. Look at
+ * Apache HTTP Components Core NIO Framework -> Java-Documentation of
+ * SkipContentListener.
+ *
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Andy Seidel <andy.seidel@uni-rostock.de>
  */
 class ByteContentListener implements ContentListener {
-    final SimpleInputBuffer input = new SimpleInputBuffer(2048, new HeapByteBufferAllocator());
+	private final SimpleInputBuffer input = new SimpleInputBuffer(2048, new HeapByteBufferAllocator());
 
-    public void consumeContent(ContentDecoder decoder, IOControl ioctrl)
-            throws IOException {
-        this.input.consumeContent(decoder);
-    }
+	public void consumeContent(ContentDecoder decoder) throws IOException {
+		this.input.consumeContent(decoder);
+	}
 
-    public void finish() {
-        this.input.reset();
-    }
+	public void finish() {
+		this.input.reset();
+	}
 
-    byte[] getContent() throws IOException {
-        byte[] b = new byte[this.input.length()];
-        this.input.read(b);
-        return b;
-    }
+	byte[] getContent() throws IOException {
+		byte[] b = new byte[this.input.length()];
+		this.input.read(b);
+		return b;
+	}
 
 	@Override
-	public void contentAvailable(ContentDecoder decoder, IOControl arg1)
-			throws IOException {
+	public void contentAvailable(ContentDecoder decoder, IOControl arg1) throws IOException {
 		this.input.consumeContent(decoder);
-		
 	}
 
 	@Override
 	public void finished() {
-		this.input.reset();					
+		this.input.reset();
 	}
 }

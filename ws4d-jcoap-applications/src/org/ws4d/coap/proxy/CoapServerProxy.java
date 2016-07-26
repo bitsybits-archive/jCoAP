@@ -20,82 +20,79 @@ package org.ws4d.coap.proxy;
 
 import java.net.InetAddress;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.util.concurrent.ArrayBlockingQueue;
 
-import org.apache.log4j.Logger;
-import org.ws4d.coap.connection.BasicCoapChannelManager;
-import org.ws4d.coap.interfaces.CoapChannelManager;
-import org.ws4d.coap.interfaces.CoapRequest;
-import org.ws4d.coap.interfaces.CoapServer;
-import org.ws4d.coap.interfaces.CoapServerChannel;
-import org.ws4d.coap.messages.BasicCoapResponse;
-import org.ws4d.coap.messages.CoapResponseCode;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.ws4d.coap.core.CoapServer;
+import org.ws4d.coap.core.connection.BasicCoapChannelManager;
+import org.ws4d.coap.core.connection.api.CoapChannelManager;
+import org.ws4d.coap.core.connection.api.CoapServerChannel;
+import org.ws4d.coap.core.enumerations.CoapResponseCode;
+import org.ws4d.coap.core.messages.BasicCoapResponse;
+import org.ws4d.coap.core.messages.api.CoapRequest;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Andy Seidel <andy.seidel@uni-rostock.de>
  */
+public class CoapServerProxy implements CoapServer {
+	private static Logger logger = LogManager.getLogger();
 
-public class CoapServerProxy implements CoapServer{
-	static Logger logger = Logger.getLogger(Proxy.class);
-	
-    private static final int LOCAL_PORT = 5683;					//port on which the server is listening
-    ProxyMapper mapper = ProxyMapper.getInstance();
-    
-    //coapOUTq_ receives a coap-response from mapper in case of coap-http
-    CoapChannelManager channelManager;
-    
+	private static final int LOCAL_PORT = 5683; // port on which the server is
+												// listening
+	private ProxyMapper mapper = ProxyMapper.getInstance();
 
-    
-    //constructor of coapserver-class, initiates the jcoap-components and starts CoapSender
-    public CoapServerProxy() {
+	// coapOUTq_ receives a coap-response from mapper in case of coap-http
+	private CoapChannelManager channelManager;
 
-        this.channelManager = BasicCoapChannelManager.getInstance();
-        this.channelManager.createServerListener(this, LOCAL_PORT);
-    }
-    
-    //interface-function for the message-queue
-    public void sendResponse(ProxyMessageContext context) {
+	// constructor of coapserver-class, initiates the jcoap-components and
+	// starts CoapSender
+	public CoapServerProxy() {
+
+		this.channelManager = BasicCoapChannelManager.getInstance();
+		this.channelManager.createServerListener(this, LOCAL_PORT);
+	}
+
+	// interface-function for the message-queue
+	public void sendResponse(ProxyMessageContext context) {
 		CoapServerChannel channel = (CoapServerChannel) context.getInCoapRequest().getChannel();
 		channel.sendMessage(context.getOutCoapResponse());
-		channel.close(); //TODO: implement strategy when to close a channel
-    }
+		channel.close(); // TODO: implement strategy when to close a channel
+	}
 
-    @Override
-    public CoapServer onAccept(CoapRequest request) {
-        logger.info("new incomming CoAP connection");
-        /* accept every incoming connection */
-        return this;
-    }
+	@Override
+	public CoapServer onAccept(CoapRequest request) {
+		logger.info("new incomming CoAP connection");
+		/* accept every incoming connection */
+		return this;
+	}
 
-    @Override
+	@Override
 	public void onRequest(CoapServerChannel channel, CoapRequest request) {
-    	/* draft-08:
-    	 *  CoAP distinguishes between requests to an origin server and a request
-   			made through a proxy.  A proxy is a CoAP end-point that can be tasked
-   			by CoAP clients to perform requests on their behalf.  This may be
-   			useful, for example, when the request could otherwise not be made, or
-   			to service the response from a cache in order to reduce response time
-   			and network bandwidth or energy consumption.
-   			
-   			CoAP requests to a proxy are made as normal confirmable or non-
-			confirmable requests to the proxy end-point, but specify the request
-   			URI in a different way: The request URI in a proxy request is
-   			specified as a string in the Proxy-Uri Option (see Section 5.10.3),
-   			while the request URI in a request to an origin server is split into
-   			the Uri-Host, Uri-Port, Uri-Path and Uri-Query Options (see
-   			Section 5.10.2).
-    	*/
-    	URI proxyUri = null;
-    	
-    	
+		/*
+		 * draft-08: CoAP distinguishes between requests to an origin server and
+		 * a request made through a proxy. A proxy is a CoAP end-point that can
+		 * be tasked by CoAP clients to perform requests on their behalf. This
+		 * may be useful, for example, when the request could otherwise not be
+		 * made, or to service the response from a cache in order to reduce
+		 * response time and network bandwidth or energy consumption.
+		 * 
+		 * CoAP requests to a proxy are made as normal confirmable or non-
+		 * confirmable requests to the proxy end-point, but specify the request
+		 * URI in a different way: The request URI in a proxy request is
+		 * specified as a string in the Proxy-Uri Option (see Section 5.10.3),
+		 * while the request URI in a request to an origin server is split into
+		 * the Uri-Host, Uri-Port, Uri-Path and Uri-Query Options (see Section
+		 * 5.10.2).
+		 */
+		URI proxyUri = null;
+
 		/* we need to cast to allow an efficient header copy */
-    	//create a prototype response, will be changed during the translation process
+		// create a prototype response, will be changed during the translation
+		// process
 		try {
-			BasicCoapResponse response = (BasicCoapResponse) channel.createResponse(request, CoapResponseCode.Internal_Server_Error_500);
+			BasicCoapResponse response = (BasicCoapResponse) channel.createResponse(request,
+					CoapResponseCode.Internal_Server_Error_500);
 			try {
 				proxyUri = new URI(request.getProxyUri());
 			} catch (Exception e) {
@@ -134,7 +131,7 @@ public class CoapServerProxy implements CoapServer{
 										// port
 				} else {
 					/* CoAP Server */
-					serverPort = org.ws4d.coap.Constants.COAP_DEFAULT_PORT;
+					serverPort = org.ws4d.coap.core.CoapConstants.COAP_DEFAULT_PORT;
 				}
 			}
 			/* generate context and forward message */
@@ -159,6 +156,4 @@ public class CoapServerProxy implements CoapServer{
 	public void onReset(CoapRequest lastRequest) {
 		System.out.println("Received RST message");
 	}
-   
 }
-
