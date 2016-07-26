@@ -15,14 +15,14 @@
 
 package org.ws4d.coap.test;
 
-import org.ws4d.coap.connection.BasicCoapChannelManager;
-import org.ws4d.coap.interfaces.CoapChannelManager;
-import org.ws4d.coap.interfaces.CoapRequest;
-import org.ws4d.coap.interfaces.CoapResponse;
-import org.ws4d.coap.interfaces.CoapServer;
-import org.ws4d.coap.interfaces.CoapServerChannel;
-import org.ws4d.coap.messages.CoapMediaType;
-import org.ws4d.coap.messages.CoapResponseCode;
+import org.ws4d.coap.core.CoapServer;
+import org.ws4d.coap.core.connection.BasicCoapChannelManager;
+import org.ws4d.coap.core.connection.api.CoapChannelManager;
+import org.ws4d.coap.core.connection.api.CoapServerChannel;
+import org.ws4d.coap.core.enumerations.CoapMediaType;
+import org.ws4d.coap.core.enumerations.CoapResponseCode;
+import org.ws4d.coap.core.messages.api.CoapRequest;
+import org.ws4d.coap.core.messages.api.CoapResponse;
 
 public class PlugtestSeparateResponseCoapServer implements CoapServer {
 	private static final int PORT = 5683;
@@ -49,23 +49,23 @@ public class PlugtestSeparateResponseCoapServer implements CoapServer {
 		System.out.println("Received message: " + request.toString());
 
 		this.channel = channel;
-		response = channel.createSeparateResponse(request,
+		this.response = channel.createSeparateResponse(request,
 				CoapResponseCode.Content_205);
 		(new Thread(new SendDelayedResponse())).start();
 	}
 
 	public class SendDelayedResponse implements Runnable {
 		public void run() {
-			response.setContentType(CoapMediaType.text_plain);
-			response.setPayload("payload...".getBytes());
+			PlugtestSeparateResponseCoapServer.this.response.setContentType(CoapMediaType.text_plain);
+			PlugtestSeparateResponseCoapServer.this.response.setPayload("payload...".getBytes());
 			try {
-				Thread.sleep(separateResponseTimeMs);
+				Thread.sleep(PlugtestSeparateResponseCoapServer.this.separateResponseTimeMs);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			channel.sendSeparateResponse(response);
+			PlugtestSeparateResponseCoapServer.this.channel.sendSeparateResponse(PlugtestSeparateResponseCoapServer.this.response);
 			System.out
-					.println("Send separate Response: " + response.toString());
+					.println("Send separate Response: " + PlugtestSeparateResponseCoapServer.this.response.toString());
 		}
 	}
 

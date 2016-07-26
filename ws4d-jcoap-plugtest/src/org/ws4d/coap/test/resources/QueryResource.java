@@ -1,7 +1,7 @@
 package org.ws4d.coap.test.resources;
 
-import org.ws4d.coap.messages.CoapMediaType;
-import org.ws4d.coap.rest.BasicCoapResource;
+import org.ws4d.coap.core.enumerations.CoapMediaType;
+import org.ws4d.coap.core.rest.BasicCoapResource;
 
 public class QueryResource extends BasicCoapResource {
 

@@ -8,9 +8,9 @@ package org.ws4d.coap.test;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.ws4d.coap.connection.BasicCoapChannelManager;
-import org.ws4d.coap.connection.BasicCoapSocketHandler;
-import org.ws4d.coap.rest.CoapResourceServer;
+import org.ws4d.coap.core.connection.BasicCoapChannelManager;
+import org.ws4d.coap.core.connection.BasicCoapSocketHandler;
+import org.ws4d.coap.core.rest.CoapResourceServer;
 import org.ws4d.coap.test.resources.LongPathResource;
 import org.ws4d.coap.test.resources.QueryResource;
 import org.ws4d.coap.test.resources.TestResource;
@@ -52,28 +52,28 @@ public class PlugtestServer {
 		System.out.println("===Run Test Server: " + testId + "===");
 		init();
 		if (testId.equals("TD_COAP_CORE_01")) {
-			resourceServer.createResource(new TestResource());
+			this.resourceServer.createResource(new TestResource());
 			run();
 		} else if (testId.equals("TD_COAP_CORE_02")) {
 			/* Nothing to setup, POST creates new resource */
 			run();
 		} else if (testId.equals("TD_COAP_CORE_03")) {
-			resourceServer.createResource(new TestResource());
+			this.resourceServer.createResource(new TestResource());
 			run();
 		} else if (testId.equals("TD_COAP_CORE_04")) {
-			resourceServer.createResource(new TestResource());
+			this.resourceServer.createResource(new TestResource());
 			run();
 		} else if (testId.equals("TD_COAP_CORE_05")) {
-			resourceServer.createResource(new TestResource());
+			this.resourceServer.createResource(new TestResource());
 			run();
 		} else if (testId.equals("TD_COAP_CORE_06")) {
 			/* Nothing to setup, POST creates new resource */
 			run();
 		} else if (testId.equals("TD_COAP_CORE_07")) {
-			resourceServer.createResource(new TestResource());
+			this.resourceServer.createResource(new TestResource());
 			run();
 		} else if (testId.equals("TD_COAP_CORE_08")) {
-			resourceServer.createResource(new TestResource());
+			this.resourceServer.createResource(new TestResource());
 			run();
 		} else if (testId.equals("TD_COAP_CORE_09")) {
 			/*
@@ -83,19 +83,19 @@ public class PlugtestServer {
 			PlugtestSeparateResponseCoapServer server = new PlugtestSeparateResponseCoapServer();
 			server.start(TestConfiguration.SEPARATE_RESPONSE_TIME_MS);
 		} else if (testId.equals("TD_COAP_CORE_10")) {
-			resourceServer.createResource(new TestResource());
+			this.resourceServer.createResource(new TestResource());
 			run();
 		} else if (testId.equals("TD_COAP_CORE_11")) {
-			resourceServer.createResource(new TestResource());
+			this.resourceServer.createResource(new TestResource());
 			run();
 		} else if (testId.equals("TD_COAP_CORE_12")) {
-			resourceServer.createResource(new LongPathResource());
+			this.resourceServer.createResource(new LongPathResource());
 			run();
 		} else if (testId.equals("TD_COAP_CORE_13")) {
-			resourceServer.createResource(new QueryResource());
+			this.resourceServer.createResource(new QueryResource());
 			run();
 		} else if (testId.equals("TD_COAP_CORE_14")) {
-			resourceServer.createResource(new TestResource());
+			this.resourceServer.createResource(new TestResource());
 			run();
 		} else if (testId.equals("TD_COAP_CORE_15")) {
 			/*
@@ -112,12 +112,12 @@ public class PlugtestServer {
 			PlugtestSeparateResponseCoapServer server = new PlugtestSeparateResponseCoapServer();
 			server.start(TestConfiguration.SEPARATE_RESPONSE_TIME_MS);
 		} else if (testId.equals("TD_COAP_LINK_01")) {
-			resourceServer.createResource(new LongPathResource());
-			resourceServer.createResource(new TestResource());
+			this.resourceServer.createResource(new LongPathResource());
+			this.resourceServer.createResource(new TestResource());
 			run();
 		} else if (testId.equals("TD_COAP_LINK_02")) {
-			resourceServer.createResource(new LongPathResource());
-			resourceServer.createResource(new TestResource());
+			this.resourceServer.createResource(new LongPathResource());
+			this.resourceServer.createResource(new TestResource());
 			run();
 		} else if (testId.equals("TD_COAP_BLOCK_01")) {
 		} else if (testId.equals("TD_COAP_BLOCK_02")) {
@@ -137,15 +137,15 @@ public class PlugtestServer {
 
 	private void init() {
 		BasicCoapChannelManager.getInstance().setMessageId(2000);
-		if (resourceServer != null)
-			resourceServer.stop();
-		resourceServer = new CoapResourceServer();
+		if (this.resourceServer != null)
+			this.resourceServer.stop();
+		this.resourceServer = new CoapResourceServer();
 
 	}
 
 	private void run() {
 		try {
-			resourceServer.start();
+			this.resourceServer.start();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

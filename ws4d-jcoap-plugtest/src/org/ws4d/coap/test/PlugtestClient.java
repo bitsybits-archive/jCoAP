@@ -12,15 +12,15 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.ws4d.coap.Constants;
-import org.ws4d.coap.connection.BasicCoapChannelManager;
-import org.ws4d.coap.connection.BasicCoapSocketHandler;
-import org.ws4d.coap.interfaces.CoapChannelManager;
-import org.ws4d.coap.interfaces.CoapClient;
-import org.ws4d.coap.interfaces.CoapClientChannel;
-import org.ws4d.coap.interfaces.CoapRequest;
-import org.ws4d.coap.interfaces.CoapResponse;
-import org.ws4d.coap.messages.CoapRequestCode;
+import org.ws4d.coap.core.CoapClient;
+import org.ws4d.coap.core.CoapConstants;
+import org.ws4d.coap.core.connection.BasicCoapChannelManager;
+import org.ws4d.coap.core.connection.BasicCoapSocketHandler;
+import org.ws4d.coap.core.connection.api.CoapChannelManager;
+import org.ws4d.coap.core.connection.api.CoapClientChannel;
+import org.ws4d.coap.core.enumerations.CoapRequestCode;
+import org.ws4d.coap.core.messages.api.CoapRequest;
+import org.ws4d.coap.core.messages.api.CoapResponse;
 
 /**
  * @author Nico Laum <nico.laum@uni-rostock.de>
@@ -48,7 +48,7 @@ public class PlugtestClient implements CoapClient{
 		logger.setLevel(Level.WARNING);
 		PlugtestClient client = new PlugtestClient();
 		//client.start(args[0], Integer.parseInt(args[1]), args[2], args[3]);
-		client.start("127.0.0.1", Constants.COAP_DEFAULT_PORT, "TD_COAP_LINK_02", "");
+		client.start("127.0.0.1", CoapConstants.COAP_DEFAULT_PORT, "TD_COAP_LINK_02", "");
 		
 	}
 	
@@ -59,13 +59,13 @@ public class PlugtestClient implements CoapClient{
 		this.serverAddress = serverAddress;
 		this.serverPort = serverPort;
 		this.filter = filter;
-		this.serverList = new HashMap<String, List<String>>();
+		this.serverList = new HashMap<>();
 		
 		init(false, CoapRequestCode.GET);
-		request.setUriPath("/.well-known/core");
+		this.request.setUriPath("/.well-known/core");
 //		request.setUriPath("/test");
 		
-		System.out.println("QueryPath: " + request.getUriPath() );
+		System.out.println("QueryPath: " + this.request.getUriPath() );
 		
 /*		if (testId.equals("TD_COAP_CORE_01")) {
 			init(true, CoapRequestCode.GET);
@@ -159,16 +159,16 @@ public class PlugtestClient implements CoapClient{
     
     
 	public void init(boolean reliable, CoapRequestCode requestCode) {
-		channelManager = BasicCoapChannelManager.getInstance();
-		channelManager.setMessageId(1000);
+		this.channelManager = BasicCoapChannelManager.getInstance();
+		this.channelManager.setMessageId(1000);
 		
 		try {
-			clientChannel = channelManager.connect(this, InetAddress.getByName(this.serverAddress), this.serverPort);
-			if (clientChannel == null){
+			this.clientChannel = this.channelManager.connect(this, InetAddress.getByName(this.serverAddress), this.serverPort);
+			if (this.clientChannel == null){
 				System.out.println("Connect failed.");
 				System.exit(-1);
 			}
-			request = clientChannel.createRequest(reliable, requestCode);
+			this.request = this.clientChannel.createRequest(reliable, requestCode);
 			
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -177,12 +177,12 @@ public class PlugtestClient implements CoapClient{
 	}
 
 	public void run() {
-		if(request.getPayload() != null){
-			System.out.println("Send Request: " + request.toString() + " (" + new String(request.getPayload()) +")");
+		if(this.request.getPayload() != null){
+			System.out.println("Send Request: " + this.request.toString() + " (" + new String(this.request.getPayload()) +")");
 		}else {
-			System.out.println("Send Request: " + request.toString());
+			System.out.println("Send Request: " + this.request.toString());
 		}
-		clientChannel.sendMessage(request);
+		this.clientChannel.sendMessage(this.request);
 	}
 
 
@@ -201,7 +201,7 @@ public class PlugtestClient implements CoapClient{
 		} else {
 			System.out.println("Response: " + response.toString());
 		}
-		if (exitAfterResponse){
+		if (this.exitAfterResponse){
 			System.out.println("===END===");
 			System.exit(0);
 		}

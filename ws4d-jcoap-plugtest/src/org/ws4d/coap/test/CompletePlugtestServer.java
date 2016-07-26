@@ -8,9 +8,9 @@ package org.ws4d.coap.test;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.ws4d.coap.connection.BasicCoapChannelManager;
-import org.ws4d.coap.connection.BasicCoapSocketHandler;
-import org.ws4d.coap.rest.CoapResourceServer;
+import org.ws4d.coap.core.connection.BasicCoapChannelManager;
+import org.ws4d.coap.core.connection.BasicCoapSocketHandler;
+import org.ws4d.coap.core.rest.CoapResourceServer;
 import org.ws4d.coap.test.resources.LongPathResource;
 import org.ws4d.coap.test.resources.QueryResource;
 import org.ws4d.coap.test.resources.TestResource;
@@ -49,23 +49,23 @@ public class CompletePlugtestServer {
 		System.out.println("===Run Test Server ===");
 		init();
 
-		resourceServer.createResource(new TestResource());
-		resourceServer.createResource(new LongPathResource());
-		resourceServer.createResource(new QueryResource());
+		this.resourceServer.createResource(new TestResource());
+		this.resourceServer.createResource(new LongPathResource());
+		this.resourceServer.createResource(new QueryResource());
 		run();
 	}
 
 	private void init() {
 		BasicCoapChannelManager.getInstance().setMessageId(2000);
-		if (resourceServer != null)
-			resourceServer.stop();
-		resourceServer = new CoapResourceServer();
+		if (this.resourceServer != null)
+			this.resourceServer.stop();
+		this.resourceServer = new CoapResourceServer();
 
 	}
 
 	private void run() {
 		try {
-			resourceServer.start();
+			this.resourceServer.start();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
