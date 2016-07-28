@@ -5,18 +5,18 @@ import java.util.List;
 import org.ws4d.coap.core.enumerations.CoapMediaType;
 import org.ws4d.coap.core.rest.CoapData;
 
-public abstract class ResourceHandler {
+public interface ResourceHandler {
 
-	public abstract CoapMediaType getMediaType();
+	public CoapMediaType getMediaType();
 
-	public abstract CoapData handleGet();
+	public CoapData handleGet();
 
-	public abstract CoapData handleGet(List<String> queryString);
+	public CoapData handleGet(List<String> queryString);
 
-	public abstract boolean handlePost(byte[] data);
+	public boolean handlePost(byte[] data);
 
-	public abstract boolean handlePut(byte[] data);
+	public boolean handlePut(byte[] data);
 
-	public abstract boolean handleDelete();
+	public boolean handleDelete();
 
 }

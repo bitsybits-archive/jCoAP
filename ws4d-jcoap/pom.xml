@@ -41,13 +41,11 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.4</version>
+				<version>3.0.2</version>
 				<configuration>
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<classpathPrefix>dependency</classpathPrefix>
-							<mainClass>com.test.entryClassOfJarHavingMainMethod</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
@@ -85,4 +83,9 @@
 		<url>http://www.ws4d.org/</url>
 		<name>Web Services for Devices</name>
 	</organization>
+	<url>https://gitlab.amd.e-technik.uni-rostock.de/bjoern.konieczek/jcoap-draft18</url>
+	<issueManagement>
+		<url>https://gitlab.amd.e-technik.uni-rostock.de/bjoern.konieczek/jcoap-draft18/issues</url>
+		<system>GitLab</system>
+	</issueManagement>
 </project>
