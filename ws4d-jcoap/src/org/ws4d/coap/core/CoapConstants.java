@@ -18,7 +18,7 @@ package org.ws4d.coap.core;
 /**
  * Defines CoAP related constants.
  * 
- * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ * @author Christian Lerche
  */
 public final class CoapConstants {
 

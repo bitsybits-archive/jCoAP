@@ -57,9 +57,9 @@ public class CoapHeaderOption implements Comparable<CoapHeaderOption> {
 			if (this.optionTypeValue % 14 == 0) {
 				/* no-op: no operation for deltas > 14 */
 			} else {
-				/* TODO: implement check if it is a critical option */
-				//this.isCritical();
-				throw new IllegalArgumentException("Unknown header option");
+				if(this.isCritical()){
+					throw new IllegalArgumentException("Unknown critical header option: "+this.optionTypeValue);
+				}
 			}
 		}
 		/* parse length */
@@ -88,11 +88,6 @@ public class CoapHeaderOption implements Comparable<CoapHeaderOption> {
 
 	@Override
 	public int compareTo(CoapHeaderOption option) {
-		/*
-		 * compare function for sorting TODO: check what happens in case of
-		 * equal option values IMPORTANT: order must be the same for e.g.,
-		 * URI path
-		 */
 		if (this.optionTypeValue != option.optionTypeValue)
 			return this.optionTypeValue < option.optionTypeValue ? -1 : 1;
 		return 0;

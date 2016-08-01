@@ -37,8 +37,6 @@ public class BasicCoapResponse extends AbstractCoapMessage implements CoapRespon
 		 * case of an invalid argument
 		 */
 		this.responseCode = CoapResponseCode.parse(this.getMessageCodeValue());
-
-		// TODO: check integrity of header options
 	}
 
 	/* token can be null */

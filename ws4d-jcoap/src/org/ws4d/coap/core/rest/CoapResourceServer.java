@@ -136,9 +136,9 @@ public class CoapResourceServer implements ResourceServer {
 	public void stop() {
 		this.resources.clear();
 		this.etags.clear();
-		this.coreResource = null;
+		this.coreResource.changed();
 		// FIXME causes java.nio.channels.ClosedChannelException when starting the server again
-		BasicCoapChannelManager.getInstance().removeServerListener(this, this.port);
+		// BasicCoapChannelManager.getInstance().removeServerListener(this, this.port);
 	}
 
 	/**
@@ -313,7 +313,7 @@ public class CoapResourceServer implements ResourceServer {
 
 	@Override
 	public void onSeparateResponseFailed(CoapServerChannel channel) {
-		logger.error("Separate response failed but server never used separate responses");
+		logger.error("Separate response failed.");
 	}
 
 	@Override

@@ -21,7 +21,10 @@ import org.ws4d.coap.core.connection.api.CoapClientChannel;
 import org.ws4d.coap.core.messages.api.CoapResponse;
 
 /**
- * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ * This is the base interface that has to be implemented by every CoAP client in
+ * order to receive callbacks on different events.
+ * 
+ * @author Christian Lerche
  */
 public interface CoapClient {
 
@@ -41,9 +44,9 @@ public interface CoapClient {
 	 * multicast request at the application layer.
 	 * 
 	 * @param channel
-	 *            - The CoapClientChannel where the message arrived.
+	 *            - The {@link CoapClientChannel} where the message arrived.
 	 * @param resonse
-	 *            - The CoapResponse that arrived
+	 *            - The {@link CoapResponse} that arrived
 	 * @param srcAddress
 	 *            - The IP address of the origin server of the response.
 	 * @param srcPort
@@ -58,7 +61,9 @@ public interface CoapClient {
 	 * @param channel
 	 *            - The {@link CoapClientChannel} where the connection failed.
 	 * @param notReachable
+	 *            - A flag to indicate that the server is not reachable
 	 * @param resetByServer
+	 *            - A flag to indicate that the remote server made a reset
 	 */
 	public void onConnectionFailed(CoapClientChannel channel, boolean notReachable, boolean resetByServer);
 }

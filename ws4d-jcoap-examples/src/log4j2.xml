@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="WARN"><!-- ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF: -->
+<Configuration status="INFO"><!-- ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF: -->
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
       <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
     </Console>
   </Appenders>
   <Loggers>
-    <Root level="WARN"><!-- ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF: -->
+    <Root level="INFO"><!-- ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF: -->
       <AppenderRef ref="Console"/>
     </Root>
   </Loggers>

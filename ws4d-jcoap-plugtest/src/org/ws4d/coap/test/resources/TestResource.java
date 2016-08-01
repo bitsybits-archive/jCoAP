@@ -15,7 +15,7 @@ public class TestResource extends BasicCoapResource {
 	}
 
 	@Override
-	public String getResourceType() {
+	public synchronized String getResourceType() {
 		return "TypeA";
 	}
 }

@@ -108,7 +108,6 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 		}
 	}
 
-	/* TODO: this function should be in another class */
 	public static CoapMessage parseMessage(byte[] bytes, int length) {
 		return parseMessage(bytes, length, 0);
 	}
@@ -171,8 +170,6 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 	}
 
 	public byte[] serialize() {
-		/* TODO improve memory allocation */
-
 		/* serialize header options first to get the length */
 		int optionsLength = 0;
 		byte[] optionsArray = null;

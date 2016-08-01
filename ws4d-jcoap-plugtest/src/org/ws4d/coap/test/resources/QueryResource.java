@@ -7,7 +7,6 @@ public class QueryResource extends BasicCoapResource {
 
 	private QueryResource(String path, byte[] value, CoapMediaType mediaType) {
 		super(path, value, mediaType);
-		// TODO Auto-generated constructor stub
 	}
 
 	public QueryResource() {
@@ -16,7 +15,7 @@ public class QueryResource extends BasicCoapResource {
 	}
 
 	@Override
-	public String getResourceType() {
+	public synchronized String getResourceType() {
 		return "TypeB";
 	}
 

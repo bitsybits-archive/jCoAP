@@ -19,32 +19,33 @@ import org.ws4d.coap.core.connection.api.CoapServerChannel;
 import org.ws4d.coap.core.messages.api.CoapRequest;
 
 /**
- * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ * This is the base interface that has to be implemented by every CoAP server in
+ * order to receive callbacks on different events.
+ * 
+ * @author Christian Lerche
  */
 public interface CoapServer {
 
 	/**
-	 * 
 	 * @param request
 	 * @return
 	 */
 	public CoapServer onAccept(CoapRequest request);
 
 	/**
-	 * 
-	 * @param channel
-	 * @param request
+	 * This is a callback method that is invoked every time when a new request arrives.
+	 * @param channel - The {@link CoapServerChannel} where the request arrived.
+	 * @param request - The {@link CoapRequest} that arrived.
 	 */
 	public void onRequest(CoapServerChannel channel, CoapRequest request);
 
 	/**
-	 * 
 	 * @param channel
 	 */
 	public void onSeparateResponseFailed(CoapServerChannel channel);
 
 	/**
-	 * 
+	 * This method is called whenever a reset message is received
 	 * @param lastRequest
 	 */
 	public void onReset(CoapRequest lastRequest);

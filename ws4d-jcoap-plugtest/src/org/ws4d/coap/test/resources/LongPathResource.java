@@ -4,9 +4,9 @@ import org.ws4d.coap.core.enumerations.CoapMediaType;
 import org.ws4d.coap.core.rest.BasicCoapResource;
 
 public class LongPathResource extends BasicCoapResource {
+	
 	private LongPathResource(String path, byte[] value, CoapMediaType mediaType) {
 		super(path, value, mediaType);
-		// TODO Auto-generated constructor stub
 	}
 
 	public LongPathResource() {
@@ -15,7 +15,7 @@ public class LongPathResource extends BasicCoapResource {
 	}
 
 	@Override
-	public String getResourceType() {
+	public synchronized String getResourceType() {
 		return "TypeC";
 	}
 

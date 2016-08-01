@@ -146,7 +146,7 @@ public class BasicResourceTest {
 	@Test
 	public void validPathRootResources() {
 		// An empty path component is equivalent to an absolute path of "/"
-		CoapResource res = new BasicCoapResource("/test", "", CoapMediaType.text_plain);
+		CoapResource res = new BasicCoapResource("", "", CoapMediaType.text_plain);
 		resourceServer.createResource(res);
 	}
 

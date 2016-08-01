@@ -49,8 +49,6 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 		 * of an invalid argument
 		 */
 		this.requestCode = CoapRequestCode.parse(this.getMessageCodeValue());
-
-		// TODO: check integrity of header options
 	}
 
 	public BasicCoapRequest(CoapPacketType packetType, CoapRequestCode requestCode, int messageId) {

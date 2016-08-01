@@ -64,9 +64,10 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 	public void handleMessage(CoapMessage message) {
 		/* message MUST be a request */
 		if (message.getPacketType() == CoapPacketType.RST) {
-			// TODO Notify Server to handle reset messages (for example for
-			// observe cancellation)
 			this.server.onReset(this.lastRequest);
+			// TODO Notify Server to handle reset messages (Reset ongoing blockwise transfer --> delete BlockContext)
+			// this.blockContext = null;
+			return;
 		}
 		if (message.isEmpty()) {
 			return;
@@ -134,7 +135,6 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 		System.err.println("ERROR: Received a response on a Server");
 	}
 
-	/* TODO: implement */
 	public void lostConnection(boolean notReachable, boolean resetByServer) {
 		this.server.onSeparateResponseFailed(this);
 	}

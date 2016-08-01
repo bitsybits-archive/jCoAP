@@ -26,16 +26,14 @@ import org.ws4d.coap.core.messages.api.CoapResponse;
 
 public class PlugtestSeparateResponseCoapServer implements CoapServer {
 	private static final int PORT = 5683;
-	static int counter = 0;
 	CoapResponse response = null;
-	CoapServerChannel channel = null;
-	int separateResponseTimeMs = 4000;
+	CoapServerChannel ch = null;
+	int responseTimeMs = 4000;
 
 	public void start(int separateResponseTimeMs) {
-		CoapChannelManager channelManager = BasicCoapChannelManager
-				.getInstance();
+		CoapChannelManager channelManager = BasicCoapChannelManager.getInstance();
 		channelManager.createServerListener(this, PORT);
-		this.separateResponseTimeMs = separateResponseTimeMs;
+		this.responseTimeMs = separateResponseTimeMs;
 	}
 
 	@Override
@@ -48,22 +46,23 @@ public class PlugtestSeparateResponseCoapServer implements CoapServer {
 	public void onRequest(CoapServerChannel channel, CoapRequest request) {
 		System.out.println("Received message: " + request.toString());
 
-		this.channel = channel;
-		this.response = channel.createSeparateResponse(request,
-				CoapResponseCode.Content_205);
+		this.ch = channel;
+		this.response = channel.createSeparateResponse(request, CoapResponseCode.Content_205);
 		(new Thread(new SendDelayedResponse())).start();
 	}
 
 	public class SendDelayedResponse implements Runnable {
+
 		public void run() {
 			PlugtestSeparateResponseCoapServer.this.response.setContentType(CoapMediaType.text_plain);
 			PlugtestSeparateResponseCoapServer.this.response.setPayload("payload...".getBytes());
 			try {
-				Thread.sleep(PlugtestSeparateResponseCoapServer.this.separateResponseTimeMs);
+				Thread.sleep(PlugtestSeparateResponseCoapServer.this.responseTimeMs);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			PlugtestSeparateResponseCoapServer.this.channel.sendSeparateResponse(PlugtestSeparateResponseCoapServer.this.response);
+			PlugtestSeparateResponseCoapServer.this.ch
+					.sendSeparateResponse(PlugtestSeparateResponseCoapServer.this.response);
 			System.out
 					.println("Send separate Response: " + PlugtestSeparateResponseCoapServer.this.response.toString());
 		}
@@ -76,8 +75,6 @@ public class PlugtestSeparateResponseCoapServer implements CoapServer {
 
 	@Override
 	public void onReset(CoapRequest lastRequest) {
-		// TODO Auto-generated method stub
-
+		// empty
 	}
-
 }

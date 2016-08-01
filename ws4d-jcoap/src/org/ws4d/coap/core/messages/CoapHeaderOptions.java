@@ -23,8 +23,6 @@ public class CoapHeaderOptions implements Iterable<CoapHeaderOption> {
 		this.deserializedLength = 0;
 		int lastOptionNumber = 0;
 		int optionOffset = offset;
-		// System.out.println("Byte Length = " + bytes.length);
-		// for (int i = 0; i < optionCount; i++) {
 		while (bytes[optionOffset] != -1 && optionOffset < length - 1) {
 			CoapHeaderOption option = new CoapHeaderOption(bytes, optionOffset, lastOptionNumber);
 			lastOptionNumber = option.getOptionTypeValue();
@@ -66,7 +64,6 @@ public class CoapHeaderOptions implements Iterable<CoapHeaderOption> {
 
 	public void addOption(CoapHeaderOption option) {
 		this.headerOptions.add(option);
-		/* TODO: only sort when options are serialized */
 		Collections.sort(this.headerOptions);
 	}
 

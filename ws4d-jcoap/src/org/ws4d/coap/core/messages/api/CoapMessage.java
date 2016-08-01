@@ -161,7 +161,6 @@ public interface CoapMessage {
 	 */
 	public void setObserveOption(int sequenceNumber);
 
-	// TODO: could this compromise the internal state?
 	/**
 	 * 
 	 * @param optionType

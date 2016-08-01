@@ -55,7 +55,6 @@ import org.ws4d.coap.core.tools.TimeoutHashMap;
 public class BasicCoapSocketHandler implements CoapSocketHandler {
 	/*
 	 * the socket handler has its own logger 
-	 * TODO: implement different socket handler for client and server channels
 	 */
 	static final Logger logger = LogManager.getLogger();
 	private static final int POLLING_INTERVALL = 10000;
@@ -63,6 +62,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 	private int localPort;
 
 	private WorkerThread workerThread = null;
+	// TODO can b removed MC receive thread can also handle unicast messages
 	private ReceiveThread receiveThread = null;
 	private ReceiveThread receiveMCThread = null;
 	private Map<ChannelKey, CoapClientChannel> clientChannels = new HashMap<ChannelKey, CoapClientChannel>();
@@ -555,9 +555,6 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 
 			/* send message */
 			ByteBuffer buf = ByteBuffer.wrap(msg.serialize());
-			/*
-			 * TODO: check if serialization could fail... then do not put it to any Map!
-			 */
 			try {
 				BasicCoapSocketHandler.this.getDatagramChannel().send(buf, new InetSocketAddress(inetAddr, port));
 				logger.info("Send Msg with ID: " + msg.getMessageID());

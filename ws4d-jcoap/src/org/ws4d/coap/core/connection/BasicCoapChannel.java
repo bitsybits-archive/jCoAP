@@ -86,7 +86,6 @@ public abstract class BasicCoapChannel implements CoapChannel {
 	 * A channel is identified (and therefore unique) by its remote address,
 	 * remote port and the local port
 	 */
-	// TODO: identify channel also by a token
 	@Override
 	public int hashCode() {
 

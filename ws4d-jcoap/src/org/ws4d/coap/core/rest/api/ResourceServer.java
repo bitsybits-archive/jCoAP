@@ -25,8 +25,8 @@ import org.ws4d.coap.core.messages.api.CoapRequest;
  * A ResourceServer manages resources, takes care of resource permissions and
  * handles GET, POST, PUT and DELETE requests.
  * 
- * @author Nico Laum <nico.laum@uni-rostock.de>
- * @author Christian Lerche <christian.lerche@uni-rostock.de>
+ * @author Nico Laum
+ * @author Christian Lerche
  * @author Björn Butzin <bjoern.butzin@uni-rostock.de>
  */
 public interface ResourceServer extends CoapServer {

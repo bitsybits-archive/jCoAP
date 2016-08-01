@@ -100,11 +100,13 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		if (this.blockContext != null) {
 			/* blocking option */
 			if (this.blockContext.getFirstRequest() == null)
-				System.err.println("first Request is null");
+				logger.warn("first request is null");
+			/* If this is a response, to a blockwise GET, add the payload to the current BlockContext.
+			 */
 			if (this.blockContext.getFirstRequest().getRequestCode() == CoapRequestCode.GET) {
 				if (!this.blockContext.addBlock(message, block2)) {
-					/* this was not a correct block */
-					/* TODO: implement either a RST or ignore this packet */
+					/* Current block number and expected block number do not match! Hence, the block was not added to the BlockContext */
+					/* TODO: implement a RST*/
 				}
 			}
 
@@ -132,19 +134,12 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 					}
 					sendMessage(request);
 				}
-				/*
-				 * TODO: implement handler, inform the client that a block (but not the complete message) was received
-				 */
 				return;
 			}
 			/* blockwise transfer finished */
 
 			message.setPayload(this.blockContext.getPayload());
 			this.blockContext = null;
-			/*
-			 * TODO: give the payload separately and leave the original message
-			 * as they is
-			 */
 		}
 
 		/* normal or separate response */
@@ -173,8 +168,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		}
 
 		if (message.getBlock1() != null || message.getBlock2() != null) {
-			// TODO: handle blockwise multicast transactions
-			System.err.println("ERROR: Received a blockwise response to a multicast request!");
+			logger.error("ERROR: Received a blockwise response to a multicast request!");
 		} else {
 			this.client.onMCResponse(this, (BasicCoapResponse) message, srcAddress, srcPort);
 		}
