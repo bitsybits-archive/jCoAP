@@ -83,9 +83,9 @@
 		<url>http://www.ws4d.org/</url>
 		<name>Web Services for Devices</name>
 	</organization>
-	<url>https://gitlab.amd.e-technik.uni-rostock.de/bjoern.konieczek/jcoap-draft18</url>
+	<url>https://gitlab.amd.e-technik.uni-rostock.de/ws4d/jcoap</url>
 	<issueManagement>
-		<url>https://gitlab.amd.e-technik.uni-rostock.de/bjoern.konieczek/jcoap-draft18/issues</url>
+		<url>https://gitlab.amd.e-technik.uni-rostock.de/ws4d/jcoap/issues</url>
 		<system>GitLab</system>
 	</issueManagement>
 </project>

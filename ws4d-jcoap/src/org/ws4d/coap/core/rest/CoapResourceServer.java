@@ -135,9 +135,11 @@ public class CoapResourceServer implements ResourceServer {
 	@Override
 	public void stop() {
 		this.resources.clear();
+		addResource(this.coreResource);
 		this.etags.clear();
 		this.coreResource.changed();
-		// FIXME causes java.nio.channels.ClosedChannelException when starting the server again
+		// FIXME causes NullPointerException when starting the server again
+		// at org.ws4d.coap.core.connection.BasicCoapChannelManager.createServerChannel(BasicCoapChannelManager.java:61)
 		// BasicCoapChannelManager.getInstance().removeServerListener(this, this.port);
 	}
 

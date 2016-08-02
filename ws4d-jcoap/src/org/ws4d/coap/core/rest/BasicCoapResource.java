@@ -76,7 +76,7 @@ public class BasicCoapResource implements CoapResource {
 		for (String segment : segments) {
 			if (segment.getBytes().length > 255) {
 				IllegalArgumentException e = new IllegalArgumentException("Uri-Path too long");
-				logger.info("Uri-Path too long: " + initPath, e);
+				logger.warn("Uri-Path too long: " + initPath);
 				throw e;
 			}
 		}

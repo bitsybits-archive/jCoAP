@@ -62,7 +62,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 	private int localPort;
 
 	private WorkerThread workerThread = null;
-	// TODO can b removed MC receive thread can also handle unicast messages
+	// TODO can be removed MC receive thread can also handle unicast messages
 	private ReceiveThread receiveThread = null;
 	private ReceiveThread receiveMCThread = null;
 	private Map<ChannelKey, CoapClientChannel> clientChannels = new HashMap<ChannelKey, CoapClientChannel>();
@@ -114,9 +114,9 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 		this.dgramSocket.setSoTimeout(0);
 		this.dgramSocket.setReceiveBufferSize(CoapConstants.RECEIVE_BUFFER_SIZE);
 
-		this.dgramSocket.joinGroup(InetAddress.getByName("ff02::fd"));
-		this.dgramSocket.joinGroup(InetAddress.getByName("ff05::fd"));
-		this.dgramSocket.joinGroup(InetAddress.getByName("224.0.1.187"));
+		this.dgramSocket.joinGroup(InetAddress.getByName(CoapConstants.COAP_ALL_NODES_IPV6_LL_MC_ADDR));
+		this.dgramSocket.joinGroup(InetAddress.getByName(CoapConstants.COAP_ALL_NODES_IPV6_SL_MC_ADDR));
+		this.dgramSocket.joinGroup(InetAddress.getByName(CoapConstants.COAP_ALL_NODES_IPV4_MC_ADDR));
 
 		this.workerThread = new WorkerThread();
 		this.workerThread.start();
@@ -710,7 +710,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 		} catch (IOException e) {
 			logger.warn(e.getLocalizedMessage());
 		}
-		/* TODO: wake up thread and kill it */
+		/* TODO: wake up threads (receive & worker) and kill them */
 	}
 
 	@Override

@@ -282,8 +282,103 @@ public class PlugTest {
 	
 	// /.well-known/core
 	
+	@Test
+	public void wellKnownFull() throws InterruptedException {
+		resourceServer.createResource(new BasicCoapResource("/resource1", "content1", CoapMediaType.text_plain)
+				.setResourceType("resource1Type")
+				.setInterfaceDescription("resource1Description"));
+
+		CoapRequest request = clientChannel.createRequest(true, CoapRequestCode.GET);
+		request.setUriPath("/.well-known/core");
+		clientChannel.sendMessage(request);
+
+		while (null == receivedResponse)Thread.sleep(10);
+
+		Assert.assertEquals("</.well-known/core>,</resource1>;rt=\"resource1Type\";if=\"resource1Description\"",
+				Encoder.ByteToString(receivedResponse.getPayload()));
+	}
+
+	@Test
+	public void wellKnownRT() throws InterruptedException {
+		resourceServer.createResource(new BasicCoapResource("/resource1", "content1", CoapMediaType.text_plain)
+				.setResourceType("resource1Type")
+				.setInterfaceDescription("resource1Description"));
+		resourceServer.createResource(new BasicCoapResource("/resource2", "content2", CoapMediaType.text_plain)
+				.setResourceType("resource2Type")
+				.setInterfaceDescription("resource2Description"));
+
+		CoapRequest request = clientChannel.createRequest(true, CoapRequestCode.GET);
+		request.setUriPath("/.well-known/core");
+		request.setUriQuery("rt=resource1Type");
+		clientChannel.sendMessage(request);
+
+		while (null == receivedResponse)Thread.sleep(10);
+
+		Assert.assertEquals("</resource1>;rt=\"resource1Type\";if=\"resource1Description\"",
+				Encoder.ByteToString(receivedResponse.getPayload()));
+	}
+	
 	// URI-query
 	
+	
+	
+	// Path length
+	@Test(expected = Exception.class)
+	public void invalidNameTooLongResource() {
+		String resourcename = "";
+		for (int i = 0; i < 256; i++) {
+			resourcename += 'a';
+		}
+		CoapResource res = new BasicCoapResource("/" + resourcename, "", CoapMediaType.text_plain);
+		resourceServer.createResource(res);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void invalidPathTooLongResource() {
+		String resourcename = "";
+		for (int i = 0; i < 256; i++) {
+			resourcename += 'a';
+		}
+		CoapResource res = new BasicCoapResource("/1/2/3/4/5/6/7/8/9/0/1/2/3/4/5/6/7/8/9/" + resourcename, "",
+				CoapMediaType.text_plain);
+		resourceServer.createResource(res);
+	}
+
+	/*
+	 * ########################################################################
+	 * valid resources
+	 * ########################################################################
+	 */
+
+	@Test
+	public void validPathShortestResources() {
+		// An empty path component is equivalent to an absolute path of "/"
+		CoapResource res = new BasicCoapResource("/test", "", CoapMediaType.text_plain);
+		resourceServer.createResource(res);
+	}
+
+	@Test
+	public void validPathRootResources() {
+		// An empty path component is equivalent to an absolute path of "/"
+		CoapResource res = new BasicCoapResource("", "", CoapMediaType.text_plain);
+		resourceServer.createResource(res);
+	}
+
+	@Test
+	public void validNameLongestResources() {
+		String resourcename = "";
+		for (int i = 0; i < 255; i++) {
+			resourcename += 'a';
+		}
+		CoapResource res = new BasicCoapResource("/" + resourcename, "", CoapMediaType.text_plain);
+		resourceServer.createResource(res);
+	}
+
+	@Test
+	public void validPathLongestResources() {
+		CoapResource res = new BasicCoapResource("/1/2/3/4/5", "", CoapMediaType.text_plain);
+		resourceServer.createResource(res);
+	}
 }
 
 
