@@ -65,6 +65,10 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		return null;
 	}
 
+	public boolean isLastMulticast() {
+		return lastRequest != null && lastRequest.isMulticast();
+	}
+
 	@Override
 	public void handleMessage(CoapMessage message) {
 		if (message.isRequest()) {

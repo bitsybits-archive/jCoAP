@@ -36,6 +36,7 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 
 	private static final Logger logger = Logger.getLogger(BasicCoapRequest.class.getCanonicalName());
 	private CoapRequestCode requestCode;
+	private boolean isMulticast;
 
 	public BasicCoapRequest(byte[] bytes, int length) {
 		/* length ought to be provided by UDP header */
@@ -342,6 +343,16 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 	@Override
 	public void setRequestCode(CoapRequestCode requestCode) {
 		this.requestCode = requestCode;
+	}
+
+	@Override
+	public void setMulticast(boolean value) {
+		isMulticast = value;
+	}
+
+	@Override
+	public boolean isMulticast() {
+		return isMulticast;
 	}
 
 	@Override

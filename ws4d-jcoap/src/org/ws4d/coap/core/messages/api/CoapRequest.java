@@ -155,4 +155,8 @@ public interface CoapRequest extends CoapMessage {
 	public void setRequestCode(CoapRequestCode requestCode);
 	
 	public CoapHeaderOptions getOptions();
+
+	void setMulticast(boolean value);
+
+	boolean isMulticast();
 }

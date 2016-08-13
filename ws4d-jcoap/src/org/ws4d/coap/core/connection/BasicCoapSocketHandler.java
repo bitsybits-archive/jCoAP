@@ -380,7 +380,8 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 					while(it.hasNext()) {
 						channel = BasicCoapSocketHandler.this.getClientChannels().get(it.next());
 						try {
-							if (new String(channel.getLastToken()).equals(new String(msg.getToken()))) {
+							if (channel.isLastMulticast() 
+									|| new String(channel.getLastToken()).equals(new String(msg.getToken()))) {
 								mcResp = true;
 								break;
 							}

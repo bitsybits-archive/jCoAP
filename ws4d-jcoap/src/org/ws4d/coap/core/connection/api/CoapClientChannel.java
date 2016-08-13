@@ -55,4 +55,6 @@ public interface CoapClientChannel extends CoapChannel {
 	 * @return
 	 */
 	public byte[] getLastToken();
+
+	boolean isLastMulticast();
 }
