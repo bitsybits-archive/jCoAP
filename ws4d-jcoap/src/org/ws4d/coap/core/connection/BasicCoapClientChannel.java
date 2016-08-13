@@ -15,13 +15,6 @@
 
 package org.ws4d.coap.core.connection;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.InetAddress;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.ws4d.coap.core.CoapClient;
 import org.ws4d.coap.core.connection.api.CoapClientChannel;
 import org.ws4d.coap.core.connection.api.CoapSocketHandler;
@@ -35,6 +28,13 @@ import org.ws4d.coap.core.messages.CoapEmptyMessage;
 import org.ws4d.coap.core.messages.api.CoapMessage;
 import org.ws4d.coap.core.messages.api.CoapRequest;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Bjoern Konieczek <bjoern.konieczek@uni-rostock.de>
@@ -45,7 +45,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 	private ClientBlockContext blockContext = null;
 	private CoapRequest lastRequest = null;
 	private Object trigger = null;
-	private static final Logger logger = LogManager.getLogger();
+	private static final Logger logger = Logger.getLogger(BasicCoapClientChannel.class.getCanonicalName());
 
 	public BasicCoapClientChannel(CoapSocketHandler socketHandler, CoapClient client, InetAddress remoteAddress,
 			int remotePort) {
@@ -100,7 +100,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		if (this.blockContext != null) {
 			/* blocking option */
 			if (this.blockContext.getFirstRequest() == null)
-				logger.warn("first request is null");
+				logger.log(Level.WARNING, "first request is null");
 			/* If this is a response, to a blockwise GET, add the payload to the current BlockContext.
 			 */
 			if (this.blockContext.getFirstRequest().getRequestCode() == CoapRequestCode.GET) {
@@ -119,7 +119,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 				 */
 				CoapBlockOption newBlock = this.blockContext.getNextBlock();
 				if (this.lastRequest == null) {
-					logger .warn("Client channel: lastRequest == null");
+					logger.log(Level.WARNING,"Client channel: lastRequest == null");
 				} else {
 					/* create a new request for the next block */
 					BasicCoapRequest request = new BasicCoapRequest(this.lastRequest.getPacketType(),
@@ -168,7 +168,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		}
 
 		if (message.getBlock1() != null || message.getBlock2() != null) {
-			logger.error("ERROR: Received a blockwise response to a multicast request!");
+			logger.log(Level.SEVERE, "ERROR: Received a blockwise response to a multicast request!");
 		} else {
 			this.client.onMCResponse(this, (BasicCoapResponse) message, srcAddress, srcPort);
 		}
@@ -201,9 +201,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 	 * This function should be called to initiate any blockwise POST or PUT
 	 * request. Adds the context for the blockwise transaction to the client
 	 * channel.
-	 * 
-	 * @param maxBlocksize
-	 *            Maximal BlockSize for sending
+	 *
 	 * @param request
 	 *            The CoapRequest-Object, that was obtained through
 	 *            ClientChannel.createRequest() function. The request must
@@ -253,8 +251,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		private int blockNumber;
 		private int maxBlockNumber;
 		private CoapRequest request;
-		private final Logger blockContextLogger  = LogManager.getLogger();
-		
+		private final Logger blockContextLogger = Logger.getLogger(ClientBlockContext.class.getCanonicalName());
 		/**
 		 * Create BlockContext for GET requests. This is done automatically, if
 		 * the sent GET request or the obtained response contain a
@@ -342,7 +339,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 			try {
 				this.incomingStream.write(msg.getPayload());
 			} catch (IOException e) {
-				this.blockContextLogger.warn("ERROR: Cannot write data block to input buffer!");
+				this.blockContextLogger.log(Level.SEVERE, "ERROR: Cannot write data block to input buffer!");
 			}
 			if (block.isLast()) {
 				this.finished = true;

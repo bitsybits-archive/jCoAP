@@ -16,22 +16,22 @@
 package org.ws4d.coap.core.tools;
 
 import java.io.UnsupportedEncodingException;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Björn Butzin <bjoern.butzin@uni-rostock.de>
  */
 public class Encoder {
-	private static final Logger logger = LogManager.getLogger();
+	private static final Logger logger = Logger.getLogger(Encoder.class.getCanonicalName());
 
 	public static String ByteToString(byte[] bytes) {
 		if (null != bytes) {
 			try {
 				return new String(bytes, "UTF-8");
 			} catch (UnsupportedEncodingException e) {
-				logger.warn("Can not encode \"" + bytes + "\" as UTF-8 String", e);
+				logger.log(Level.WARNING, "Can not encode \"" + Arrays.toString(bytes) + "\" as UTF-8 String", e);
 
 			}
 		}
@@ -43,7 +43,7 @@ public class Encoder {
 			try {
 				return string.getBytes("UTF-8");
 			} catch (UnsupportedEncodingException e) {
-				logger.warn("Can not encode \"" + string + "\" as UTF-8 byte[]", e);
+				logger.log(Level.WARNING, "Can not encode \"" + string + "\" as UTF-8 byte[]", e);
 			}
 		}
 		return null;

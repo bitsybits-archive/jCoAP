@@ -15,16 +15,9 @@
 
 package org.ws4d.coap.core.connection;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.Random;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.ws4d.coap.core.CoapClient;
-import org.ws4d.coap.core.CoapServer;
 import org.ws4d.coap.core.CoapConstants;
+import org.ws4d.coap.core.CoapServer;
 import org.ws4d.coap.core.connection.api.CoapChannelManager;
 import org.ws4d.coap.core.connection.api.CoapClientChannel;
 import org.ws4d.coap.core.connection.api.CoapServerChannel;
@@ -32,12 +25,19 @@ import org.ws4d.coap.core.connection.api.CoapSocketHandler;
 import org.ws4d.coap.core.messages.BasicCoapRequest;
 import org.ws4d.coap.core.messages.api.CoapMessage;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 public class BasicCoapChannelManager implements CoapChannelManager {
 	// global message id
-	private static final Logger logger = LogManager.getLogger();
+	private static final Logger logger = Logger.getLogger(BasicCoapChannelManager.class.getCanonicalName());
 	private int globalMessageId;
 	private static BasicCoapChannelManager instance;
 	private HashMap<Integer, SocketInformation> socketMap = new HashMap<Integer, SocketInformation>();
@@ -100,7 +100,7 @@ public class BasicCoapChannelManager implements CoapChannelManager {
 						listener);
 				this.socketMap.put(localPort, socketInfo);
 			} catch (IOException e) {
-				logger.warn(e.getLocalizedMessage());
+				logger.log(Level.WARNING, e.getMessage(), e);
 			}
 		} else {
 			throw new IllegalStateException("address already in use");
@@ -126,7 +126,7 @@ public class BasicCoapChannelManager implements CoapChannelManager {
 			this.socketMap.put(socketHandler.getLocalPort(), sockInfo);
 			return socketHandler.connect(client, addr, port);
 		} catch (IOException e) {
-			logger.warn(e.getLocalizedMessage());
+			logger.log(Level.WARNING, e.getMessage(), e);
 		}
 		return null;
 	}

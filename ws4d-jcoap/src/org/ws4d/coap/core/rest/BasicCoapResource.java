@@ -15,14 +15,6 @@
 
 package org.ws4d.coap.core.rest;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.ws4d.coap.core.connection.api.CoapChannel;
 import org.ws4d.coap.core.connection.api.CoapServerChannel;
 import org.ws4d.coap.core.enumerations.CoapMediaType;
@@ -33,12 +25,16 @@ import org.ws4d.coap.core.rest.api.CoapResource;
 import org.ws4d.coap.core.rest.api.ResourceServer;
 import org.ws4d.coap.core.tools.Encoder;
 
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Björn Butzin <bjoern.butzin@uni-rostock.de>
  */
 public class BasicCoapResource implements CoapResource {
-	private static final Logger logger = LogManager.getLogger();
+	private static final Logger logger = Logger.getLogger(BasicCoapResource.class.getCanonicalName());
 	private ResourceServer serverListener = null; // could be a list of listener
 
 	// parameter
@@ -76,7 +72,7 @@ public class BasicCoapResource implements CoapResource {
 		for (String segment : segments) {
 			if (segment.getBytes().length > 255) {
 				IllegalArgumentException e = new IllegalArgumentException("Uri-Path too long");
-				logger.warn("Uri-Path too long: " + initPath);
+				logger.log(Level.WARNING, "Uri-Path too long: " + initPath);
 				throw e;
 			}
 		}

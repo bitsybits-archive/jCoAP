@@ -14,7 +14,6 @@ repositories {
 }
 
 dependencies {
-	group: 'org.apache.logging.log4j:log4j-core:2.6.2'
 	testCompile 'junit:junit:4.12'
 }
 

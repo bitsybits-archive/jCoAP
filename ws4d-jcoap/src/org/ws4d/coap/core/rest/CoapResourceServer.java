@@ -15,21 +15,8 @@
 
 package org.ws4d.coap.core.rest;
 
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.ws4d.coap.core.CoapServer;
 import org.ws4d.coap.core.CoapConstants;
+import org.ws4d.coap.core.CoapServer;
 import org.ws4d.coap.core.connection.BasicCoapChannelManager;
 import org.ws4d.coap.core.connection.api.CoapServerChannel;
 import org.ws4d.coap.core.enumerations.CoapMediaType;
@@ -40,13 +27,18 @@ import org.ws4d.coap.core.messages.api.CoapResponse;
 import org.ws4d.coap.core.rest.api.CoapResource;
 import org.ws4d.coap.core.rest.api.ResourceServer;
 
+import java.net.*;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Björn Konieczek <bjoern.konieczek@uni-rostock.de>
  * @author Björn Butzin <bjoern.butzin@uni-rostock.de>
  */
 public class CoapResourceServer implements ResourceServer {
-	private static final Logger logger = LogManager.getLogger();
+	private static final Logger logger = Logger.getLogger(CoapResourceServer.class.getCanonicalName());
 	private int port = 0;
 	private Map<String, byte[]> etags = new HashMap<String, byte[]>();
 	private Map<String, CoapResource> resources = new HashMap<String, CoapResource>();
@@ -156,7 +148,7 @@ public class CoapResourceServer implements ResourceServer {
 		try {
 			hostUri = new URI("coap://" + getLocalIpAddress() + ":" + getPort());
 		} catch (URISyntaxException e) {
-			logger.warn("getHostUri() could not create valid URI from local IP address", e);
+			logger.log(Level.WARNING, "getHostUri() could not create valid URI from local IP address", e);
 		}
 		return hostUri;
 	}
@@ -315,7 +307,7 @@ public class CoapResourceServer implements ResourceServer {
 
 	@Override
 	public void onSeparateResponseFailed(CoapServerChannel channel) {
-		logger.error("Separate response failed.");
+		logger.log(Level.SEVERE, "Separate response failed.");
 	}
 
 	@Override
@@ -343,7 +335,7 @@ public class CoapResourceServer implements ResourceServer {
 				}
 			}
 		} catch (SocketException ex) {
-			logger.error("Can't obtain network Interface", ex);
+			logger.log(Level.SEVERE, "Can't obtain network Interface", ex);
 		}
 		return null;
 	}

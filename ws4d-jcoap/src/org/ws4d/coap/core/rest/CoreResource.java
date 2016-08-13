@@ -15,20 +15,20 @@
 
 package org.ws4d.coap.core.rest;
 
+import org.ws4d.coap.core.CoapConstants;
+import org.ws4d.coap.core.enumerations.CoapMediaType;
+import org.ws4d.coap.core.rest.api.CoapResource;
+import org.ws4d.coap.core.rest.api.ResourceServer;
+import org.ws4d.coap.core.tools.Encoder;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.ws4d.coap.core.CoapConstants;
-import org.ws4d.coap.core.enumerations.CoapMediaType;
-import org.ws4d.coap.core.rest.api.CoapResource;
-import org.ws4d.coap.core.rest.api.ResourceServer;
-import org.ws4d.coap.core.tools.Encoder;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Well-Known CoRE support (rfc6690 - ietf-core-link-format)
@@ -38,7 +38,7 @@ import org.ws4d.coap.core.tools.Encoder;
  * @author Björn Butzin <bjoern.butzin@uni-rostock.de>
  */
 public class CoreResource extends BasicCoapResource {
-	private static final Logger logger = LogManager.getLogger();
+	private static final Logger logger = Logger.getLogger(CoreResource.class.getCanonicalName());
 	private static final String uriPath = "/.well-known/core";
 	private static final CoapMediaType mediaType = CoapMediaType.link_format;
 	private ResourceServer server = null;
@@ -86,7 +86,7 @@ public class CoreResource extends BasicCoapResource {
 				try {
 					query = URLDecoder.decode(query, "UTF-8");
 				} catch (UnsupportedEncodingException e) {
-					logger.warn("Can not decode query String: \"" + query + "\"\n", e);
+					logger.log(Level.WARNING, "Can not decode query String: \"" + query + "\"\n", e);
 					break;
 				}
 				// each query parameter can contain spaces to separate

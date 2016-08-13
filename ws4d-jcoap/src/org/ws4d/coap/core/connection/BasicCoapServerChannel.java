@@ -15,22 +15,11 @@
 
 package org.ws4d.coap.core.connection;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.InetAddress;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.ws4d.coap.core.CoapServer;
 import org.ws4d.coap.core.connection.api.CoapChannel;
 import org.ws4d.coap.core.connection.api.CoapServerChannel;
 import org.ws4d.coap.core.connection.api.CoapSocketHandler;
-import org.ws4d.coap.core.enumerations.CoapBlockSize;
-import org.ws4d.coap.core.enumerations.CoapMediaType;
-import org.ws4d.coap.core.enumerations.CoapPacketType;
-import org.ws4d.coap.core.enumerations.CoapRequestCode;
-import org.ws4d.coap.core.enumerations.CoapResponseCode;
+import org.ws4d.coap.core.enumerations.*;
 import org.ws4d.coap.core.messages.BasicCoapRequest;
 import org.ws4d.coap.core.messages.BasicCoapResponse;
 import org.ws4d.coap.core.messages.CoapBlockOption;
@@ -38,6 +27,13 @@ import org.ws4d.coap.core.messages.CoapEmptyMessage;
 import org.ws4d.coap.core.messages.api.CoapMessage;
 import org.ws4d.coap.core.messages.api.CoapRequest;
 import org.ws4d.coap.core.messages.api.CoapResponse;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Bjoern Konieczek <bjoern.konieczek@uni-rostock.de>
@@ -262,7 +258,7 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 		private int blockNumber;
 		private int maxBlockNumber;
 		private CoapRequest request;
-		private final Logger logger = LogManager.getLogger();
+		private final Logger logger = Logger.getLogger(ServerBlockContext.class.getCanonicalName());
 
 		/**
 		 * Create BlockContext for GET requests. This is done automatically, if
@@ -322,7 +318,7 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 				try {
 					this.incomingStream.close();
 				} catch (IOException e) {
-					this.logger.warn(e.getLocalizedMessage());
+					this.logger.log(Level.WARNING, e.getMessage(), e);
 				}
 				return this.incomingStream.toByteArray();
 			} else if (this.outgoingStream != null) {
@@ -354,7 +350,7 @@ public class BasicCoapServerChannel extends BasicCoapChannel implements CoapServ
 			try {
 				this.incomingStream.write(msg.getPayload());
 			} catch (IOException e) {
-				this.logger.warn("ERROR: Cannot write data block to input buffer! "+e.getLocalizedMessage());
+				this.logger.log(Level.SEVERE, "ERROR: Cannot write data block to input buffer!", e);
 			}
 			if (block.isLast()) {
 				this.finished = true;

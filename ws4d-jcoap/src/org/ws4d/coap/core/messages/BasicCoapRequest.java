@@ -15,13 +15,6 @@
 
 package org.ws4d.coap.core.messages;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.Iterator;
-import java.util.Vector;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.ws4d.coap.core.CoapConstants;
 import org.ws4d.coap.core.enumerations.CoapHeaderOptionType;
 import org.ws4d.coap.core.enumerations.CoapMediaType;
@@ -29,12 +22,19 @@ import org.ws4d.coap.core.enumerations.CoapPacketType;
 import org.ws4d.coap.core.enumerations.CoapRequestCode;
 import org.ws4d.coap.core.messages.api.CoapRequest;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.Iterator;
+import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  */
 public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest {
 
-	private static final Logger logger = LogManager.getLogger();
+	private static final Logger logger = Logger.getLogger(BasicCoapRequest.class.getCanonicalName());
 	private CoapRequestCode requestCode;
 
 	public BasicCoapRequest(byte[] bytes, int length) {
@@ -212,7 +212,7 @@ public class BasicCoapRequest extends AbstractCoapMessage implements CoapRequest
 			}
 			return URLDecoder.decode(uriPathBuilder.toString(), "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			logger.warn("Invalid Encoding");
+			logger.log(Level.WARNING, "Invalid Encoding");
 			throw new IllegalArgumentException("Invalid Encoding");
 		}
 	}

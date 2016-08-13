@@ -15,11 +15,6 @@
 
 package org.ws4d.coap.core.messages;
 
-import java.nio.ByteBuffer;
-import java.util.Random;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.ws4d.coap.core.CoapConstants;
 import org.ws4d.coap.core.connection.api.CoapChannel;
 import org.ws4d.coap.core.enumerations.CoapHeaderOptionType;
@@ -27,13 +22,18 @@ import org.ws4d.coap.core.enumerations.CoapMediaType;
 import org.ws4d.coap.core.enumerations.CoapPacketType;
 import org.ws4d.coap.core.messages.api.CoapMessage;
 
+import java.nio.ByteBuffer;
+import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
  * @author Sebastian Unger <sebastian.unger@uni-rostock.de>
  */
 public abstract class AbstractCoapMessage implements CoapMessage {
 	/* use the logger of the channel manager */
-	private static final Logger logger = LogManager.getLogger();
+	private static final Logger logger = Logger.getLogger(AbstractCoapMessage.class.getCanonicalName());
 	protected static final int HEADER_LENGTH = 4;
 
 	/* Header */
@@ -337,7 +337,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 		byte[] data = option.getOptionData();
 
 		if (data.length < 0 || data.length > 2) {
-			logger.warn("invalid observe option length, return null");
+			logger.log(Level.WARNING, "invalid observe option length, return null");
 			return null;
 		}
 		return (int) AbstractCoapMessage.coapUint2Long(data);
