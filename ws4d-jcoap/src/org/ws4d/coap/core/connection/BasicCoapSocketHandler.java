@@ -556,6 +556,7 @@ public class BasicCoapSocketHandler implements CoapSocketHandler {
 			/* send message */
 			ByteBuffer buf = ByteBuffer.wrap(msg.serialize());
 			try {
+				BasicCoapSocketHandler.this.getDatagramChannel().setBroadcast(true);
 				BasicCoapSocketHandler.this.getDatagramChannel().send(buf, new InetSocketAddress(inetAddr, port));
 				logger.info("Send Msg with ID: " + msg.getMessageID());
 			} catch (IOException e) {
