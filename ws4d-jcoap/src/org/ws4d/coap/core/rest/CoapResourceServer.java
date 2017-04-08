@@ -34,8 +34,8 @@ import java.util.logging.Logger;
 
 /**
  * @author Christian Lerche <christian.lerche@uni-rostock.de>
- * @author Björn Konieczek <bjoern.konieczek@uni-rostock.de>
- * @author Björn Butzin <bjoern.butzin@uni-rostock.de>
+ * @author BjÃ¶rn Konieczek <bjoern.konieczek@uni-rostock.de>
+ * @author BjÃ¶rn Butzin <bjoern.butzin@uni-rostock.de>
  */
 public class CoapResourceServer implements ResourceServer {
 	private static final Logger logger = Logger.getLogger(CoapResourceServer.class.getCanonicalName());
@@ -45,7 +45,8 @@ public class CoapResourceServer implements ResourceServer {
 	private CoreResource coreResource = new CoreResource(this);
 	/** toggle if the creation of resources is allowed on this server **/
 	private boolean allowCreate = true;
-
+	public int lastMsgId = -1;
+	
 	public Map<String, CoapResource> getResources() {
 		return this.resources;
 	}
@@ -240,6 +241,7 @@ public class CoapResourceServer implements ResourceServer {
 				response = channel.createResponse(request, CoapResponseCode.Created_201);
 			} else if (null != resource && resource.isPostable()) {
 				// resource exist & accepts post requests -> change
+				lastMsgId = request.getMessageID();
 				resource.post(request.getPayload(), request.getContentType());
 				response = channel.createResponse(request, CoapResponseCode.Changed_204);
 			} else {
