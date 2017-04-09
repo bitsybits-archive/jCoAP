@@ -46,6 +46,7 @@ public class CoapResourceServer implements ResourceServer {
 	/** toggle if the creation of resources is allowed on this server **/
 	private boolean allowCreate = true;
 	public int lastMsgId = -1;
+	public InetAddress lastRemoteAddress;
 	
 	public Map<String, CoapResource> getResources() {
 		return this.resources;
@@ -242,6 +243,7 @@ public class CoapResourceServer implements ResourceServer {
 			} else if (null != resource && resource.isPostable()) {
 				// resource exist & accepts post requests -> change
 				lastMsgId = request.getMessageID();
+				lastRemoteAddress = channel.getRemoteAddress();
 				resource.post(request.getPayload(), request.getContentType());
 				response = channel.createResponse(request, CoapResponseCode.Changed_204);
 			} else {
